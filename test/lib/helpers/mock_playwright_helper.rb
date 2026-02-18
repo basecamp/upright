@@ -6,11 +6,16 @@ module MockPlaywrightHelper
   end
 
   class MockContext
-    attr_reader :state
+    attr_reader :state, :init_script
 
     def initialize(state = nil)
       @state = state
       @closed = false
+      @init_script = nil
+    end
+
+    def add_init_script(script: nil, path: nil)
+      @init_script = script if script
     end
 
     def new_page = MockPage.new
@@ -24,5 +29,7 @@ module MockPlaywrightHelper
     def url = "https://example.com/"
     def close = nil
     def on(event, callback) = nil
+    def wait_for_load_state(state: nil) = nil
+    def evaluate(script) = 0
   end
 end
