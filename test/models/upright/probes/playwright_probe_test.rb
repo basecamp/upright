@@ -100,4 +100,32 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
       assert_match(/200 DOCUMENT/, log_content)
     end
   end
+
+  test "inp observer script is injected into context before page is created" do
+    Rails.application.stubs(:config_for).with(:playwright).returns(server_url: "http://localhost:53333")
+    Playwright.stubs(:connect_to_browser_server).yields(MockPlaywrightHelper::MockBrowser.new)
+
+    probe = StaggeredPlaywrightProbe.new
+    with_env("SITE_SUBDOMAIN" => "ams") { probe.perform_check }
+
+    assert_instance_of MockPlaywrightHelper::MockContext, probe.context
+    script = probe.context.init_script
+    assert script, "expected init script to be added"
+    assert_includes script, "window.upright"
+    assert_includes script, "inp"
+    assert_includes script, "PerformanceObserver"
+  end
+
+  test "browser performance metrics including inp are attached to document span" do
+    probe = StaggeredPlaywrightProbe.new
+    probe.page = mock("page")
+    probe.page.stubs(:evaluate).returns("inp" => 100, "ttfb" => 50, "fcp" => 200)
+
+    span = mock("span")
+    span.expects(:set_attribute).with("browser.performance.inp", 100)
+    span.expects(:set_attribute).with("browser.performance.ttfb", 50)
+    span.expects(:set_attribute).with("browser.performance.fcp", 200)
+
+    probe.send(:add_browser_performance_metrics_to_span, span)
+  end
 end
