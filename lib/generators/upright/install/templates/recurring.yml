@@ -1,0 +1,25 @@
+development:
+  http_probes:
+    schedule: every minute
+    command: "Upright::Probes::HTTPProbe.check_and_record_all_later"
+
+  smtp_probes:
+    schedule: every minute
+    command: "Upright::Probes::SMTPProbe.check_and_record_all_later"
+
+production:
+  http_probes:
+    schedule: "*/30 * * * * *"
+    command: "Upright::Probes::HTTPProbe.check_and_record_all_later"
+
+  smtp_probes:
+    schedule: "*/30 * * * * *"
+    command: "Upright::Probes::SMTPProbe.check_and_record_all_later"
+
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
+    schedule: every hour at minute 12
+
+  cleanup_stale_probe_results:
+    command: "Upright::ProbeResult.stale.in_batches.destroy_all"
+    schedule: every hour at minute 30

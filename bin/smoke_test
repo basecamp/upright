@@ -5,8 +5,9 @@
 # Verifies that a fresh Rails app can:
 #   1. Install the Upright gem from the local path
 #   2. Run the upright:install generator
-#   3. Run db:setup
+#   3. Run db:prepare (primary + queue databases)
 #   4. Boot the dev server and respond to HTTP requests
+#   5. Run Solid Queue and execute a probe end-to-end
 #
 # Usage:
 #   bin/smoke_test
@@ -18,11 +19,17 @@ APP_NAME="smoke_test_app"
 WORK_DIR=$(mktemp -d)
 APP_DIR="$WORK_DIR/$APP_NAME"
 SERVER_PID=""
+JOBS_PID=""
 PORT=3999
 
 cleanup() {
   echo ""
   echo "=> Cleaning up..."
+
+  if [ -n "$JOBS_PID" ]; then
+    kill "$JOBS_PID" 2>/dev/null || true
+    wait "$JOBS_PID" 2>/dev/null || true
+  fi
 
   if [ -n "$SERVER_PID" ]; then
     kill "$SERVER_PID" 2>/dev/null || true
@@ -46,9 +53,9 @@ echo ""
 # Step 1: Create a new Rails app
 # -------------------------------------------------------------------
 echo "=> Creating new Rails app: $APP_NAME"
-# Strip the upright bin/ from PATH so we use the system `rails` binary
-CLEAN_PATH=$(echo "$PATH" | tr ':' '\n' | grep -v "$UPRIGHT_ROOT/bin" | paste -sd ':')
-(cd "$WORK_DIR" && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u RUBYOPT -u RUBYLIB PATH="$CLEAN_PATH" rails new "$APP_NAME" --database=sqlite3 --skip-test --skip-git --skip-docker --quiet)
+# Drop a .ruby-version so mise activates the same Ruby used by the Upright project
+ruby -e "puts RUBY_VERSION" > "$WORK_DIR/.ruby-version"
+(cd "$WORK_DIR" && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u RUBYOPT -u RUBYLIB rails new "$APP_NAME" --database=sqlite3 --skip-test --skip-git --skip-docker --skip-bootsnap --quiet)
 echo "   OK"
 
 cd "$APP_DIR"
@@ -73,11 +80,16 @@ echo "=> Running upright:install generator"
 bin/rails generate upright:install --force --quiet
 echo "   OK"
 
+# Trust the generated mise.toml so subsequent commands use the correct Ruby
+if command -v mise &>/dev/null && [ -f mise.toml ]; then
+  mise trust mise.toml 2>/dev/null || true
+fi
+
 # -------------------------------------------------------------------
 # Step 4: Set up the database
 # -------------------------------------------------------------------
-echo "=> Running db:migrate"
-bin/rails db:migrate --quiet 2>&1
+echo "=> Running db:prepare"
+bin/rails db:prepare --quiet 2>&1
 echo "   OK"
 
 # -------------------------------------------------------------------
@@ -97,7 +109,11 @@ for f in \
   docker-compose.yml \
   probes/http_probes.yml \
   probes/smtp_probes.yml \
-  probes/traceroute_probes.yml; do
+  probes/traceroute_probes.yml \
+  config/queue.yml \
+  config/recurring.yml \
+  db/queue_schema.rb \
+  bin/jobs; do
   if [ ! -f "$f" ]; then
     echo "   MISSING: $f"
     missing=1
@@ -128,6 +144,24 @@ tables=$(bin/rails runner "puts ActiveRecord::Base.connection.tables.sort.join('
 for table in upright_probe_results active_storage_blobs; do
   if [[ "$tables" != *"$table"* ]]; then
     echo "   FAIL: Table '$table' not found in database"
+    exit 1
+  fi
+done
+echo "   OK"
+
+# -------------------------------------------------------------------
+# Step 7b: Verify queue database tables exist
+# -------------------------------------------------------------------
+echo "=> Verifying queue database tables"
+queue_db="storage/development_queue.sqlite3"
+if [ ! -f "$queue_db" ]; then
+  echo "   FAIL: Queue database not found at $queue_db"
+  exit 1
+fi
+queue_tables=$(sqlite3 "$queue_db" ".tables")
+for table in solid_queue_jobs solid_queue_ready_executions solid_queue_recurring_tasks; do
+  if [[ "$queue_tables" != *"$table"* ]]; then
+    echo "   FAIL: Table '$table' not found in queue database"
     exit 1
   fi
 done
@@ -199,6 +233,58 @@ else
   echo "   FAIL: /up returned HTTP $status"
   exit 1
 fi
+
+# -------------------------------------------------------------------
+# Step 9: Verify probe execution via Solid Queue
+# -------------------------------------------------------------------
+echo "=> Starting Solid Queue worker"
+OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES bin/rails solid_queue:start &>"$WORK_DIR/jobs.log" &
+JOBS_PID=$!
+sleep 2
+
+echo "=> Enqueuing HTTP probe check"
+bin/rails runner "Upright::Probes::HTTPProbe.check_and_record_all_later"
+
+echo -n "   Waiting for probe result"
+for i in $(seq 1 30); do
+  count=$(bin/rails runner "puts Upright::ProbeResult.count" 2>/dev/null || echo "0")
+  if [ "$count" -gt 0 ]; then
+    echo " done"
+    break
+  fi
+  echo -n "."
+  sleep 1
+  if [ "$i" -eq 30 ]; then
+    echo ""
+    echo "   FAIL: No probe results created within 30 seconds (queue may be broken)"
+    echo "   Jobs log (first 100 lines):"
+    head -100 "$WORK_DIR/jobs.log"
+    exit 1
+  fi
+done
+
+echo "=> Verifying probe result"
+result_info=$(bin/rails runner "r = Upright::ProbeResult.last; puts \"#{r.probe_type}|#{r.probe_name}|#{r.status}\"")
+probe_type=$(echo "$result_info" | cut -d'|' -f1)
+probe_name=$(echo "$result_info" | cut -d'|' -f2)
+probe_status=$(echo "$result_info" | cut -d'|' -f3)
+
+if [ -z "$probe_type" ] || [ -z "$probe_name" ]; then
+  echo "   FAIL: Probe result missing probe_type or probe_name"
+  exit 1
+fi
+
+if [ "$probe_status" = "fail" ]; then
+  echo "   WARN: Probe result status is 'fail' (network issue, not a bug)"
+  echo "   probe_type=$probe_type probe_name=$probe_name status=$probe_status"
+else
+  echo "   OK (probe_type=$probe_type probe_name=$probe_name status=$probe_status)"
+fi
+
+echo "=> Stopping Solid Queue worker"
+kill "$JOBS_PID" 2>/dev/null || true
+wait "$JOBS_PID" 2>/dev/null || true
+JOBS_PID=""
 
 # -------------------------------------------------------------------
 # Done
