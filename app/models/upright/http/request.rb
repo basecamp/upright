@@ -23,7 +23,7 @@ class Upright::HTTP::Request
         proxy: proxy_url,
         proxyuserpwd: proxy_userpwd,
         verbose: true,
-        forbid_reuse: true
+        forbid_reuse: proxy_url.nil?
       }.compact
     end
 
