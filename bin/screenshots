@@ -53,6 +53,24 @@ async function screenshot(page, url, file, { waitMs = 1500 } = {}) {
   await screenshot(darkPage, "/dashboards/uptime", "uptime.png");
   await dark.close();
 
+  console.log("Video modal:");
+  const video = await browser.newContext({ viewport: VIEWPORT, colorScheme: "dark" });
+  const videoPage = await login(video);
+  // Run the example probe against example.com to generate a video recording
+  await videoPage.goto(`http://${BASE}/probes/playwright/example/run`);
+  await videoPage.waitForLoadState("networkidle");
+  await videoPage.waitForTimeout(5000);
+  // Navigate to the site probe results and open the video modal
+  const siteBase = process.env.UPRIGHT_SITE_HOST || "nyc.upright.localhost:3000";
+  await videoPage.goto(`http://${siteBase}/`);
+  await videoPage.waitForLoadState("networkidle");
+  await videoPage.waitForTimeout(1500);
+  // Click the first video artifact (🎬) to open the modal
+  await videoPage.locator("details.artifact summary", { hasText: "🎬" }).first().click();
+  await videoPage.waitForTimeout(2000);
+  await screenshot(videoPage, null, "video-modal.png");
+  await video.close();
+
   await browser.close();
   console.log("Done.");
 })().catch((e) => {
