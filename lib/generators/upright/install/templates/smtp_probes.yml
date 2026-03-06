@@ -4,6 +4,9 @@
 # Required fields:
 #   - name: Unique identifier for the probe
 #   - host: SMTP server hostname
+#
+# Optional fields:
+#   - alert_severity: Alert severity when probe fails: medium, high (default), critical
 
 # - name: Example Mail Server
 #   host: mail.example.com

@@ -172,11 +172,14 @@ Add probes to `probes/http_probes.yml`:
 - name: API Health
   url: https://api.example.com/health
   expected_status: 200
+  alert_severity: critical
 
 - name: Admin Panel
   url: https://admin.example.com
   basic_auth_credentials: admin_auth  # Key in Rails credentials
 ```
+
+The optional `alert_severity` field controls the Prometheus alert severity when a probe fails. Values: `medium`, `high` (default), `critical`.
 
 ### SMTP Probes
 
@@ -407,7 +410,7 @@ groups:
         expr: upright_probe_up == 0
         for: 5m
         labels:
-          severity: critical
+          severity: "{{ $labels.alert_severity }}"
         annotations:
           summary: "Probe {{ $labels.name }} is down"
 ```

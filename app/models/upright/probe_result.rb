@@ -1,6 +1,8 @@
 class Upright::ProbeResult < Upright::ApplicationRecord
   include Upright::ExceptionRecording
 
+  attr_accessor :probe_alert_severity
+
   has_many_attached :artifacts
 
   scope :by_type,   ->(type) { where(probe_type: type) if type.present? }
@@ -23,7 +25,7 @@ class Upright::ProbeResult < Upright::ApplicationRecord
 
   private
     def increment_metrics
-      labels = { type: probe_type, name: probe_name, probe_target: probe_target, probe_service: probe_service }
+      labels = { type: probe_type, name: probe_name, probe_target: probe_target, probe_service: probe_service, alert_severity: probe_alert_severity || :high }
 
       Yabeda.upright_probe_duration_seconds.set(labels.merge(status: status), duration.to_f)
       Yabeda.upright_probe_up.set(labels, ok? ? 1 : 0)

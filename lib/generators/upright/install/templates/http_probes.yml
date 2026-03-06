@@ -7,6 +7,7 @@
 #
 # Optional fields:
 #   - expected_status: HTTP status code to expect (default: 200-399)
+#   - alert_severity: Alert severity when probe fails: medium, high (default), critical
 #   - basic_auth_credentials: Key in Rails credentials for basic auth
 #   - proxy: Key in Rails credentials for proxy settings
 

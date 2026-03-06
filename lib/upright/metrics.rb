@@ -44,12 +44,12 @@ module Upright::Metrics
             gauge :probe_duration_seconds,
               comment: "Duration of each probe",
               aggregation: :max,
-              tags: %i[type name probe_target probe_service status]
+              tags: %i[type name probe_target probe_service alert_severity status]
 
             gauge :probe_up,
               comment: "Probe status (1 = up, 0 = down)",
               aggregation: :most_recent,
-              tags: %i[type name probe_target probe_service]
+              tags: %i[type name probe_target probe_service alert_severity]
 
             gauge :http_response_status,
               comment: "HTTP response status code",

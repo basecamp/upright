@@ -8,9 +8,9 @@ groups:
       # Fraction of regions reporting DOWN (0.0 to 1.0)
       - record: upright:probe_down_fraction
         expr: |
-          count by (name, type, probe_target) (upright_probe_up == 0)
+          count by (name, type, probe_target, alert_severity) (upright_probe_up == 0)
           /
-          count by (name, type, probe_target) (upright_probe_up)
+          count by (name, type, probe_target, alert_severity) (upright_probe_up)
 
       # Daily uptime percentage (0.0 to 1.0)
       # Uptime = percentage of time in past day when majority of sites reported UP
@@ -148,7 +148,7 @@ groups:
           upright: "https://app.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
         expr: upright:probe_down_fraction{type="http"} > 0.5
         labels:
-          severity: page
+          severity: "{{ $labels.alert_severity }}"
           group: upright
 
       - alert: UprightHTTPProbeDegraded
@@ -187,7 +187,7 @@ groups:
           upright: "https://app.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
         expr: upright:probe_down_fraction{type="smtp"} > 0.5
         labels:
-          severity: page
+          severity: "{{ $labels.alert_severity }}"
           group: upright
 
       - alert: UprightSMTPProbeDegraded
@@ -226,7 +226,7 @@ groups:
           upright: "https://app.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
         expr: upright:probe_down_fraction{type="playwright"} > 0.5
         labels:
-          severity: page
+          severity: "{{ $labels.alert_severity }}"
           group: upright
 
       - alert: UprightPlaywrightProbeDegraded

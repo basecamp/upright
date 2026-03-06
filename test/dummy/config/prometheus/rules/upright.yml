@@ -7,9 +7,9 @@ groups:
       # Fraction of regions reporting DOWN (0.0 to 1.0)
       - record: upright:probe_down_fraction
         expr: |
-          count by (name, type, probe_target) (upright_probe_up == 0)
+          count by (name, type, probe_target, alert_severity) (upright_probe_up == 0)
           /
-          count by (name, type, probe_target) (upright_probe_up)
+          count by (name, type, probe_target, alert_severity) (upright_probe_up)
 
       # Daily uptime percentage (0.0 to 1.0)
       # Uptime = percentage of time in past day when majority of sites reported UP

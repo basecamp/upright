@@ -92,7 +92,7 @@ echo "Generating seed data..."
           val=0
         fi
 
-        echo "upright_probe_up{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"\",site_code=\"${scode}\",site_city=\"${scity}\",site_country=\"${scountry}\",site_geohash=\"${sgeohash}\",site_provider=\"${sprovider}\"} ${val}.0 ${ts}.0"
+        echo "upright_probe_up{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"\",alert_severity=\"high\",site_code=\"${scode}\",site_city=\"${scity}\",site_country=\"${scountry}\",site_geohash=\"${sgeohash}\",site_provider=\"${sprovider}\"} ${val}.0 ${ts}.0"
       done
     done
   done

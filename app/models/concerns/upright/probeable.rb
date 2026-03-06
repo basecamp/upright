@@ -3,6 +3,7 @@ module Upright::Probeable
   include Upright::Staggerable
 
   TYPES = %w[ http playwright smtp traceroute ]
+  ALERT_SEVERITIES = %i[ medium high critical ]
 
   included do
     attr_writer :logger
@@ -35,6 +36,7 @@ module Upright::Probeable
       probe_name: probe_name,
       probe_target: probe_target,
       probe_service: probe_service,
+      probe_alert_severity: probe_alert_severity,
       status: result[:status],
       duration: result[:duration],
       error: result[:error]
@@ -61,6 +63,11 @@ module Upright::Probeable
 
   def probe_service
     nil
+  end
+
+  def probe_alert_severity
+    severity = try(:alert_severity)&.to_sym
+    ALERT_SEVERITIES.include?(severity) ? severity : :high
   end
 
   private
