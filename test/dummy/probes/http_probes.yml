@@ -11,3 +11,19 @@
     - proxy_a
     - proxy_b
     - proxy_c
+
+- name: "MediumSeverity"
+  url: "https://example.com/medium"
+  alert_severity: medium
+
+- name: "HighSeverity"
+  url: "https://example.com/high"
+  alert_severity: high
+
+- name: "CriticalSeverity"
+  url: "https://example.com/critical"
+  alert_severity: critical
+
+- name: "InvalidSeverity"
+  url: "https://example.com/invalid"
+  alert_severity: unknown
