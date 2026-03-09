@@ -17,7 +17,7 @@ class Upright::Probes::Uptime
 
     private
       def query(probe_type)
-        "upright:probe_uptime_daily#{label_selector(probe_type)}"
+        "min by (name, type, probe_target) (upright:probe_uptime_daily#{label_selector(probe_type)})"
       end
 
       def label_selector(probe_type)
