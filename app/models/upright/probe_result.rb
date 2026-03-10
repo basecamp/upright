@@ -1,5 +1,6 @@
 class Upright::ProbeResult < Upright::ApplicationRecord
   include Upright::ExceptionRecording
+  include Upright::ProbeResult::StaleCleanup
 
   attr_accessor :probe_alert_severity
 

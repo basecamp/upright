@@ -29,5 +29,5 @@ production:
     schedule: every hour at minute 12
 
   cleanup_stale_probe_results:
-    command: "Upright::ProbeResult.stale.in_batches.destroy_all"
+    command: "Upright::ProbeResult.cleanup_stale"
     schedule: every hour at minute 30
