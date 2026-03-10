@@ -60,7 +60,7 @@ class ProbeResultsControllerTest < ActionDispatch::IntegrationTest
     chart_data = JSON.parse(css_select("[data-probe-results-chart-results-value]").first["data-probe-results-chart-results-value"])
 
     assert chart_data.all? { |r| r["status"] == "fail" }
-    assert_equal 2, chart_data.length
+    assert_equal 4, chart_data.length
   end
 
   test "paginates results when there are many" do
