@@ -12,6 +12,7 @@ class Upright::ProbeResultsController < Upright::ApplicationController
         .by_type(params[:probe_type])
         .by_status(params[:status])
         .by_name(params[:probe_name])
+        .by_date(params[:date])
         .with_attached_artifacts
     end
 end

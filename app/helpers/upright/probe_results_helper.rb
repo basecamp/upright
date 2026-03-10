@@ -44,6 +44,7 @@ module Upright::ProbeResultsHelper
     parts << "for #{params[:probe_type].titleize} probes" if params[:probe_type].present?
     parts << "named #{params[:probe_name]}" if params[:probe_name].present?
     parts << "with status #{params[:status]}" if params[:status].present?
+    parts << "on #{Date.parse(params[:date]).to_fs(:long)}" if params[:date].present?
     parts.join(" ")
   end
 end

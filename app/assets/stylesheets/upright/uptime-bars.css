@@ -40,12 +40,21 @@
   /* Individual uptime bar */
   .uptime-bar {
     border-radius: 2px;
-    cursor: default;
     flex: 1;
     height: 24px;
     max-width: 12px;
     min-width: 4px;
     transition: transform 100ms, filter 100ms;
+  }
+
+  a.uptime-bar {
+    cursor: pointer;
+    display: block;
+    text-decoration: none;
+  }
+
+  div.uptime-bar {
+    cursor: default;
   }
 
   .uptime-bar:hover {

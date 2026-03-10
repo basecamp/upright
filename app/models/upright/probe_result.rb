@@ -8,6 +8,8 @@ class Upright::ProbeResult < Upright::ApplicationRecord
   scope :by_type,   ->(type) { where(probe_type: type) if type.present? }
   scope :by_status, ->(status) { where(status: status) if status.present? }
   scope :by_name,   ->(name) { where(probe_name: name) if name.present? }
+  scope :by_date,   ->(date) { where(created_at: Date.parse(date).all_day) if date.present? }
+
   scope :stale,     -> { where(created_at: ...24.hours.ago) }
 
   enum :status, [ :ok, :fail ]

@@ -16,6 +16,7 @@
     <div class="filters">
       <%= form_with url: site_root_path, method: :get, data: { controller: "form" } do |f| %>
         <%= hidden_field_tag :probe_type, params[:probe_type] if params[:probe_type].present? %>
+        <%= hidden_field_tag :date, params[:date] if params[:date].present? %>
         <label for="probe_name">Name</label>
         <%= select_tag :probe_name,
               options_for_select([["All", ""]] + @probe_names, params[:probe_name]),
@@ -26,6 +27,9 @@
               options_for_select([["All", ""]] + Upright::ProbeResult.statuses.keys.map { |s| [s.titleize, s] }, params[:status]),
               class: "input--select",
               data: { action: "change->form#submit" } %>
+        <% if params[:date].present? %>
+          <%= link_to "Clear date filter", site_root_path(probe_type: params[:probe_type], probe_name: params[:probe_name], status: params[:status]), class: "filter-clear" %>
+        <% end %>
       <% end %>
     </div>
 

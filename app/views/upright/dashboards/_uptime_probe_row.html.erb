@@ -1,5 +1,5 @@
 <div class="data-table__row uptime-bars__row">
-  <%= link_to upright.site_root_url(subdomain: Upright.sites.first.code, probe_type: probe.type, probe_name: probe.name), class: "data-table__probe" do %>
+  <%= link_to upright.site_root_url(subdomain: current_or_default_site.code, probe_type: probe.type, probe_name: probe.name), class: "data-table__probe" do %>
     <%= probe_type_icon(probe.type) %>
     <span class="data-table__probe-name"><%= probe.name %></span>
   <% end %>
@@ -11,8 +11,9 @@
       <% else %>
         <% uptime_percent = uptime * 100 %>
         <% downtime_minutes = ((1 - uptime) * 24 * 60).round %>
-        <div class="uptime-bar uptime-bar--<%= uptime_label(uptime_percent) %>"
-             title="<%= uptime_bar_tooltip(date, uptime_percent, downtime_minutes) %>"></div>
+        <%= link_to upright.site_root_url(subdomain: current_or_default_site.code, probe_type: probe.type, probe_name: probe.name, date: date.iso8601),
+              class: "uptime-bar uptime-bar--#{uptime_label(uptime_percent)}",
+              title: uptime_bar_tooltip(date, uptime_percent, downtime_minutes) %>
       <% end %>
     <% end %>
   </div>

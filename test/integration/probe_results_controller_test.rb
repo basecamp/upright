@@ -84,6 +84,13 @@ class ProbeResultsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a.pagination__next[href*='probe_type=http']"
   end
 
+  test "filters by date" do
+    get upright.site_root_path(date: Date.current.iso8601)
+    assert_response :success
+    assert_select "p", text: /on #{Date.current.to_fs(:long)}/
+    assert_select "a.filter-clear", text: /Clear date filter/
+  end
+
   test "renders artifacts for probe results with attachments" do
     result = upright_probe_results(:http_probe_result)
     assert result.artifacts.attached?, "Test fixture should have attached artifact"
