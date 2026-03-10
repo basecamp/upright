@@ -26,4 +26,29 @@ class Upright::ProbeResultTest < ActiveSupport::TestCase
     assert_includes report, "app/models/foo.rb:10"
     assert_includes report, "app/controllers/bar.rb:5"
   end
+
+  test ".cleanup_stale removes old successes but keeps recent failures" do
+    stale_success_id = upright_probe_results(:stale_success).id
+    fresh_success_id = upright_probe_results(:http_probe_result).id
+    stale_failure_id = upright_probe_results(:stale_failure).id
+    recent_failure_id = upright_probe_results(:recent_failure).id
+
+    Upright::ProbeResult.cleanup_stale
+
+    assert_not Upright::ProbeResult.exists?(stale_success_id)
+    assert Upright::ProbeResult.exists?(fresh_success_id)
+    assert_not Upright::ProbeResult.exists?(stale_failure_id)
+    assert Upright::ProbeResult.exists?(recent_failure_id)
+  end
+
+  test ".cleanup_stale caps failures at retention limit" do
+    recent_failure_id = upright_probe_results(:recent_failure).id
+
+    stub_const(Upright::ProbeResult::StaleCleanup, :FAILURE_RETENTION_LIMIT, 2) do
+      Upright::ProbeResult.cleanup_stale
+
+      assert_not Upright::ProbeResult.exists?(recent_failure_id)
+      assert_equal 2, Upright::ProbeResult.fail.count
+    end
+  end
 end

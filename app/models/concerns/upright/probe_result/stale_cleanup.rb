@@ -21,7 +21,7 @@ module Upright::ProbeResult::StaleCleanup
         fail.order(created_at: :desc).offset(FAILURE_RETENTION_LIMIT).pick(:created_at)
       ].compact.max
 
-      fail.where(created_at: ...cutoff).in_batches.destroy_all
+      fail.where(created_at: ..cutoff).in_batches.destroy_all
     end
   end
 end

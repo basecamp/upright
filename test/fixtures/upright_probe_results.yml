@@ -67,3 +67,27 @@ playwright_probe_result_without_artifacts:
   status: "ok"
   created_at: <%= Time.current %>
   updated_at: <%= Time.current %>
+
+stale_success:
+  probe_type: http
+  probe_name: HTTP Probe
+  duration: 0.1
+  status: "ok"
+  created_at: <%= 2.days.ago %>
+  updated_at: <%= 2.days.ago %>
+
+stale_failure:
+  probe_type: http
+  probe_name: HTTP Probe
+  duration: 0.1
+  status: "fail"
+  created_at: <%= 31.days.ago %>
+  updated_at: <%= 31.days.ago %>
+
+recent_failure:
+  probe_type: http
+  probe_name: HTTP Probe
+  duration: 0.1
+  status: "fail"
+  created_at: <%= 5.days.ago %>
+  updated_at: <%= 5.days.ago %>
