@@ -425,6 +425,10 @@ Upright.configure do |config|
 end
 ```
 
+#### Browser performance (Playwright)
+
+Playwright probes attach browser performance metrics to document spans as `browser.performance.*` (ttfb, fcp, lcp, inp, fid). Responsiveness is reported as **INP** (Interaction to Next Paint). **FID** is still included for backward compatibility but is deprecated in favor of INP.
+
 ## Local Development
 
 ### Setup
