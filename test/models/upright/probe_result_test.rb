@@ -44,11 +44,13 @@ class Upright::ProbeResultTest < ActiveSupport::TestCase
   test ".cleanup_stale caps failures at retention limit" do
     recent_failure_id = upright_probe_results(:recent_failure).id
 
-    stub_const(Upright::ProbeResult::StaleCleanup, :FAILURE_RETENTION_LIMIT, 2) do
-      Upright::ProbeResult.cleanup_stale
+    original = Upright.config.failure_retention_limit
+    Upright.config.failure_retention_limit = 2
+    Upright::ProbeResult.cleanup_stale
 
-      assert_not Upright::ProbeResult.exists?(recent_failure_id)
-      assert_equal 2, Upright::ProbeResult.fail.count
-    end
+    assert_not Upright::ProbeResult.exists?(recent_failure_id)
+    assert_equal 2, Upright::ProbeResult.fail.count
+  ensure
+    Upright.config.failure_retention_limit = original
   end
 end

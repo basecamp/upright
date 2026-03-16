@@ -29,6 +29,11 @@ class Upright::Configuration
   attr_accessor :prometheus_url
   attr_accessor :alert_webhook_url
 
+  # Probe result cleanup
+  attr_accessor :stale_success_threshold
+  attr_accessor :stale_failure_threshold
+  attr_accessor :failure_retention_limit
+
   def initialize
     @service_name = "upright"
     @user_agent = "Upright/1.0"
@@ -46,6 +51,10 @@ class Upright::Configuration
 
     @auth_provider = :static_credentials
     @auth_options = {}
+
+    @stale_success_threshold = 24.hours
+    @stale_failure_threshold = 30.days
+    @failure_retention_limit = 20_000
   end
 
   def global_subdomain

@@ -158,6 +158,18 @@ Upright.configure do |config|
 end
 ```
 
+### Probe Result Cleanup
+
+Upright automatically cleans up old probe results on a recurring schedule. You can configure the retention thresholds:
+
+```ruby
+Upright.configure do |config|
+  config.stale_success_threshold = 24.hours     # Delete successful results older than this (default: 24 hours)
+  config.stale_failure_threshold = 30.days       # Delete failed results older than this (default: 30 days)
+  config.failure_retention_limit = 20_000        # Keep at most this many failed results (default: 20,000)
+end
+```
+
 ## Defining Probes
 
 ### HTTP Probes
