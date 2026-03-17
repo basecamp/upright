@@ -29,6 +29,7 @@ module Upright::Playwright::Lifecycle
 
     def with_context(browser, **options, &block)
       self.context = create_context(browser, **options)
+      context.add_init_script(script: inp_observer_script)
       self.page = context.new_page
       run_callbacks :page_ready
       yield
@@ -41,5 +42,11 @@ module Upright::Playwright::Lifecycle
 
     def create_context(browser, **options)
       authenticated_context(browser, options) || browser.new_context(userAgent: user_agent, **options)
+    end
+
+    def inp_observer_script
+      @inp_observer_script ||= File.read(
+        Upright::Engine.root.join("lib", "upright", "playwright", "inp_observer.js")
+      )
     end
 end
