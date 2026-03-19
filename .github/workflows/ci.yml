@@ -85,7 +85,7 @@ jobs:
 
     services:
       upright-playwright:
-        image: jacoblincool/playwright:chromium-server-1.55.0
+        image: jacoblincool/playwright:chromium-server-1.55.0 # zizmor: ignore[unpinned-images] -- version tag pins to a specific release
         ports:
           - 53333:53333
 
