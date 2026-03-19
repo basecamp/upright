@@ -5,15 +5,21 @@ on:
   push:
     branches: [ main ]
 
+permissions: {}
+
 jobs:
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       RUBY_VERSION: ruby-4.0.0
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
@@ -36,9 +42,13 @@ jobs:
 
   security:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
@@ -51,6 +61,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     services:
       upright-playwright:
@@ -61,6 +73,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@319994f95fa847cf3fb3cd3dbe89f6dcde9f178f # v1.295.0
