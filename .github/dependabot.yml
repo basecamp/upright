@@ -9,6 +9,10 @@ updates:
     default-days: 10
 - package-ecosystem: github-actions
   directory: "/"
+  groups:
+    github-actions:
+      patterns:
+        - "*"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
