@@ -15,6 +15,20 @@ FileUtils.chdir APP_ROOT do
   puts "== Installing dependencies =="
   system("bundle check") || system!("bundle install")
 
+  puts "\n== Installing workflow linting tools =="
+  %w[actionlint shellcheck zizmor].each do |tool|
+    next if system("command -v #{tool} > /dev/null 2>&1")
+
+    if system("command -v brew > /dev/null 2>&1")
+      system! "brew install #{tool}"
+    elsif system("command -v pacman > /dev/null 2>&1")
+      system! "sudo pacman -S --noconfirm #{tool}"
+    else
+      warn "Error: install #{tool} manually"
+      exit 1
+    end
+  end
+
   # puts "\n== Copying sample files =="
   # unless File.exist?("config/database.yml")
   #   FileUtils.cp "config/database.yml.sample", "config/database.yml"
