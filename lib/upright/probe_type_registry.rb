@@ -22,6 +22,10 @@ module Upright
       @probe_types.find { |pt| pt.type == type.to_s }
     end
 
+    def unregister(type)
+      @probe_types.reject! { |pt| pt.type == type.to_s }
+    end
+
     def each(&block)
       @probe_types.each(&block)
     end

@@ -61,6 +61,6 @@ class Upright::ProbeTypeRegistryTest < ActiveSupport::TestCase
     assert_includes Upright.probe_types.types, "test_probe"
     assert_equal "🧪", Upright.probe_types.find(:test_probe).icon
   ensure
-    Upright.probe_types.instance_variable_get(:@probe_types).reject! { |pt| pt.type == "test_probe" }
+    Upright.probe_types.unregister(:test_probe)
   end
 end
