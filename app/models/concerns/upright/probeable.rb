@@ -2,7 +2,6 @@ module Upright::Probeable
   extend ActiveSupport::Concern
   include Upright::Staggerable
 
-  TYPES = %w[ http playwright smtp traceroute ]
   ALERT_SEVERITIES = %i[ medium high critical ]
 
   included do

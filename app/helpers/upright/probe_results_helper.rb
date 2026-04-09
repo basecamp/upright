@@ -1,15 +1,7 @@
 module Upright::ProbeResultsHelper
-  PROBE_TYPE_ICONS = {
-    http: "🌐",
-    playwright: "🎭",
-    ping: "📶",
-    smtp: "✉️",
-    traceroute: "🛤️"
-  }
-
   def probe_type_icon(probe_type)
-    icon = PROBE_TYPE_ICONS.fetch(probe_type.to_s.downcase.to_sym)
-    content_tag(:span, icon, title: probe_type.titleize)
+    registered = Upright.probe_types.find(probe_type)
+    content_tag(:span, registered.icon, title: registered.name)
   end
 
   def type_filter_link(label, probe_type = nil)

@@ -11,6 +11,15 @@ class ProbeResultsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "renders filter links for all registered probe types" do
+    get upright.site_root_path
+    assert_response :success
+
+    Upright.probe_types.each do |probe_type|
+      assert_select "aside a[href*='probe_type=#{probe_type.type}']", text: /#{probe_type.name}/
+    end
+  end
+
   test "filters by probe type when signed in" do
     get upright.site_root_path(probe_type: "playwright")
     assert_response :success

@@ -170,6 +170,79 @@ Upright.configure do |config|
 end
 ```
 
+## Custom Probe Types
+
+Upright ships with four built-in probe types: HTTP, Playwright, SMTP, and Traceroute. You can register your own to extend the system.
+
+### 1. Register the type
+
+Add it to your initializer so Upright knows about its name and icon:
+
+```ruby
+# config/initializers/upright.rb
+Upright.configure do |config|
+  config.probe_types.register :ping, name: "Ping", icon: "📶"
+end
+```
+
+### 2. Create the probe class
+
+Add a Ruby class in your `probes/` directory that extends `FrozenRecord::Base` and includes `Upright::Probeable` and `Upright::ProbeYamlSource`. Implement `probe_type`, `probe_target`, `check`, and `on_check_recorded`:
+
+```ruby
+# probes/ping_probe.rb
+class PingProbe < FrozenRecord::Base
+  include Upright::Probeable
+  include Upright::ProbeYamlSource
+
+  stagger_by_site 3.seconds
+
+  def check
+    @ping_output, status = Open3.capture2e("ping", "-c", "1", "-W", "5", host)
+    status.success?
+  end
+
+  def on_check_recorded(probe_result)
+    if @ping_output.present?
+      Upright::Artifact.new(name: "ping.log", content: @ping_output).attach_to(probe_result)
+    end
+  end
+
+  def probe_type = "ping"
+  def probe_target = host
+end
+```
+
+The `check` method should return a truthy value on success and a falsy value on failure.
+
+### 3. Define probes in YAML
+
+Create a YAML file matching the class name (e.g., `PingProbe` → `probes/ping_probes.yml`):
+
+```yaml
+# probes/ping_probes.yml
+- name: "Cloudflare DNS"
+  host: "1.1.1.1"
+
+- name: "Google DNS"
+  host: "8.8.8.8"
+```
+
+Fields defined in the YAML are available as methods on the probe instance (e.g., `host`).
+
+### 4. Schedule it
+
+Add a recurring job in `config/recurring.yml`:
+
+```yaml
+production:
+  ping_probes:
+    command: "PingProbe.check_and_record_all_later"
+    schedule: every 30 seconds
+```
+
+The custom type will automatically appear in all dashboard dropdowns and filter links.
+
 ## Defining Probes
 
 ### HTTP Probes

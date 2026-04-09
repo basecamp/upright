@@ -2,10 +2,9 @@
   <aside>
     <ul>
       <li><%= type_filter_link "All" %></li>
-      <li><%= type_filter_link "HTTP", "http" %></li>
-      <li><%= type_filter_link "Playwright", "playwright" %></li>
-      <li><%= type_filter_link "SMTP", "smtp" %></li>
-      <li><%= type_filter_link "Traceroute", "traceroute" %></li>
+      <% Upright.probe_types.each do |probe_type| %>
+        <li><%= type_filter_link probe_type.name, probe_type.type %></li>
+      <% end %>
     </ul>
   </aside>
 

@@ -29,6 +29,9 @@ class Upright::Configuration
   attr_accessor :prometheus_url
   attr_accessor :alert_webhook_url
 
+  # Probe types
+  attr_reader :probe_types
+
   # Probe result cleanup
   attr_accessor :stale_success_threshold
   attr_accessor :stale_failure_threshold
@@ -45,6 +48,8 @@ class Upright::Configuration
     @frozen_record_path = nil
     @probes_path = nil
     @authenticators_path = nil
+
+    @probe_types = Upright::ProbeTypeRegistry.new
 
     @playwright_server_url = ENV["PLAYWRIGHT_SERVER_URL"]
     @otel_endpoint = ENV["OTEL_EXPORTER_OTLP_ENDPOINT"]

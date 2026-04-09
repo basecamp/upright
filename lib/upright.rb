@@ -19,6 +19,7 @@ require "yabeda/puma/plugin"
 
 require "upright/version"
 require "upright/configuration"
+require "upright/probe_type_registry"
 require "upright/geohash"
 require "upright/site"
 require "upright/metrics"
@@ -36,6 +37,10 @@ module Upright
 
     def configure
       yield(configuration)
+    end
+
+    def probe_types
+      configuration.probe_types
     end
 
     def sites

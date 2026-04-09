@@ -1,0 +1,5 @@
+- name: "Cloudflare DNS"
+  host: "1.1.1.1"
+
+- name: "Google DNS"
+  host: "8.8.8.8"

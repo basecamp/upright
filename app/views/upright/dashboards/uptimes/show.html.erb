@@ -4,7 +4,7 @@
 
     <div class="dashboard-filters">
       <%= form_with url: dashboards_uptime_path, method: :get, data: { controller: "form", turbo_frame: :uptime_bars } do %>
-        <%= collection_select nil, :probe_type, Upright::Probeable::TYPES, :itself, :titleize,
+        <%= collection_select nil, :probe_type, Upright.probe_types, :type, :name,
               { selected: @probe_type },
               { class: "input--select", data: { action: "change->form#submit" } } %>
       <% end %>
