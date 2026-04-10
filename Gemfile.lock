@@ -13,7 +13,7 @@ PATH
       opentelemetry-exporter-otlp
       opentelemetry-instrumentation-all
       opentelemetry-sdk
-      playwright-ruby-client (~> 1.56)
+      playwright-ruby-client (~> 1.58)
       prometheus-api-client
       prometheus-client
       propshaft

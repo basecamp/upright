@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"]   = "https://github.com/basecamp/upright/blob/main/CHANGELOG.md"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir["{app,config,db,lib}/**/*", "LICENSE.md", "Rakefile", "README.md"]
+    Dir["{app,config,db,lib,public}/**/*", "LICENSE.md", "Rakefile", "README.md"]
   end
 
   spec.required_ruby_version = ">= 3.4"
@@ -36,7 +36,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "typhoeus"
 
   # Playwright (browser automation)
-  spec.add_dependency "playwright-ruby-client", "~> 1.56"
+  spec.add_dependency "playwright-ruby-client", "~> #{Upright::PLAYWRIGHT_VERSION}"
 
   # Observability
   spec.add_dependency "prometheus-api-client"

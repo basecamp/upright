@@ -543,12 +543,22 @@ Visit http://app.upright.localhost:3000 and sign in with:
 Run probes with a visible browser window:
 
 ```bash
-LOCAL_PLAYWRIGHT=1 bin/rails console
+HEADLESS=false bin/rails console
 ```
 
 ```ruby
 Probes::Playwright::MyServiceAuthProbe.check
 ```
+
+### Upgrading Playwright
+
+Playwright versions are pinned via `Upright::PLAYWRIGHT_VERSION` in `lib/upright/version.rb`. This drives the Ruby gem, npm package, and trace viewer versions. To upgrade:
+
+1. Update `PLAYWRIGHT_VERSION` in `lib/upright/version.rb`
+2. Update the version in `package.json`
+3. Run `bin/setup` (or manually: `npm install && npx playwright install chromium && rake playwright:sync`)
+4. Run `bin/rails test` to verify compatibility
+5. Commit the updated `public/trace-viewer/` files, `package.json`, and `package-lock.json`
 
 ### Running Tests
 
