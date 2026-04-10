@@ -4,7 +4,7 @@
       <source src="<%= main_app.rails_blob_path(@artifact, disposition: :inline) %>" type="video/webm">
     </video>
   <% elsif @artifact.filename.to_s.end_with?(".zip") %>
-    <% blob_url = main_app.rails_blob_url(@artifact, disposition: :inline, expires_in: 24.hours) %>
+    <% blob_url = main_app.rails_blob_url(@artifact, disposition: :inline, expires_in: 24.hours, host: request.host) %>
     <iframe src="/trace-viewer/index.html?trace=<%= CGI.escape(blob_url) %>" class="artifact__trace-viewer"></iframe>
   <% else %>
     <pre><%= @artifact.download %></pre>
