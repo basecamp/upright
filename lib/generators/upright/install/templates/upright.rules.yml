@@ -17,9 +17,9 @@ groups:
       - record: upright:probe_uptime_daily
         expr: |
           avg_over_time((
-            sum by (name, type, probe_target) (upright_probe_up)
+            sum by (name, type, probe_target, alert_severity) (upright_probe_up)
             /
-            count by (name, type, probe_target) (upright_probe_up)
+            count by (name, type, probe_target, alert_severity) (upright_probe_up)
             > bool 0.5
           )[1d:])
 
