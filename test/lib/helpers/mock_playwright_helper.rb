@@ -22,7 +22,18 @@ module MockPlaywrightHelper
 
   class MockTracing
     def start(**options) = nil
-    def stop(**options) = nil
+
+    def stop(path:)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, "trace")
+    end
+  end
+
+  class MockVideo
+    def save_as(path)
+      FileUtils.mkdir_p(File.dirname(path))
+      File.write(path, "video")
+    end
   end
 
   class MockPage
@@ -30,7 +41,7 @@ module MockPlaywrightHelper
     def url = "https://example.com/"
     def close = nil
     def on(event, callback) = nil
-    def video = nil
+    def video = MockVideo.new
     def wait_for_load_state(**options) = nil
   end
 end

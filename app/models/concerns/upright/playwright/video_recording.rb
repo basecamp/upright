@@ -4,7 +4,7 @@ module Upright::Playwright::VideoRecording
   VIDEO_SIZE = { width: 1280, height: 720 }
 
   included do
-    attr_accessor :video_path, :video_object
+    attr_accessor :video_artifacts, :pending_video_recording
 
     set_callback :page_ready, :after, :capture_video_reference
     set_callback :page_close, :after, :finalize_video
@@ -33,28 +33,58 @@ module Upright::Playwright::VideoRecording
     end
 
     def capture_video_reference
-      self.video_object = page.video if record_video?
+      return unless record_video?
+      return unless (video = page.video)
+
+      self.pending_video_recording = { label: current_recording_label, video: video }
     end
 
     def save_video
-      if video_object
-        self.video_path = video_dir.join("#{SecureRandom.hex}.webm").to_s
-        video_object.save_as(video_path)
-      end
+      return unless pending_video_recording
+
+      video_path = video_dir.join("#{SecureRandom.hex}.webm").to_s
+      pending_video_recording.fetch(:video).save_as(video_path)
+
+      self.video_artifacts ||= []
+      video_artifacts << pending_video_recording.merge(path: video_path)
+    ensure
+      self.pending_video_recording = nil
     end
 
     def attach_video(probe_result)
-      if video_path
-        File.open(video_path, "rb") do |file|
-          Upright::Artifact.new(name: "#{probe_name}.webm", content: file).attach_to(probe_result, timestamped: true)
+      Array(video_artifacts).each do |artifact|
+        next unless File.exist?(artifact.fetch(:path))
+
+        File.open(artifact.fetch(:path), "rb") do |file|
+          Upright::Artifact.new(name: recording_artifact_filename(artifact[:label], "webm"), content: file).attach_to(probe_result, timestamped: true)
         end
 
-        if logger.respond_to?(:struct) && probe_result.artifacts.any?
-          logger.struct probe_artifact_url: Rails.application.routes.url_helpers.rails_blob_url(probe_result.artifacts.first, expires_in: 24.hours)
-        end
-
-        FileUtils.rm(video_path)
-        self.video_path = nil
+        FileUtils.rm(artifact.fetch(:path))
       end
+
+      if logger.respond_to?(:struct)
+        video_artifact = probe_result.artifacts.find { |attached| attached.content_type == "video/webm" }
+        if video_artifact
+          logger.struct probe_artifact_url: Rails.application.routes.url_helpers.rails_blob_url(video_artifact, expires_in: 24.hours)
+        end
+      end
+
+      self.video_artifacts = []
+    end
+
+    def recording_artifact_filename(label, extension)
+      [ recording_artifact_basename(label), extension ].join(".")
+    end
+
+    def recording_artifact_basename(label)
+      [ artifact_recording_name, label ].compact.join(" ")
+    end
+
+    def artifact_recording_name
+      respond_to?(:probe_name) ? probe_name : service_name.to_s
+    end
+
+    def current_recording_label
+      nil
     end
 end

@@ -17,13 +17,7 @@ module Upright::Playwright::Lifecycle
   private
     def with_browser(&block)
       ::Playwright.create(playwright_cli_executable_path: Upright.configuration.playwright_cli_path) do |playwright|
-        playwright.chromium.launch(headless: ENV.fetch("HEADLESS", "true") != "false", args: chromium_args, &block)
-      end
-    end
-
-    def chromium_args
-      [].tap do |args|
-        args << "--no-sandbox" if Rails.env.production? || ENV["PLAYWRIGHT_NO_SANDBOX"]
+        playwright.chromium.launch(headless: ENV.fetch("HEADLESS", "true") != "false", &block)
       end
     end
 
@@ -34,6 +28,7 @@ module Upright::Playwright::Lifecycle
       yield
     ensure
       run_callbacks :page_close do
+        # Rescue each step independently so one failed close does not block artifact capture
         page&.close rescue Rails.error.report($!)
         context&.close rescue Rails.error.report($!)
       end

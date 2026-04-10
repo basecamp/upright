@@ -14,7 +14,7 @@ class Upright::Playwright::Authenticator::Base
   def ensure_authenticated(context, page)
     @page = page
     load_cached_storage_state(context)
-    page.goto(signin_redirect_url, timeout: 10.seconds.in_ms)
+    page.goto(auth_check_url, timeout: 10.seconds.in_ms)
 
     unless session_valid_on?(page)
       authenticate_on(page)
@@ -60,6 +60,10 @@ class Upright::Playwright::Authenticator::Base
   end
 
   private
+    def auth_check_url
+      signin_redirect_url
+    end
+
     def authenticate
       raise NotImplementedError
     end

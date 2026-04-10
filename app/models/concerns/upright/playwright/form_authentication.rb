@@ -3,7 +3,6 @@ module Upright::Playwright::FormAuthentication
 
   included do
     class_attribute :authentication_service
-
     set_callback :page_ready, :after, :ensure_authenticated
   end
 
