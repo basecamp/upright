@@ -13,7 +13,7 @@ PATH
       opentelemetry-exporter-otlp
       opentelemetry-instrumentation-all
       opentelemetry-sdk
-      playwright-ruby-client (~> 1.59.0)
+      playwright-ruby-client (= 0.3.0)
       prometheus-api-client
       prometheus-client
       propshaft
@@ -438,9 +438,8 @@ GEM
     parser (3.3.10.1)
       ast (~> 2.4.1)
       racc
-    playwright-ruby-client (1.59.0)
-      base64
-      concurrent-ruby (>= 1.1.6)
+    playwright-ruby-client (0.3.0)
+      concurrent-ruby
       mime-types (>= 3.0)
     pp (0.6.3)
       prettyprint
@@ -560,8 +559,8 @@ GEM
       fugit (~> 1.11)
       railties (>= 7.1)
       thor (>= 1.3.1)
-    sqlite3 (2.9.2-arm64-darwin)
-    sqlite3 (2.9.2-x86_64-linux-gnu)
+    sqlite3 (2.9.3-arm64-darwin)
+    sqlite3 (2.9.3-x86_64-linux-gnu)
     stimulus-rails (1.3.4)
       railties (>= 6.0.0)
     stringio (3.2.0)
@@ -767,7 +766,7 @@ CHECKSUMS
   opentelemetry-semantic_conventions (1.37.0) sha256=1e2dc5ad649e19ba2fb0fa7c6f9303e5cdd8d3952511415cb07efe28a0f8f4c3
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.1) sha256=06f6a725d2cd91e5e7f2b7c32ba143631e1f7c8ae2fb918fc4cebec187e6a688
-  playwright-ruby-client (1.59.0) sha256=b9e66233ed7b83e917980badc27ecd233e244503c74772a3854dbd5d41438c21
+  playwright-ruby-client (0.3.0) sha256=bbe230a23d65a5d1307921b3efe4126d5fd70a16eacbcc056787250f4f429301
   pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
@@ -805,8 +804,8 @@ CHECKSUMS
   ruby2_keywords (0.0.5) sha256=ffd13740c573b7301cf7a2e61fc857b2a8e3d3aff32545d6f8300d8bae10e3ef
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   solid_queue (1.4.0) sha256=e6a18d196f0b27cb6e3c77c5b31258b05fb634f8ed64fb1866ed164047216c2a
-  sqlite3 (2.9.2-arm64-darwin) sha256=d15bd9609a05f9d54930babe039585efc8cadd57517c15b64ec7dfa75158a5e9
-  sqlite3 (2.9.2-x86_64-linux-gnu) sha256=dce83ffcb7e72f9f7aeb6e5404f15d277a45332fe18ccce8a8b3ed51e8d23aee
+  sqlite3 (2.9.3-arm64-darwin) sha256=76b265d3d57362d3e38338f24f50a0c9cd47a4599c9cfbb578fac125d2299906
+  sqlite3 (2.9.3-x86_64-linux-gnu) sha256=85200a10c6cf5c60085fcca411a3168c5fba8fda3e2b1b0109ec277d7c226d46
   stimulus-rails (1.3.4) sha256=765676ffa1f33af64ce026d26b48e8ffb2e0b94e0f50e9119e11d6107d67cb06
   stringio (3.2.0) sha256=c37cb2e58b4ffbd33fe5cd948c05934af997b36e0b6ca6fdf43afa234cf222e1
   swd (2.0.3) sha256=4cdbe2a4246c19f093fce22e967ec3ebdd4657d37673672e621bf0c7eb770655
