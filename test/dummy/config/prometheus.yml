@@ -9,4 +9,4 @@ scrape_configs:
   - job_name: "upright"
     scrape_interval: 5s
     static_configs:
-      - targets: ["localhost:9394"]
+      - targets: ["host.docker.internal:9394"]
