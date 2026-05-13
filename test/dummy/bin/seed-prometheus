@@ -43,32 +43,48 @@ echo "Generating seed data..."
   echo '# TYPE upright:probe_uptime_daily gauge'
   echo '# HELP upright:probe_uptime_daily Daily uptime percentage'
 
+  # Days (ago) that simulate cross-probe incidents so the bars show all statuses
+  # and the service rollup (min across probes) clearly reflects them.
+  MAJOR_INCIDENT_DAY=22
+  PARTIAL_INCIDENT_DAY=12
+
   for ((day = 30; day >= 0; day--)); do
     ts=$((NOW - day * 86400))
     for probe in "${PROBES[@]}"; do
       IFS='|' read -r pname ptype ptarget pservice <<< "$probe"
 
-      r=$((RANDOM % 100))
-      case "$pname" in
-        MultiProxy)
-          # Flakier: occasional dips make the bars interesting
-          if   (( r < 60 )); then uptime="1.0"
-          elif (( r < 80 )); then uptime="0.99"
-          elif (( r < 95 )); then uptime="0.96"
-          else                     uptime="0.92"
-          fi ;;
-        Gmail)
-          if   (( r < 75 )); then uptime="1.0"
-          elif (( r < 95 )); then uptime="0.99"
-          else                     uptime="0.97"
-          fi ;;
-        *)
-          # Most probes are very reliable
-          if   (( r < 90 )); then uptime="1.0"
-          elif (( r < 98 )); then uptime="0.99"
-          else                     uptime="0.98"
-          fi ;;
-      esac
+      uptime=""
+      if (( day == MAJOR_INCIDENT_DAY )) && [[ "$pname" == "MultiProxy" ]]; then
+        uptime="0.40"  # major_outage
+      elif (( day == PARTIAL_INCIDENT_DAY )) && [[ "$pname" == "Gmail" ]]; then
+        uptime="0.78"  # partial_outage
+      fi
+
+      if [[ -z "$uptime" ]]; then
+        r=$((RANDOM % 100))
+        case "$pname" in
+          MultiProxy)
+            # Flakiest probe — sample touches every status tier
+            if   (( r < 50 )); then uptime="1.0"
+            elif (( r < 75 )); then uptime="0.97"  # degraded_performance
+            elif (( r < 92 )); then uptime="0.82"  # partial_outage
+            else                     uptime="0.45" # major_outage
+            fi ;;
+          Gmail)
+            # Occasionally partial to colour the internal_tools service
+            if   (( r < 70 )); then uptime="1.0"
+            elif (( r < 90 )); then uptime="0.97"
+            elif (( r < 98 )); then uptime="0.85"
+            else                     uptime="0.55"
+            fi ;;
+          *)
+            # Mostly reliable, occasional minor blips
+            if   (( r < 90 )); then uptime="1.0"
+            elif (( r < 98 )); then uptime="0.99"
+            else                     uptime="0.95"
+            fi ;;
+        esac
+      fi
 
       echo "upright:probe_uptime_daily{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"${pservice}\"} ${uptime} ${ts}.0"
     done
