@@ -1,0 +1,129 @@
+@layer components {
+  :root {
+    --status-operational: oklch(70% 0.18 145);
+    --status-degraded: oklch(78% 0.18 95);
+    --status-partial: oklch(70% 0.18 50);
+    --status-major: oklch(60% 0.21 28);
+    --status-none: oklch(var(--lch-ink-lightest));
+  }
+
+  .public {
+    font-family: var(--font-sans);
+  }
+
+  .status-page {
+    margin: 0 auto;
+    max-width: 56rem;
+    padding: calc(var(--block-space) * 3) var(--main-padding);
+  }
+
+  .status-page__title {
+    font-size: var(--text-x-large);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0 0 calc(var(--block-space) * 1.5);
+  }
+
+  .status-banner {
+    align-items: center;
+    border-radius: 0.5rem;
+    color: var(--color-white);
+    display: flex;
+    font-size: var(--text-large);
+    font-weight: 600;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    margin-bottom: calc(var(--block-space) * 3);
+  }
+
+  .status-banner--operational { background: var(--status-operational); }
+  .status-banner--degraded_performance { background: var(--status-degraded); color: oklch(20% 0 0); }
+  .status-banner--partial_outage { background: var(--status-partial); }
+  .status-banner--major_outage { background: var(--status-major); }
+
+  .status-banner__dot {
+    background: currentColor;
+    border-radius: 50%;
+    height: 0.6rem;
+    opacity: 0.8;
+    width: 0.6rem;
+  }
+
+  .service {
+    border-top: var(--border);
+    padding: calc(var(--block-space) * 1.25) 0;
+  }
+
+  .service__row {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  .service__name {
+    font-size: var(--text-large);
+    font-weight: 500;
+  }
+
+  .service__status {
+    color: var(--color-ink-medium);
+    font-size: var(--text-small);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .service__status--operational { color: var(--status-operational); }
+  .service__status--degraded_performance { color: var(--status-degraded); }
+  .service__status--partial_outage { color: var(--status-partial); }
+  .service__status--major_outage { color: var(--status-major); }
+
+  .service__description {
+    color: var(--color-ink-medium);
+    font-size: var(--text-small);
+    margin: 0 0 0.75rem;
+  }
+
+  .uptime {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .uptime__bars {
+    display: flex;
+    gap: 2px;
+    height: 2rem;
+  }
+
+  .uptime__bar {
+    background: var(--status-none);
+    border-radius: 1px;
+    flex: 1 1 0;
+    min-width: 2px;
+    transition: filter 100ms ease-out;
+  }
+
+  .uptime__bar:hover {
+    filter: brightness(0.9);
+  }
+
+  .uptime__bar--operational { background: var(--status-operational); }
+  .uptime__bar--degraded_performance { background: var(--status-degraded); }
+  .uptime__bar--partial_outage { background: var(--status-partial); }
+  .uptime__bar--major_outage { background: var(--status-major); }
+
+  .uptime__meta {
+    color: var(--color-ink-medium);
+    display: flex;
+    font-size: var(--text-x-small);
+    justify-content: space-between;
+  }
+
+  .uptime__meta-percent {
+    color: var(--color-ink-dark);
+    font-weight: 500;
+  }
+}

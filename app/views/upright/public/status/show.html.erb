@@ -1,26 +1,56 @@
-<h1>Status</h1>
+<% banner_label = {
+     operational: "All Systems Operational",
+     degraded_performance: "Some Systems Degraded",
+     partial_outage: "Partial Outage",
+     major_outage: "Major Outage"
+   }[@overall_status] %>
 
-<% @services.each do |service| %>
-  <% uptime_by_day = service.daily_uptime(days: @days.size) %>
-  <% today_status = service.status_for(@today) %>
+<div class="status-page">
+  <h1 class="status-page__title">Status</h1>
 
-  <section class="service">
-    <header>
-      <h2><%= service.name %></h2>
-      <span class="status status-<%= today_status %>"><%= today_status.to_s.humanize %></span>
-    </header>
+  <div class="status-banner status-banner--<%= @overall_status %>">
+    <span class="status-banner__dot" aria-hidden="true"></span>
+    <%= banner_label %>
+  </div>
 
-    <% if service.description.present? %>
-      <p><%= service.description %></p>
-    <% end %>
+  <% @services.each do |service| %>
+    <% uptime_by_day = service.daily_uptime(days: @days.size) %>
+    <% today_status = service.status_for(@today) %>
+    <% present_fractions = uptime_by_day.values.compact %>
+    <% avg = present_fractions.any? ? (present_fractions.sum.to_f / present_fractions.size) * 100 : nil %>
 
-    <div class="uptime-bars" aria-label="<%= @days.size %>-day uptime">
-      <% @days.each do |day| %>
-        <% fraction = uptime_by_day[day.beginning_of_day] %>
-        <% status = Upright::Rollups::ProbeRollup.status_for(fraction) %>
-        <span class="bar bar-<%= status %>"
-              title="<%= day.iso8601 %>: <%= fraction ? '%.2f%%' % (fraction * 100) : 'no data' %>"></span>
+    <section class="service">
+      <div class="service__row">
+        <span class="service__name"><%= service.name %></span>
+        <span class="service__status service__status--<%= today_status %>">
+          <%= today_status.to_s.humanize %>
+        </span>
+      </div>
+
+      <% if service.description.present? %>
+        <p class="service__description"><%= service.description %></p>
       <% end %>
-    </div>
-  </section>
-<% end %>
+
+      <div class="uptime">
+        <div class="uptime__bars" role="img" aria-label="<%= @days.size %>-day uptime for <%= service.name %>">
+          <% @days.each do |day| %>
+            <% fraction = uptime_by_day[day.beginning_of_day] %>
+            <% bar_status = Upright::Rollups::ProbeRollup.status_for(fraction) %>
+            <% tooltip = "#{day.strftime('%b %-d')}: #{fraction ? '%.2f%% uptime' % (fraction * 100) : 'no data'}" %>
+            <span class="uptime__bar uptime__bar--<%= bar_status %>" title="<%= tooltip %>"></span>
+          <% end %>
+        </div>
+
+        <div class="uptime__meta">
+          <span><%= @days.size %> days ago</span>
+          <% if avg %>
+            <span class="uptime__meta-percent"><%= '%.2f' % avg %>% uptime</span>
+          <% else %>
+            <span class="uptime__meta-percent">No data yet</span>
+          <% end %>
+          <span>Today</span>
+        </div>
+      </div>
+    </section>
+  <% end %>
+</div>
