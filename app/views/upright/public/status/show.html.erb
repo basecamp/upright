@@ -35,9 +35,13 @@
         <div class="uptime__bars" role="img" aria-label="<%= @days.size %>-day uptime for <%= service.name %>">
           <% @days.each do |day| %>
             <% fraction = uptime_by_day[day.beginning_of_day] %>
-            <% bar_status = Upright::Rollups::ProbeRollup.status_for(fraction) %>
             <% tooltip = "#{day.strftime('%b %-d')}: #{fraction ? '%.2f%% uptime' % (fraction * 100) : 'no data'}" %>
-            <span class="uptime__bar uptime__bar--<%= bar_status %>" title="<%= tooltip %>"></span>
+            <% if fraction %>
+              <% bar_status = Upright::Rollups::ProbeRollup.status_for(fraction) %>
+              <span class="uptime__bar uptime__bar--<%= bar_status %>" title="<%= tooltip %>"></span>
+            <% else %>
+              <span class="uptime__bar" title="<%= tooltip %>"></span>
+            <% end %>
           <% end %>
         </div>
 
