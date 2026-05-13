@@ -66,16 +66,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_12_000001) do
     t.index ["probe_service", "period_start"], name: "idx_on_probe_service_period_start_c65e2bccc5"
   end
 
-  create_table "upright_rollups_service_rollups", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.datetime "period_start", null: false
-    t.string "service_code", null: false
-    t.integer "status", default: 0, null: false
-    t.datetime "updated_at", null: false
-    t.float "uptime_fraction", null: false
-    t.index ["service_code", "period_start"], name: "idx_on_service_code_period_start_610d020d62", unique: true
-  end
-
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
 end

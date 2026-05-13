@@ -3,28 +3,22 @@ class Upright::Service < FrozenRecord::Base
     Rails.root.join("config", "services.yml").to_s
   end
 
-  def probes
-    Upright::Probeable.probe_classes.flat_map do |klass|
-      next [] unless klass.respond_to?(:all)
-      klass.all.select { |probe| probe.probe_service.to_s == code.to_s }
-    end
+  def probe_rollups
+    Upright::Rollups::ProbeRollup.where(probe_service: code)
   end
 
-  def probe_results
-    Upright::ProbeResult.where(probe_service: code)
+  def uptime_for(day)
+    probe_rollups.where(period_start: day.beginning_of_day).minimum(:uptime_fraction)
   end
 
-  def latest_probe_rollups(days: 90)
-    Upright::Rollups::ProbeRollup
-      .where(probe_service: code)
+  def status_for(day)
+    Upright::Rollups::ProbeRollup.status_for(uptime_for(day))
+  end
+
+  def daily_uptime(days: 90)
+    probe_rollups
       .where(period_start: days.days.ago.beginning_of_day..)
-      .order(:period_start)
-  end
-
-  def latest_service_rollups(days: 90)
-    Upright::Rollups::ServiceRollup
-      .where(service_code: code)
-      .where(period_start: days.days.ago.beginning_of_day..)
-      .order(:period_start)
+      .group(:period_start)
+      .minimum(:uptime_fraction)
   end
 end
