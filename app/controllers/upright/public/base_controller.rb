@@ -1,4 +1,6 @@
 class Upright::Public::BaseController < ActionController::Base
+  layout "upright/public"
+
   helper :all
   protect_from_forgery with: :exception
 

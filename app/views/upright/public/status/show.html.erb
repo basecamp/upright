@@ -1,0 +1,26 @@
+<h1>Status</h1>
+
+<% @services.each do |service| %>
+  <% uptime_by_day = service.daily_uptime(days: @days.size) %>
+  <% today_status = service.status_for(@today) %>
+
+  <section class="service">
+    <header>
+      <h2><%= service.name %></h2>
+      <span class="status status-<%= today_status %>"><%= today_status.to_s.humanize %></span>
+    </header>
+
+    <% if service.description.present? %>
+      <p><%= service.description %></p>
+    <% end %>
+
+    <div class="uptime-bars" aria-label="<%= @days.size %>-day uptime">
+      <% @days.each do |day| %>
+        <% fraction = uptime_by_day[day.beginning_of_day] %>
+        <% status = Upright::Rollups::ProbeRollup.status_for(fraction) %>
+        <span class="bar bar-<%= status %>"
+              title="<%= day.iso8601 %>: <%= fraction ? '%.2f%%' % (fraction * 100) : 'no data' %>"></span>
+      <% end %>
+    </div>
+  </section>
+<% end %>
