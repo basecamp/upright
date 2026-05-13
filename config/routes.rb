@@ -1,6 +1,10 @@
 Upright::Engine.routes.draw do
   global_subdomain = ->(req) { Upright.configuration.global_subdomain == req.subdomain }
   site_subdomain   = ->(req) { Upright.configuration.site_subdomains.include?(req.subdomain) }
+  public_status    = ->(req) {
+    Upright.configuration.public_status_enabled &&
+      req.subdomain == Upright.configuration.public_status_subdomain
+  }
 
   constraints global_subdomain do
     root "sites#index", as: :admin_root
@@ -34,6 +38,12 @@ Upright::Engine.routes.draw do
     end
 
     mount MissionControl::Jobs::Engine, at: "/jobs"
+  end
+
+  constraints public_status do
+    scope module: :public, as: :public do
+      root "status#show", as: :status_root
+    end
   end
 
   # Base routes (no subdomain constraint)

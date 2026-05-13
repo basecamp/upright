@@ -2,6 +2,9 @@ class Upright::Configuration
   # Global subdomain is always "app" - this is documented behavior
   GLOBAL_SUBDOMAIN = "app"
 
+  # Public status pages live at status.<hostname>; custom CNAMEs match by subdomain.
+  PUBLIC_STATUS_SUBDOMAIN = "status"
+
   # Core settings
   attr_accessor :service_name
   attr_accessor :user_agent
@@ -38,6 +41,10 @@ class Upright::Configuration
   attr_accessor :stale_failure_threshold
   attr_accessor :failure_retention_limit
 
+  # Public status pages
+  attr_accessor :public_status_enabled
+  attr_reader :public_status_custom_domains
+
   def initialize
     @service_name = "upright"
     @user_agent = "Upright/1.0"
@@ -62,6 +69,18 @@ class Upright::Configuration
     @stale_success_threshold = 24.hours
     @stale_failure_threshold = 30.days
     @failure_retention_limit = 20_000
+
+    @public_status_enabled = false
+    @public_status_custom_domains = []
+  end
+
+  def public_status_subdomain
+    PUBLIC_STATUS_SUBDOMAIN
+  end
+
+  def public_status_custom_domains=(domains)
+    @public_status_custom_domains = Array(domains)
+    configure_allowed_hosts if @hostname
   end
 
   def global_subdomain
@@ -120,7 +139,11 @@ class Upright::Configuration
   private
     def configure_allowed_hosts
       port_suffix = Rails.env.local? ? "(:\\d+)?" : ""
-      Rails.application.config.hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]
+      hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]
+      Array(@public_status_custom_domains).each do |domain|
+        hosts << /\A#{Regexp.escape(domain)}#{port_suffix}\z/
+      end
+      Rails.application.config.hosts = hosts
       Rails.application.config.action_dispatch.tld_length = 1
     end
 end
