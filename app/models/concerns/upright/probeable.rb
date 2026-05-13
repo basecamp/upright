@@ -4,12 +4,16 @@ module Upright::Probeable
 
   ALERT_SEVERITIES = %i[ medium high critical ]
 
+  mattr_accessor :probe_classes, default: []
+
   included do
     attr_writer :logger
 
     def logger
       @logger || Rails.logger
     end
+
+    Upright::Probeable.probe_classes |= [ self ]
   end
 
   class_methods do
@@ -61,7 +65,7 @@ module Upright::Probeable
   end
 
   def probe_service
-    nil
+    try(:service)
   end
 
   def probe_alert_severity
