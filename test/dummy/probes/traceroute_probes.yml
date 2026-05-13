@@ -1,5 +1,7 @@
 - name: "Google DNS"
   host: "8.8.8.8"
+  service: "internal_tools"
 
 - name: "Cloudflare DNS"
   host: "1.1.1.1"
+  service: "internal_tools"

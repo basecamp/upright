@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-# Seeds Prometheus with synthetic uptime data for development.
+# Seeds Prometheus with synthetic uptime data for development, then
+# aggregates it into Upright::Rollups::ProbeRollup.
+#
 # Generates 30 days of daily uptime and 2 hours of raw probe status data.
 #
 # Prerequisites: docker with the upright-prometheus container running.
@@ -14,14 +16,14 @@ trap 'rm -f "$TMPFILE"' EXIT
 
 NOW=$(date +%s)
 
-# Probes: name|type|target (must match test/dummy/probes/*.yml)
+# Probes: name|type|target|service (must match test/dummy/probes/*.yml)
 PROBES=(
-  "Example|http|https://example.com/"
-  "Expected301|http|https://example.com/redirect"
-  "MultiProxy|http|https://example.com/multi"
-  "Gmail|smtp|smtp.gmail.com"
-  "Google DNS|traceroute|8.8.8.8"
-  "Cloudflare DNS|traceroute|1.1.1.1"
+  "Example|http|https://example.com/|example_app"
+  "Expected301|http|https://example.com/redirect|example_app"
+  "MultiProxy|http|https://example.com/multi|example_app"
+  "Gmail|smtp|smtp.gmail.com|internal_tools"
+  "Google DNS|traceroute|8.8.8.8|internal_tools"
+  "Cloudflare DNS|traceroute|1.1.1.1|internal_tools"
 )
 
 # Sites: code|city|country|geohash|provider (must match config/sites.yml)
@@ -35,16 +37,16 @@ echo "Generating seed data..."
 
 {
   # === upright:probe_uptime_daily ===
-  # Used by the Uptime Dashboard (30-day view, 1-day resolution).
-  # This is normally computed by a recording rule, but rules don't backfill,
-  # so we write it directly.
+  # Used by the Uptime Dashboard (30-day view, 1-day resolution) and the
+  # ProbeRollup aggregation job. Normally a recording rule writes this,
+  # but rules don't backfill so we emit it directly.
   echo '# TYPE upright:probe_uptime_daily gauge'
   echo '# HELP upright:probe_uptime_daily Daily uptime percentage'
 
   for ((day = 30; day >= 0; day--)); do
     ts=$((NOW - day * 86400))
     for probe in "${PROBES[@]}"; do
-      IFS='|' read -r pname ptype ptarget <<< "$probe"
+      IFS='|' read -r pname ptype ptarget pservice <<< "$probe"
 
       r=$((RANDOM % 100))
       case "$pname" in
@@ -68,7 +70,7 @@ echo "Generating seed data..."
           fi ;;
       esac
 
-      echo "upright:probe_uptime_daily{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\"} ${uptime} ${ts}.0"
+      echo "upright:probe_uptime_daily{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"${pservice}\"} ${uptime} ${ts}.0"
     done
   done
 
@@ -80,7 +82,7 @@ echo "Generating seed data..."
 
   for ((ts = NOW - 7200; ts <= NOW; ts += 30)); do
     for probe in "${PROBES[@]}"; do
-      IFS='|' read -r pname ptype ptarget <<< "$probe"
+      IFS='|' read -r pname ptype ptarget pservice <<< "$probe"
       for site in "${SITES[@]}"; do
         IFS='|' read -r scode scity scountry sgeohash sprovider <<< "$site"
 
@@ -92,7 +94,7 @@ echo "Generating seed data..."
           val=0
         fi
 
-        echo "upright_probe_up{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"\",alert_severity=\"high\",site_code=\"${scode}\",site_city=\"${scity}\",site_country=\"${scountry}\",site_geohash=\"${sgeohash}\",site_provider=\"${sprovider}\"} ${val}.0 ${ts}.0"
+        echo "upright_probe_up{name=\"${pname}\",type=\"${ptype}\",probe_target=\"${ptarget}\",probe_service=\"${pservice}\",alert_severity=\"high\",site_code=\"${scode}\",site_city=\"${scity}\",site_country=\"${scountry}\",site_geohash=\"${sgeohash}\",site_provider=\"${sprovider}\"} ${val}.0 ${ts}.0"
       done
     done
   done
@@ -111,4 +113,11 @@ docker exec "$CONTAINER" sh -c 'cp -r /tmp/seed-blocks/* /prometheus/'
 docker exec --user root "$CONTAINER" rm -rf /tmp/seed-blocks /tmp/seed-data.om
 curl -sf -X POST http://localhost:9090/-/reload
 
-echo "Done! Seeded 30 days of uptime data for ${#PROBES[@]} probes across ${#SITES[@]} sites."
+echo "Seeded 30 days of uptime data for ${#PROBES[@]} probes across ${#SITES[@]} sites."
+
+echo "Aggregating ProbeRollup from Prometheus..."
+ENGINE_ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
+cd "$ENGINE_ROOT"
+bin/rails runner 'Upright::Rollups::DailyAggregationJob.new.perform(lookback: 30.days)'
+
+echo "Done."
