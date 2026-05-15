@@ -3,6 +3,8 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
 
   enum :status, Upright::Status::VALUES, default: :operational
 
+  before_save :derive_status_from_uptime
+
   scope :for_period, ->(range) { where(period_start: range) }
   scope :for_service, ->(code) { where(probe_service: code) if code.present? }
   scope :for_probe, ->(name) { where(probe_name: name) if name.present? }
@@ -10,22 +12,12 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
   PROMETHEUS_METRIC = "upright:probe_uptime_daily".freeze
 
   def self.aggregate_day(day)
-    fetch_uptime_for(day).each do |sample|
-      upsert_day(
-        day:,
-        probe_name: sample.fetch(:name),
-        probe_service: sample[:probe_service],
-        uptime_fraction: sample.fetch(:uptime_fraction)
-      )
+    fetch_uptime_for(day).each do |probe_uptime|
+      find_or_create_by(probe_name: probe_uptime.fetch(:probe_name), period_start: day.beginning_of_day) do |rollup|
+        rollup.probe_service   = probe_uptime[:probe_service]
+        rollup.uptime_fraction = probe_uptime.fetch(:uptime_fraction)
+      end
     end
-  end
-
-  def self.upsert_day(day:, probe_name:, probe_service:, uptime_fraction:)
-    rollup = find_or_initialize_by(probe_name:, period_start: day.beginning_of_day)
-    rollup.probe_service = probe_service
-    rollup.uptime_fraction = uptime_fraction
-    rollup.status = Upright::Status.for(uptime_fraction)
-    rollup.save!
   end
 
   def self.fetch_uptime_for(day)
@@ -35,8 +27,8 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
 
     Array(response[:result]).map do |series|
       {
-        name: series.dig(:metric, :name),
-        probe_service: series.dig(:metric, :probe_service).presence,
+        probe_name:      series.dig(:metric, :name),
+        probe_service:   series.dig(:metric, :probe_service).presence,
         uptime_fraction: series.dig(:value, 1).to_f
       }
     end
@@ -58,4 +50,9 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
       (uptime_fraction * 100).round(4)
     end
   end
+
+  private
+    def derive_status_from_uptime
+      self.status = Upright::Status.for(uptime_fraction)
+    end
 end
