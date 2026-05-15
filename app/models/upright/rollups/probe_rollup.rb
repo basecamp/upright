@@ -11,7 +11,7 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
 
   PROMETHEUS_METRIC = "upright:probe_uptime_daily".freeze
 
-  def self.aggregate_day(day)
+  def self.rollup_day(day)
     fetch_uptime_for(day).each do |probe_uptime|
       find_or_create_by(probe_name: probe_uptime.fetch(:probe_name), period_start: day.beginning_of_day) do |rollup|
         rollup.probe_service   = probe_uptime[:probe_service]
