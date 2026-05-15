@@ -18,9 +18,9 @@ class Upright::Service < FrozenRecord::Base
   def self.degraded
     all.filter_map do |service|
       status = service.live_status
-      next if status == :operational
-
-      { service: service, status: status, started_at: service.current_outage_started_at }
+      unless status == :operational
+        { service: service, status: status, started_at: service.current_outage_started_at }
+      end
     end
   end
 

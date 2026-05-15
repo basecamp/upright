@@ -23,7 +23,8 @@ module Upright::Public::StatusHelper
   end
 
   def average_uptime_percentage(fractions)
-    return if fractions.empty?
-    (fractions.sum.to_f / fractions.size) * 100
+    if fractions.present?
+      (fractions.sum.to_f / fractions.size) * 100
+    end
   end
 end

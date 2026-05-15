@@ -12,13 +12,11 @@ module Upright::Services::LiveStatus
   # non-operational service as "longer than the live window."
   def current_outage_started_at(now: Time.current)
     history = live_down_history(now: now)
-    return nil if history.empty?
-
     last_clear = history.rindex { |_ts, value| value.to_f == 0 }
-    return nil if last_clear.nil?
-    return nil if last_clear == history.length - 1
 
-    Time.zone.at(history[last_clear + 1].first.to_f)
+    if last_clear && last_clear < history.length - 1
+      Time.zone.at(history[last_clear + 1].first.to_f)
+    end
   end
 
   private
