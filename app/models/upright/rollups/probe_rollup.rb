@@ -29,7 +29,7 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
   end
 
   def self.fetch_uptime_for(day)
-    query_time = [ day.end_of_day, Time.now ].min
+    query_time = [ day.end_of_day, Time.current ].min
 
     response = prometheus_client.query(query: PROMETHEUS_METRIC, time: query_time.iso8601).deep_symbolize_keys
 
