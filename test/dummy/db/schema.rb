@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_01_14_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_05_12_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -52,6 +52,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_01_14_000001) do
     t.index ["probe_name"], name: "index_upright_probe_results_on_probe_name"
     t.index ["probe_type"], name: "index_upright_probe_results_on_probe_type"
     t.index ["status"], name: "index_upright_probe_results_on_status"
+  end
+
+  create_table "upright_rollups_probe_rollups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "period_start", null: false
+    t.string "probe_name", null: false
+    t.string "probe_service"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.float "uptime_fraction", null: false
+    t.index ["probe_name", "period_start"], name: "idx_on_probe_name_period_start_3a6029f64e", unique: true
+    t.index ["probe_service", "period_start"], name: "idx_on_probe_service_period_start_c65e2bccc5"
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"

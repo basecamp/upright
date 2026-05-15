@@ -1,0 +1,9 @@
+- code: "example_app"
+  name: "Example App"
+  description: "Public-facing services for the Example App"
+  public: true
+
+- code: "internal_tools"
+  name: "Internal Tools"
+  description: "Tooling used by staff"
+  public: false

@@ -1,0 +1,31 @@
+<% today_status = history.last.status %>
+<% avg = average_uptime_percentage(history.map(&:uptime_fraction).compact) %>
+
+<section class="service">
+  <div class="service__row">
+    <span class="service__name"><%= service.name %></span>
+    <span class="service__status service__status--<%= today_status %>">
+      <%= status_label(today_status) %>
+    </span>
+  </div>
+
+  <% if service.description.present? %>
+    <p class="service__description"><%= service.description %></p>
+  <% end %>
+
+  <div class="uptime">
+    <div class="uptime__bars" role="img" aria-label="<%= history.size %>-day uptime for <%= service.name %>">
+      <%= render partial: "uptime_bar", collection: history, as: :day %>
+    </div>
+
+    <div class="uptime__meta">
+      <span><%= history.size %> days ago</span>
+      <% if avg %>
+        <span class="uptime__meta-percent"><%= '%.2f' % avg %>% uptime</span>
+      <% else %>
+        <span class="uptime__meta-percent">No data yet</span>
+      <% end %>
+      <span>Today</span>
+    </div>
+  </div>
+</section>

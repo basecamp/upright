@@ -1,0 +1,14 @@
+<% if degraded.any? %>
+  <ul class="status-degraded">
+    <% degraded.each do |item| %>
+      <li class="status-degraded__item">
+        <span class="status-degraded__dot status-degraded__dot--<%= item[:status] %>" aria-hidden="true"></span>
+        <span class="status-degraded__name"><%= item[:service].name %></span>
+        <span class="status-degraded__detail">
+          <%= status_label(item[:status]).downcase %>
+          <%= outage_duration_phrase(started_at: item[:started_at]) %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

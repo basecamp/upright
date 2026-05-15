@@ -126,6 +126,9 @@ class Upright::Engine < ::Rails::Engine
       Upright.sites.each do |site|
         puts "  #{site.city || site.code}:  #{protocol}://#{site.code}.#{hostname}:#{port}"
       end
+      if Upright.configuration.public_status_enabled
+        puts "  Public status: #{protocol}://#{Upright.configuration.public_status_subdomain}.#{hostname}:#{port}"
+      end
       puts ""
     end
   end

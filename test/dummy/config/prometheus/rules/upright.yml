@@ -13,11 +13,13 @@ groups:
 
       # Daily uptime percentage (0.0 to 1.0)
       # Uptime = percentage of time in past day when majority of sites reported UP
+      # Keep probe_service in the grouping so ProbeRollup can tie rollups back
+      # to their Service; seed-prometheus emits the same label set.
       - record: upright:probe_uptime_daily
         expr: |
           avg_over_time((
-            sum by (name, type, probe_target) (upright_probe_up)
+            sum by (name, type, probe_target, probe_service) (upright_probe_up)
             /
-            count by (name, type, probe_target) (upright_probe_up)
+            count by (name, type, probe_target, probe_service) (upright_probe_up)
             > bool 0.5
           )[1d:])
