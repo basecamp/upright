@@ -43,6 +43,7 @@ Upright::Engine.routes.draw do
   constraints public_status do
     scope module: :public, as: :public do
       root "services#index", as: :services_root
+      get "feed", to: "services#index", as: :services_feed, defaults: { format: :rss }
     end
   end
 
