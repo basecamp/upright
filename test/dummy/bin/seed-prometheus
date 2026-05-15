@@ -2,7 +2,7 @@
 # Seeds Prometheus with synthetic uptime data for development, then
 # aggregates it into Upright::Rollups::ProbeRollup.
 #
-# Generates 30 days of daily uptime and 2 hours of raw probe status data.
+# Generates 90 days of daily uptime and 2 hours of raw probe status data.
 #
 # Prerequisites: docker with the upright-prometheus container running.
 #
@@ -15,6 +15,11 @@ TMPFILE=$(mktemp /tmp/upright-seed-XXXXXX.om)
 trap 'rm -f "$TMPFILE"' EXIT
 
 NOW=$(date +%s)
+# DailyAggregationJob queries upright:probe_uptime_daily at day.end_of_day (UTC),
+# and Prometheus only returns samples within 5 minutes of the query time. Anchor
+# each day's sample at 23:59 UTC so the job actually finds it; today is clamped
+# to NOW since Prometheus rejects future samples.
+TODAY_END_UTC=$(TZ=UTC date -d "today 23:59:00" +%s)
 
 # Probes: name|type|target|service (must match test/dummy/probes/*.yml)
 PROBES=(
@@ -37,9 +42,9 @@ echo "Generating seed data..."
 
 {
   # === upright:probe_uptime_daily ===
-  # Used by the Uptime Dashboard (30-day view, 1-day resolution) and the
-  # ProbeRollup aggregation job. Normally a recording rule writes this,
-  # but rules don't backfill so we emit it directly.
+  # Used by the Uptime Dashboard (30-day view, 1-day resolution), the public
+  # status page (90-day window), and the ProbeRollup aggregation job. Normally
+  # a recording rule writes this, but rules don't backfill so we emit it.
   echo '# TYPE upright:probe_uptime_daily gauge'
   echo '# HELP upright:probe_uptime_daily Daily uptime percentage'
 
@@ -48,8 +53,9 @@ echo "Generating seed data..."
   MAJOR_INCIDENT_DAY=22
   PARTIAL_INCIDENT_DAY=12
 
-  for ((day = 30; day >= 0; day--)); do
-    ts=$((NOW - day * 86400))
+  for ((day = 89; day >= 0; day--)); do
+    ts=$((TODAY_END_UTC - day * 86400))
+    (( ts > NOW )) && ts=$NOW
     for probe in "${PROBES[@]}"; do
       IFS='|' read -r pname ptype ptarget pservice <<< "$probe"
 
@@ -66,7 +72,7 @@ echo "Generating seed data..."
           MultiProxy)
             # Flakiest probe — sample touches every status tier
             if   (( r < 50 )); then uptime="1.0"
-            elif (( r < 75 )); then uptime="0.97"  # degraded_performance
+            elif (( r < 75 )); then uptime="0.97"  # degraded
             elif (( r < 92 )); then uptime="0.82"  # partial_outage
             else                     uptime="0.45" # major_outage
             fi ;;
@@ -129,11 +135,25 @@ docker exec "$CONTAINER" sh -c 'cp -r /tmp/seed-blocks/* /prometheus/'
 docker exec --user root "$CONTAINER" rm -rf /tmp/seed-blocks /tmp/seed-data.om
 curl -sf -X POST http://localhost:9090/-/reload
 
-echo "Seeded 30 days of uptime data for ${#PROBES[@]} probes across ${#SITES[@]} sites."
+# Reload is async — Prometheus loads blocks in the background, oldest last.
+# Wait until the OLDEST seeded day is queryable, otherwise the aggregation
+# job races ahead and silently produces partial rollups.
+echo "Waiting for Prometheus to load new blocks..."
+OLDEST_TS=$((TODAY_END_UTC - 89 * 86400))
+deadline=$((SECONDS + 60))
+until curl -sfG http://localhost:9090/api/v1/query \
+    --data-urlencode 'query=count(upright:probe_uptime_daily)' \
+    --data-urlencode "time=$((OLDEST_TS + 59))" \
+    | grep -q '"value":\[.*,"[1-9]'; do
+  (( SECONDS > deadline )) && { echo "Timed out waiting for Prometheus."; exit 1; }
+  sleep 1
+done
+
+echo "Seeded 90 days of uptime data for ${#PROBES[@]} probes across ${#SITES[@]} sites."
 
 echo "Aggregating ProbeRollup from Prometheus..."
 ENGINE_ROOT=$(cd "$(dirname "$0")/../../.." && pwd)
 cd "$ENGINE_ROOT"
-bin/rails runner 'Upright::Rollups::DailyAggregationJob.new.perform(lookback: 30.days)'
+bin/rails runner 'Upright::Rollups::DailyAggregationJob.new.perform(past: 90.days)'
 
 echo "Done."
