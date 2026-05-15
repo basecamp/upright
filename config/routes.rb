@@ -42,7 +42,7 @@ Upright::Engine.routes.draw do
 
   constraints public_status do
     scope module: :public, as: :public do
-      root "status#show", as: :status_root
+      root "services#index", as: :services_root
     end
   end
 

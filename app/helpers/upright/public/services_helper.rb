@@ -1,4 +1,4 @@
-module Upright::Public::StatusHelper
+module Upright::Public::ServicesHelper
   OVERALL_STATUS_LABELS = {
     operational:    "All Systems Operational",
     degraded:       "Some Systems Degraded",
