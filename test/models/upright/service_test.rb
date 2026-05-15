@@ -14,32 +14,28 @@ class Upright::ServiceTest < ActiveSupport::TestCase
     assert_equal "Example App", service.name
   end
 
+  test "public_facing returns only services flagged public" do
+    codes = Upright::Service.public_facing.map(&:code)
+
+    assert_includes codes, "example_app"
+    assert_not_includes codes, "internal_tools"
+  end
+
   test "uptime_for takes the worst probe rollup for the day" do
     service = Upright::Service.find_by(code: "example_app")
-    day = Date.new(2026, 5, 11)
-
-    Upright::Rollups::ProbeRollup.create!(probe_name: "Web", probe_service: "example_app",
-      period_start: day.beginning_of_day, uptime_fraction: 0.85, status: :partial_outage)
-    Upright::Rollups::ProbeRollup.create!(probe_name: "API", probe_service: "example_app",
-      period_start: day.beginning_of_day, uptime_fraction: 1.0, status: :operational)
+    day = Date.new(2026, 5, 5)
 
     assert_equal 0.85, service.uptime_for(day)
     assert_equal :partial_outage, service.status_for(day)
   end
 
   test "daily_uptime groups by day across the lookback window" do
-    service = Upright::Service.find_by(code: "example_app")
+    travel_to Date.new(2026, 5, 13) do
+      service = Upright::Service.find_by(code: "example_app")
+      series = service.daily_uptime(past: 7.days)
 
-    Upright::Rollups::ProbeRollup.create!(probe_name: "Web", probe_service: "example_app",
-      period_start: 2.days.ago.beginning_of_day, uptime_fraction: 0.95, status: :degraded_performance)
-    Upright::Rollups::ProbeRollup.create!(probe_name: "Web", probe_service: "example_app",
-      period_start: 1.day.ago.beginning_of_day, uptime_fraction: 1.0, status: :operational)
-    Upright::Rollups::ProbeRollup.create!(probe_name: "API", probe_service: "example_app",
-      period_start: 1.day.ago.beginning_of_day, uptime_fraction: 0.8, status: :partial_outage)
-
-    series = service.daily_uptime(days: 7)
-
-    assert_equal 0.95, series[2.days.ago.beginning_of_day]
-    assert_equal 0.8, series[1.day.ago.beginning_of_day]
+      assert_equal 0.95, series[Date.new(2026, 5, 11).beginning_of_day]
+      assert_equal 0.8,  series[Date.new(2026, 5, 12).beginning_of_day]
+    end
   end
 end

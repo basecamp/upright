@@ -20,8 +20,8 @@ class Upright::Rollups::ProbeRollupTest < ActiveSupport::TestCase
     assert_equal :operational, Upright::Rollups::ProbeRollup.status_for(nil)
   end
 
-  test "status_for returns degraded_performance for minor failures" do
-    assert_equal :degraded_performance, Upright::Rollups::ProbeRollup.status_for(0.99)
+  test "status_for returns degraded for minor failures" do
+    assert_equal :degraded, Upright::Rollups::ProbeRollup.status_for(0.99)
   end
 
   test "status_for returns partial_outage for moderate failures" do
@@ -41,7 +41,7 @@ class Upright::Rollups::ProbeRollupTest < ActiveSupport::TestCase
 
     rollup = Upright::Rollups::ProbeRollup.find_by!(probe_name: "Web", period_start: day.beginning_of_day)
     assert_equal 0.97, rollup.uptime_fraction
-    assert_equal "degraded_performance", rollup.status
+    assert_equal "degraded", rollup.status
     assert_equal "example_app", rollup.probe_service
   end
 

@@ -1,8 +1,11 @@
 module Upright::Rollups::Status
   extend ActiveSupport::Concern
 
+  VALUES   = %i[ operational degraded partial_outage major_outage ]
+  PRIORITY = VALUES.reverse  # worst first — for picking overall_status across services
+
   included do
-    enum :status, %i[ operational degraded_performance partial_outage major_outage ], default: :operational
+    enum :status, VALUES, default: :operational
   end
 
   def uptime_percentage
@@ -18,7 +21,7 @@ module Upright::Rollups::Status
       when 1.0..  then :operational
       when ...0.5 then :major_outage
       when ...0.9 then :partial_outage
-      else             :degraded_performance
+      else             :degraded
       end
     end
   end

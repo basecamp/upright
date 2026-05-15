@@ -37,7 +37,7 @@
   }
 
   .status-banner--operational { background: var(--status-operational); }
-  .status-banner--degraded_performance { background: var(--status-degraded); color: oklch(20% 0 0); }
+  .status-banner--degraded { background: var(--status-degraded); color: oklch(20% 0 0); }
   .status-banner--partial_outage { background: var(--status-partial); }
   .status-banner--major_outage { background: var(--status-major); }
 
@@ -47,6 +47,43 @@
     height: 0.6rem;
     opacity: 0.8;
     width: 0.6rem;
+  }
+
+  .status-degraded {
+    border: var(--border);
+    border-radius: 0.5rem;
+    list-style: none;
+    margin: calc(var(--block-space) * -2) 0 calc(var(--block-space) * 3);
+    padding: 0.25rem 0;
+  }
+
+  .status-degraded__item {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .status-degraded__item + .status-degraded__item {
+    border-top: var(--border);
+  }
+
+  .status-degraded__dot {
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 0.6rem;
+    width: 0.6rem;
+  }
+
+  .status-degraded__dot--degraded { background: var(--status-degraded); }
+  .status-degraded__dot--partial_outage { background: var(--status-partial); }
+  .status-degraded__dot--major_outage { background: var(--status-major); }
+
+  .status-degraded__name { font-weight: 600; }
+
+  .status-degraded__detail {
+    color: var(--color-ink-medium);
+    margin-left: auto;
   }
 
   .service {
@@ -76,7 +113,7 @@
   }
 
   .service__status--operational { color: var(--status-operational); }
-  .service__status--degraded_performance { color: var(--status-degraded); }
+  .service__status--degraded { color: var(--status-degraded); }
   .service__status--partial_outage { color: var(--status-partial); }
   .service__status--major_outage { color: var(--status-major); }
 
@@ -111,7 +148,7 @@
   }
 
   .uptime__bar--operational { background: var(--status-operational); }
-  .uptime__bar--degraded_performance { background: var(--status-degraded); }
+  .uptime__bar--degraded { background: var(--status-degraded); }
   .uptime__bar--partial_outage { background: var(--status-partial); }
   .uptime__bar--major_outage { background: var(--status-major); }
 
