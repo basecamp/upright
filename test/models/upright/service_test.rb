@@ -26,7 +26,6 @@ class Upright::ServiceTest < ActiveSupport::TestCase
     day = Date.new(2026, 5, 5)
 
     assert_equal 0.85, service.uptime_for(day)
-    assert_equal :partial_outage, service.status_for(day)
   end
 
   test "daily_uptime groups by day across the lookback window" do

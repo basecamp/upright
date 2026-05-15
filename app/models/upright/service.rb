@@ -8,7 +8,7 @@ class Upright::Service < FrozenRecord::Base
   scope :public_facing, -> { where(public: true) }
 
   def self.overall_status
-    Upright::Rollups::Status::PRIORITY.find { |status| all.any? { |service| service.live_status == status } } || :operational
+    Upright::Status::PRIORITY.find { |status| all.any? { |service| service.live_status == status } } || :operational
   end
 
   def self.by_history(past: 90.days)
@@ -32,10 +32,6 @@ class Upright::Service < FrozenRecord::Base
     probe_rollups.where(period_start: day.beginning_of_day).minimum(:uptime_fraction)
   end
 
-  def status_for(day)
-    Upright::Rollups::ProbeRollup.status_for(uptime_for(day))
-  end
-
   def daily_uptime(past: 90.days)
     probe_rollups
       .where(period_start: past.ago.beginning_of_day..)
@@ -56,7 +52,7 @@ class Upright::Service < FrozenRecord::Base
         fraction = rollup_by_day[date.beginning_of_day]
         DailyStatus.new(
           date: date,
-          status: fraction && Upright::Rollups::ProbeRollup.status_for(fraction),
+          status: Upright::Status.for(fraction),
           uptime_fraction: fraction
         )
       end

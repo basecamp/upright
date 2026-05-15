@@ -4,7 +4,7 @@ module Upright::Services::LiveStatus
   OUTAGE_LOOKBACK = 24.hours
 
   def live_status
-    Upright::Rollups::ProbeRollup.status_for(1 - live_down_fraction)
+    Upright::Status.for(live_up_fraction)
   end
 
   # Earliest moment of the current outage, or nil if the service is currently
@@ -20,6 +20,10 @@ module Upright::Services::LiveStatus
   end
 
   private
+    def live_up_fraction
+      1 - live_down_fraction
+    end
+
     def live_down_fraction
       response = self.class.prometheus_client.query(
         query: "max(upright:probe_down_fraction{probe_service=\"#{code}\"}) or vector(0)"

@@ -1,7 +1,7 @@
 class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
-  include Upright::Rollups::Status
-
   self.table_name = "upright_rollups_probe_rollups"
+
+  enum :status, Upright::Status::VALUES, default: :operational
 
   scope :for_period, ->(range) { where(period_start: range) }
   scope :for_service, ->(code) { where(probe_service: code) if code.present? }
@@ -24,7 +24,7 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
     rollup = find_or_initialize_by(probe_name:, period_start: day.beginning_of_day)
     rollup.probe_service = probe_service
     rollup.uptime_fraction = uptime_fraction
-    rollup.status = status_for(uptime_fraction)
+    rollup.status = Upright::Status.for(uptime_fraction)
     rollup.save!
   end
 
@@ -51,5 +51,11 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
 
   def service
     Upright::Service.find_by(code: probe_service) if probe_service.present?
+  end
+
+  def uptime_percentage
+    if uptime_fraction.present?
+      (uptime_fraction * 100).round(4)
+    end
   end
 end

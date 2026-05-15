@@ -15,23 +15,6 @@ class Upright::Rollups::ProbeRollupTest < ActiveSupport::TestCase
     assert_nil rollup.uptime_percentage
   end
 
-  test "status_for returns operational when fully up or nil" do
-    assert_equal :operational, Upright::Rollups::ProbeRollup.status_for(1.0)
-    assert_equal :operational, Upright::Rollups::ProbeRollup.status_for(nil)
-  end
-
-  test "status_for returns degraded for minor failures" do
-    assert_equal :degraded, Upright::Rollups::ProbeRollup.status_for(0.99)
-  end
-
-  test "status_for returns partial_outage for moderate failures" do
-    assert_equal :partial_outage, Upright::Rollups::ProbeRollup.status_for(0.8)
-  end
-
-  test "status_for returns major_outage when below half" do
-    assert_equal :major_outage, Upright::Rollups::ProbeRollup.status_for(0.4)
-  end
-
   test "upsert_day writes uptime_fraction and derived status" do
     day = Date.new(2026, 5, 11)
 

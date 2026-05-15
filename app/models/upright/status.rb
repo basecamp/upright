@@ -1,23 +1,12 @@
-module Upright::Rollups::Status
-  extend ActiveSupport::Concern
-
+module Upright::Status
   VALUES   = %i[ operational degraded partial_outage major_outage ]
   PRIORITY = VALUES.reverse  # worst first — for picking overall_status across services
 
-  included do
-    enum :status, VALUES, default: :operational
-  end
-
-  def uptime_percentage
-    if uptime_fraction.present?
-      (uptime_fraction * 100).round(4)
-    end
-  end
-
-  class_methods do
-    def status_for(uptime_fraction)
+  # nil fraction means we have no measurement for the period — distinct from
+  # :operational, so we return nil rather than guessing.
+  def self.for(uptime_fraction)
+    if uptime_fraction
       case uptime_fraction
-      when nil    then :operational
       when 1.0..  then :operational
       when ...0.5 then :major_outage
       when ...0.9 then :partial_outage
