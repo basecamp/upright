@@ -9,7 +9,7 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
   scope :for_service, ->(code) { where(probe_service: code) if code.present? }
   scope :for_probe, ->(name) { where(probe_name: name) if name.present? }
 
-  PROMETHEUS_METRIC = "upright:probe_uptime_daily".freeze
+  PROMETHEUS_METRIC = "upright:probe_uptime_daily"
 
   def self.rollup_day(day)
     fetch_uptime_for(day).each do |probe_uptime|
