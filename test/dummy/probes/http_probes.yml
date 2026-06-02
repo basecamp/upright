@@ -1,9 +1,11 @@
 - name: "Example"
   url: "https://example.com/"
+  service: "example_app"
 
 - name: "Expected301"
   url: "https://example.com/redirect"
   expected_status: 301
+  service: "example_app"
 
 - name: "MultiProxy"
   url: "https://example.com/multi"
@@ -11,6 +13,7 @@
     - proxy_a
     - proxy_b
     - proxy_c
+  service: "example_app"
 
 - name: "MediumSeverity"
   url: "https://example.com/medium"

@@ -31,3 +31,7 @@ production:
   cleanup_stale_probe_results:
     command: "Upright::ProbeResult.cleanup_stale"
     schedule: every hour at minute 30
+
+  aggregate_rollups:
+    class: "Upright::Rollups::DailyAggregationJob"
+    schedule: every hour at minute 5

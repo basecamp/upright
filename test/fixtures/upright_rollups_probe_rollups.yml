@@ -1,0 +1,37 @@
+_fixture:
+  model_class: Upright::Rollups::ProbeRollup
+
+example_web_may_05:
+  probe_name: Web
+  probe_service: example_app
+  period_start: 2026-05-05 00:00:00
+  uptime_fraction: 0.85
+  status: partial_outage
+
+example_api_may_05:
+  probe_name: API
+  probe_service: example_app
+  period_start: 2026-05-05 00:00:00
+  uptime_fraction: 1.0
+  status: operational
+
+example_web_may_11:
+  probe_name: Web
+  probe_service: example_app
+  period_start: 2026-05-11 00:00:00
+  uptime_fraction: 0.95
+  status: degraded
+
+example_web_may_12:
+  probe_name: Web
+  probe_service: example_app
+  period_start: 2026-05-12 00:00:00
+  uptime_fraction: 1.0
+  status: operational
+
+example_api_may_12:
+  probe_name: API
+  probe_service: example_app
+  period_start: 2026-05-12 00:00:00
+  uptime_fraction: 0.8
+  status: partial_outage

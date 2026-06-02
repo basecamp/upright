@@ -45,13 +45,9 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
     end
 
     def prometheus_connection
-      @prometheus_connection ||= Faraday.new(url: prometheus_url) do |f|
+      @prometheus_connection ||= Faraday.new(url: Upright.configuration.prometheus_url) do |f|
         f.options.timeout = 30
       end
-    end
-
-    def prometheus_url
-      ENV.fetch("PROMETHEUS_URL", "http://localhost:9090")
     end
 
     def authenticate_otlp_token

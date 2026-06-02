@@ -43,6 +43,13 @@ module Upright
       configuration.probe_types
     end
 
+    def prometheus_client
+      Prometheus::ApiClient.client(
+        url: configuration.prometheus_url,
+        options: { timeout: 30.seconds }
+      )
+    end
+
     def sites
       @sites ||= load_sites
     end

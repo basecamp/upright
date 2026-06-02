@@ -1,0 +1,10 @@
+<div class="status-page">
+  <h1 class="status-page__title">Status</h1>
+
+  <%= render "overall_banner", status: @services.overall_status %>
+  <%= render "degraded_list", degraded: @services.degraded %>
+
+  <% @services.by_history.each do |service, history| %>
+    <%= render "service", service: service, history: history %>
+  <% end %>
+</div>
