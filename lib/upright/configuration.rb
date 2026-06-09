@@ -134,10 +134,10 @@ class Upright::Configuration
   end
 
   def default_url_options
-    if Rails.env.production?
-      { protocol: "https", host: "#{global_subdomain}.#{hostname}", domain: hostname }
-    else
+    if Rails.env.local?
       { protocol: "http", host: "#{global_subdomain}.#{hostname}", port: ENV.fetch("PORT", 3000).to_i, domain: hostname }
+    else
+      { protocol: "https", host: "#{global_subdomain}.#{hostname}", domain: hostname }
     end
   end
 
