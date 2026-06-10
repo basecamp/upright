@@ -4,6 +4,9 @@
     <% if Upright::Current.site.present? %>
       <span class="header__site"><%= site_name(Upright::Current.site) %></span>
     <% end %>
+    <% unless Rails.env.production? %>
+      <span class="header__env"><%= Rails.env %></span>
+    <% end %>
   </div>
 
   <nav class="header__nav">

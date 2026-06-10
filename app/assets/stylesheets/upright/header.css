@@ -38,6 +38,15 @@
     text-transform: uppercase;
   }
 
+  .header__env {
+    color: var(--color-warning);
+    font-size: var(--text-x-small);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    margin-right: calc(var(--inline-space) * 2);
+    text-transform: uppercase;
+  }
+
   .header__nav {
     align-items: center;
     display: flex;
