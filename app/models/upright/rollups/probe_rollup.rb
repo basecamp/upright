@@ -35,8 +35,8 @@ class Upright::Rollups::ProbeRollup < Upright::ApplicationRecord
   end
 
   def self.uptime_query
-    matcher = Upright.environment_matcher
-    matcher ? "#{PROMETHEUS_METRIC}{#{matcher}}" : PROMETHEUS_METRIC
+    return PROMETHEUS_METRIC if Rails.env.local?
+    %(#{PROMETHEUS_METRIC}{environment="#{Rails.env}"})
   end
 
   def service

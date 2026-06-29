@@ -50,10 +50,6 @@ module Upright
       )
     end
 
-    def environment_matcher
-      %(environment="#{Rails.env}") unless Rails.env.local?
-    end
-
     def sites
       @sites ||= load_sites
     end
