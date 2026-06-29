@@ -2,7 +2,10 @@ services:
   prometheus:
     image: prom/prometheus:v3.4.1
     container_name: <%= app_name %>-prometheus
-    network_mode: host
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./config/prometheus/development/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./config/prometheus/rules:/etc/prometheus/rules:ro
