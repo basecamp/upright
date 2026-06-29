@@ -26,18 +26,23 @@ module Upright::Services::LiveStatus
 
     def live_down_fraction
       response = Upright.prometheus_client.query(
-        query: "max(upright:probe_down_fraction{probe_service=\"#{code}\"}) or vector(0)"
+        query: live_down_query
       ).deep_symbolize_keys
       response.dig(:result, 0, :value, 1).to_f
     end
 
     def live_down_history(now:)
       response = Upright.prometheus_client.query_range(
-        query: "max(upright:probe_down_fraction{probe_service=\"#{code}\"}) or vector(0)",
+        query: live_down_query,
         start: (now - OUTAGE_LOOKBACK).iso8601,
         end:   now.iso8601,
         step:  "300s"
       ).deep_symbolize_keys
       response.dig(:result, 0, :values) || []
+    end
+
+    def live_down_query
+      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}") ]
+      %(max(upright:probe_down_fraction{#{matchers.join(",")}}) or vector(0))
     end
 end

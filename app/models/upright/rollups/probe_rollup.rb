@@ -23,7 +23,7 @@ class Upright::Rollups::ProbeRollup < Upright::PersistentRecord
   def self.fetch_uptime_for(day)
     query_time = [ day.end_of_day, Time.current ].min
 
-    response = Upright.prometheus_client.query(query: PROMETHEUS_METRIC, time: query_time.iso8601).deep_symbolize_keys
+    response = Upright.prometheus_client.query(query: uptime_query, time: query_time.iso8601).deep_symbolize_keys
 
     Array(response[:result]).map do |series|
       {
@@ -32,6 +32,10 @@ class Upright::Rollups::ProbeRollup < Upright::PersistentRecord
         uptime_fraction: series.dig(:value, 1).to_f
       }
     end
+  end
+
+  def self.uptime_query
+    %(#{PROMETHEUS_METRIC}{environment="#{Rails.env}"})
   end
 
   def service

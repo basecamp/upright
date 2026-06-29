@@ -28,6 +28,7 @@ module ActiveSupport
 
     include IpApiHelper
     include MtrHelper
+    include RailsEnvHelper
     include SiteHelper
     include YabedaTestHelper
 
