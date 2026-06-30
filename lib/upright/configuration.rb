@@ -21,6 +21,9 @@ class Upright::Configuration
   attr_writer :probes_path
   attr_writer :authenticators_path
 
+  # Public status page services definition (env-overridable, like probes_path)
+  attr_writer :services_path
+
   # Playwright
   attr_accessor :playwright_cli_path
 
@@ -57,6 +60,7 @@ class Upright::Configuration
     @frozen_record_path = nil
     @probes_path = nil
     @authenticators_path = nil
+    @services_path = nil
 
     @probe_types = Upright::ProbeTypeRegistry.new
 
@@ -118,6 +122,10 @@ class Upright::Configuration
 
   def probes_path
     @probes_path || Rails.root.join("probes")
+  end
+
+  def services_path
+    @services_path || Rails.root.join("config", "services.yml")
   end
 
   def authenticators_path

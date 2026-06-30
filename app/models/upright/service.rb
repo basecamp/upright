@@ -2,7 +2,7 @@ class Upright::Service < FrozenRecord::Base
   include Upright::Services::LiveStatus
 
   def self.file_path
-    Rails.root.join("config", "services.yml").to_s
+    Upright.configuration.services_path.to_s
   end
 
   scope :public_facing, -> { where(public: true) }
