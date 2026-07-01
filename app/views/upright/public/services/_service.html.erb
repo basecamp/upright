@@ -8,8 +8,8 @@
     </span>
   </div>
 
-  <% if service.description.present? %>
-    <p class="service__description"><%= service.description %></p>
+  <% if description = service.try(:description).presence %>
+    <p class="service__description"><%= description %></p>
   <% end %>
 
   <div class="uptime">

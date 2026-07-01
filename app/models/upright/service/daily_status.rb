@@ -11,22 +11,29 @@ class Upright::Service::DailyStatus
     status == :operational
   end
 
-  def tooltip
-    "#{date_label}: #{body}"
+  def date_label
+    date == Date.current ? "Today" : date.to_fs(:month_day)
+  end
+
+  def detail
+    if uptime_fraction
+      [ "%.2f%% uptime" % (uptime_fraction * 100), downtime ].compact.join(" · ")
+    elsif status
+      status.to_s.humanize.downcase
+    else
+      "no data"
+    end
+  end
+
+  def aria_label
+    "#{date_label}: #{detail}"
   end
 
   private
-    def date_label
-      date == Date.current ? "Today" : date.to_fs(:month_day)
-    end
-
-    def body
-      if uptime_fraction
-        "%.2f%% uptime" % (uptime_fraction * 100)
-      elsif status
-        status.to_s.humanize.downcase
-      else
-        "no data"
+    def downtime
+      if uptime_fraction && uptime_fraction < 1
+        minutes = ((1 - uptime_fraction) * 24 * 60).round
+        minutes.zero? ? "<1 min down" : "#{minutes} #{'min'.pluralize(minutes)} down"
       end
     end
 end

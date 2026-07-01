@@ -140,6 +140,7 @@
     border-radius: 1px;
     flex: 1 1 0;
     min-width: 2px;
+    position: relative;
     transition: filter 100ms ease-out;
   }
 
@@ -163,4 +164,73 @@
     color: var(--color-ink-dark);
     font-weight: 500;
   }
+
+  .uptime__tooltip {
+    background: var(--color-canvas);
+    border: var(--border);
+    border-radius: 0.5rem;
+    bottom: calc(100% + 0.5rem);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    font-family: var(--font-sans);
+    font-size: var(--text-x-small);
+    gap: 0.2rem;
+    left: 50%;
+    line-height: 1.35;
+    opacity: 0;
+    padding: 0.45rem 0.6rem;
+    pointer-events: none;
+    position: absolute;
+    transform: translate(-50%, 0.25rem);
+    transition: opacity 120ms ease-out, transform 120ms ease-out;
+    visibility: hidden;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  .uptime__bar:hover .uptime__tooltip {
+    opacity: 1;
+    transform: translate(-50%, 0);
+    visibility: visible;
+  }
+
+  /* Caret, sitting on the tooltip's bottom edge and matching its border. */
+  .uptime__tooltip::after {
+    background: var(--color-canvas);
+    border-bottom: var(--border);
+    border-right: var(--border);
+    content: "";
+    height: 0.5rem;
+    left: 50%;
+    position: absolute;
+    top: calc(100% - 0.25rem);
+    transform: translateX(-50%) rotate(45deg);
+    width: 0.5rem;
+  }
+
+  .uptime__tooltip-date {
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .uptime__tooltip-detail {
+    align-items: center;
+    color: var(--color-ink-medium);
+    display: flex;
+    gap: 0.4rem;
+  }
+
+  .uptime__tooltip-dot {
+    border-radius: 50%;
+    flex-shrink: 0;
+    height: 0.5rem;
+    width: 0.5rem;
+  }
+
+  .uptime__tooltip-dot--operational { background: var(--status-operational); }
+  .uptime__tooltip-dot--degraded { background: var(--status-degraded); }
+  .uptime__tooltip-dot--partial_outage { background: var(--status-partial); }
+  .uptime__tooltip-dot--major_outage { background: var(--status-major); }
+  .uptime__tooltip-dot--none { background: var(--status-none); }
 }

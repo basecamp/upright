@@ -1,1 +1,9 @@
-<span class="uptime__bar <%= "uptime__bar--#{day.status}" %>" title="<%= day.tooltip %>"></span>
+<span class="uptime__bar uptime__bar--<%= day.status %>" aria-label="<%= day.aria_label %>">
+  <span class="uptime__tooltip" aria-hidden="true">
+    <span class="uptime__tooltip-date"><%= day.date_label %></span>
+    <span class="uptime__tooltip-detail">
+      <span class="uptime__tooltip-dot uptime__tooltip-dot--<%= day.status || "none" %>"></span>
+      <%= day.detail %>
+    </span>
+  </span>
+</span>
