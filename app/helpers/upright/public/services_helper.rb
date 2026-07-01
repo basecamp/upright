@@ -29,9 +29,12 @@ module Upright::Public::ServicesHelper
     [ issue[:service].code, issue[:started_at]&.to_i ].compact.join("-")
   end
 
-  def average_uptime_percentage(fractions)
+  def uptime_percentage_label(fractions)
     if fractions.present?
-      (fractions.sum.to_f / fractions.size) * 100
+      percentage = fractions.sum.fdiv(fractions.size) * 100
+      # Round down so a real outage never reads as 100%; strip zeros so a
+      # flawless window is a bare "100%", not "100.000%".
+      number_to_percentage(percentage, precision: 3, round_mode: :down, strip_insignificant_zeros: true)
     end
   end
 end

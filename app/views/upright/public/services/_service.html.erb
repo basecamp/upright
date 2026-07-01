@@ -1,5 +1,4 @@
 <% today_status = history.last.status %>
-<% avg = average_uptime_percentage(history.map(&:uptime_fraction).compact) %>
 
 <section class="service">
   <div class="service__row">
@@ -20,8 +19,8 @@
 
     <div class="uptime__meta">
       <span><%= history.size %> days ago</span>
-      <% if avg %>
-        <span class="uptime__meta-percent"><%= '%.2f' % avg %>% uptime</span>
+      <% if uptime = uptime_percentage_label(history.map(&:uptime_fraction).compact) %>
+        <span class="uptime__meta-percent"><%= uptime %> uptime</span>
       <% else %>
         <span class="uptime__meta-percent">No data yet</span>
       <% end %>
