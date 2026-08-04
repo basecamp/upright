@@ -1,4 +1,6 @@
 class Upright::AlertmanagerProxyController < Upright::ApplicationController
+  include Upright::ProxyAuthentication
+
   skip_forgery_protection
 
   def show

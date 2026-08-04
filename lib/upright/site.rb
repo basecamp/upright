@@ -2,13 +2,18 @@ module Upright
   class Site
     attr_reader :code, :city, :country, :geohash, :stagger_index
 
-    def initialize(code:, city: nil, country: nil, geohash: nil, provider: nil, stagger_index: 0)
+    def initialize(code:, city: nil, country: nil, geohash: nil, provider: nil, stores_metrics: false, stagger_index: 0)
       @code = code.to_sym
       @city = city
       @country = country
       @geohash = geohash
       @provider = provider
+      @stores_metrics = stores_metrics
       @stagger_index = stagger_index
+    end
+
+    def stores_metrics?
+      @stores_metrics
     end
 
     def host

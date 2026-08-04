@@ -1,8 +1,10 @@
 class Upright::PrometheusProxyController < Upright::ApplicationController
+  include Upright::ProxyAuthentication
+
   skip_forgery_protection
 
   skip_before_action :authenticate_user, only: :otlp
-  before_action :authenticate_otlp_token, only: :otlp
+  before_action :authenticate_proxy_token, only: :otlp
 
   UNSUPPORTED_PATHS = %w[/api/v1/notifications]
 
@@ -47,12 +49,6 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
     def prometheus_connection
       @prometheus_connection ||= Faraday.new(url: Upright.configuration.prometheus_url) do |f|
         f.options.timeout = 30
-      end
-    end
-
-    def authenticate_otlp_token
-      authenticate_or_request_with_http_token do |token|
-        ActiveSupport::SecurityUtils.secure_compare(token, ENV.fetch("PROMETHEUS_OTLP_TOKEN", ""))
       end
     end
 end

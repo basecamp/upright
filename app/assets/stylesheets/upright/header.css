@@ -71,6 +71,11 @@
     &.active {
       color: var(--color-positive);
     }
+
+    &.unavailable {
+      color: var(--color-ink-light);
+      cursor: help;
+    }
   }
 
   .header__divider {
