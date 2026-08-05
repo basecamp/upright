@@ -60,7 +60,11 @@ module Upright
     end
 
     def current_site
-      find_site(ENV["SITE_SUBDOMAIN"]) || sites.first
+      if (subdomain = ENV["SITE_SUBDOMAIN"]).present?
+        find_site(subdomain) || raise(ConfigurationError, "SITE_SUBDOMAIN=#{subdomain} is not a site in sites.yml (#{sites.map(&:code).join(', ')})")
+      else
+        sites.first
+      end
     end
 
     def primary_site

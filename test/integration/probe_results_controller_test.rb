@@ -29,7 +29,7 @@ class ProbeResultsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "nav falls back to the global subdomain when no site claims metrics" do
-    probe_only_sites = Upright.sites.reject(&:stores_metrics?)
+    probe_only_sites = Upright.sites.map { |site| Upright::Site.new(code: site.code, city: site.city) }
     Upright.stubs(:sites).returns(probe_only_sites)
 
     get upright.site_root_path

@@ -9,6 +9,20 @@ class UprightTest < ActiveSupport::TestCase
     assert_equal :ams, Upright.primary_site.code
   end
 
+  test "current_site refuses to guess when SITE_SUBDOMAIN names no known site" do
+    error = assert_raises Upright::ConfigurationError do
+      with_env("SITE_SUBDOMAIN" => "ahs") { Upright.current_site }
+    end
+
+    assert_match "SITE_SUBDOMAIN=ahs is not a site", error.message
+  end
+
+  test "current_site falls back to the first site only when SITE_SUBDOMAIN is unset" do
+    with_env("SITE_SUBDOMAIN" => nil) do
+      assert_equal Upright.sites.first.code, Upright.current_site.code
+    end
+  end
+
   test "loading rejects more than one primary site" do
     error = assert_raises Upright::ConfigurationError do
       load_sites_from [ { code: "ams", primary: true }, { code: "nyc", primary: true } ]

@@ -134,15 +134,16 @@ shared:
 
 Each site node identifies itself via the `SITE_SUBDOMAIN` environment variable, configured in your Kamal deploy.yml.
 
-`primary` marks the site that serves the app and status hostnames and runs the singleton jobs — the ones writing the shared `persistent` database, which must run in exactly one place. Gate them in `config/recurring.yml` with `Upright.current_site&.primary?`. Declaring two primaries raises on boot; declaring none is legal, and leaves the singletons ungated.
+`primary` marks the site that serves the app and status hostnames and runs the singleton jobs — the ones writing the shared `persistent` database, which must run in exactly one place. Gate them in `config/recurring.yml` with `Upright.current_site&.primary?`. Declaring two primaries raises on boot. Declaring none is also legal, but that gate is then false everywhere, so nothing runs the singletons — if you use it, flag exactly one site. A host with its own gate keeps whatever behaviour it already had; the flag doesn't override it.
 
 Every site exports `upright_primary_site` (1 on the primary, 0 elsewhere), `upright_persistent_db_up`, and `upright_rollup_last_run_timestamp_seconds`, which is what failover alerting needs. `Upright::HealthMetricsJob` refreshes them, so schedule it on every site — new installs get it from the generator, existing ones need it adding:
 
 ```yaml
-# config/recurring.yml
-health_metrics:
-  class: "Upright::HealthMetricsJob"
-  schedule: every minute
+# config/recurring.yml — under each environment you run, as with every other task
+production:
+  health_metrics:
+    class: "Upright::HealthMetricsJob"
+    schedule: every minute
 ```
 
 `stores_metrics` marks the sites running a local Prometheus and Alertmanager. Those sites accept metric writes and serve the `/prometheus` and `/alertmanager` proxies, so losing one leaves the others still readable; probe-only sites serve neither. Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token` (`PROMETHEUS_OTLP_TOKEN` by default) instead of an admin session.
