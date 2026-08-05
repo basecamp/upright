@@ -25,6 +25,12 @@ class Upright::Rollups::ProbeRollup < Upright::PersistentRecord
     end
   end
 
+  def self.export_metrics
+    if (last_run = maximum(:created_at))
+      Yabeda.upright_rollup_last_run_timestamp_seconds.set({}, last_run.to_i)
+    end
+  end
+
   def probe_key
     [ probe_name, probe_type, probe_target ]
   end

@@ -23,3 +23,7 @@ production:
   cleanup_stale_probe_results:
     command: "Upright::ProbeResult.cleanup_stale"
     schedule: every hour at minute 30
+
+  health_metrics:
+    class: "Upright::HealthMetricsJob"
+    schedule: every minute

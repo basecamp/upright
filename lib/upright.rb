@@ -63,6 +63,10 @@ module Upright
       find_site(ENV["SITE_SUBDOMAIN"]) || sites.first
     end
 
+    def primary_site
+      sites.find(&:primary?)
+    end
+
     private
       def load_sites
         sites_config_path = Rails.root.join("config/sites.yml")
