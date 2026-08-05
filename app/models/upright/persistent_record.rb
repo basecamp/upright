@@ -6,7 +6,7 @@ class Upright::PersistentRecord < ActiveRecord::Base
 
   def self.up?
     with_connection { |connection| connection.select_value("SELECT 1") }.present?
-  rescue ActiveRecord::ActiveRecordError
+  rescue StandardError
     false
   end
 end

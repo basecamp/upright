@@ -60,7 +60,11 @@ module Upright
     end
 
     def current_site
-      find_site(ENV["SITE_SUBDOMAIN"]) || sites.first
+      if (subdomain = ENV["SITE_SUBDOMAIN"]).present?
+        find_site(subdomain) || raise(ConfigurationError, "SITE_SUBDOMAIN=#{subdomain} is not a site in sites.yml (#{sites.map(&:code).join(', ')})")
+      else
+        sites.first
+      end
     end
 
     def primary_site
@@ -76,9 +80,20 @@ module Upright
 
           config[:sites].map.with_index do |site_config, index|
             Site.new(stagger_index: index, **site_config)
-          end
+          end.tap { |sites| ensure_at_most_one_primary(sites) }
         else
           []
+        end
+      end
+
+      # Two primaries means two hosts running the singleton jobs that write the
+      # shared persistent database. None is how a host looks before it adopts
+      # the flag, so that stays legal.
+      def ensure_at_most_one_primary(sites)
+        primaries = sites.select(&:primary?)
+
+        if primaries.many?
+          raise ConfigurationError, "sites.yml declares #{primaries.count} primary sites (#{primaries.map(&:code).join(', ')}); at most one may be primary"
         end
       end
   end
