@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Add public status pages: live status, 90-day history, and an RSS feed (#79)
+- Export `upright_primary_site`, `upright_persistent_db_up`, and `upright_rollup_last_run_timestamp_seconds` for failover alerting; sites declare `primary: true`, and existing installs need `Upright::HealthMetricsJob` adding to `recurring.yml` (#116)
 - Add incidents and scheduled maintenance, with a public timeline and impact banner (#102)
 - Record who created and updated each incident (#105)
 - Let host apps override the public status page's stylesheets and views (#109)
