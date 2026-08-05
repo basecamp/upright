@@ -23,6 +23,26 @@ class Upright::HealthMetricsJobTest < ActiveSupport::TestCase
     assert_equal 1, yabeda_gauge_value(:persistent_db_up)
   end
 
+  test "leaves the persistent database alone on a probe-only site" do
+    Upright::PersistentRecord.expects(:up?).never
+
+    with_env("SITE_SUBDOMAIN" => "nyc") do
+      Upright::HealthMetricsJob.perform_now
+    end
+
+    assert_nil yabeda_gauge_value(:persistent_db_up)
+    assert_nil yabeda_gauge_value(:rollup_last_run_timestamp_seconds)
+  end
+
+  test "reports the persistent database from a site that stores metrics without being primary" do
+    Upright.stubs(:current_site).returns(Upright::Site.new(code: "sfo", stores_metrics: true))
+
+    Upright::HealthMetricsJob.perform_now
+
+    assert_equal 0, yabeda_gauge_value(:primary_site)
+    assert_equal 1, yabeda_gauge_value(:persistent_db_up)
+  end
+
   test "reports the persistent database as down without failing the other metrics" do
     Upright::PersistentRecord.stubs(:up?).returns(false)
 
