@@ -1,7 +1,8 @@
 Upright::Engine.routes.draw do
-  global_subdomain = ->(req) { Upright.configuration.global_subdomain == req.subdomain }
-  site_subdomain   = ->(req) { Upright.configuration.site_subdomains.include?(req.subdomain) }
-  public_status    = ->(req) {
+  global_subdomain  = ->(req) { Upright.configuration.global_subdomain == req.subdomain }
+  site_subdomain    = ->(req) { Upright.configuration.site_subdomains.include?(req.subdomain) }
+  metrics_subdomain = ->(req) { global_subdomain.call(req) || Upright.find_site(req.subdomain)&.stores_metrics? }
+  public_status     = ->(req) {
     Upright.configuration.public_status_enabled &&
       req.subdomain == Upright.configuration.public_status_subdomain
   }
@@ -20,7 +21,9 @@ Upright::Engine.routes.draw do
     resources :incidents do
       resources :updates, only: :create, controller: "incidents/updates"
     end
+  end
 
+  constraints metrics_subdomain do
     scope :framed do
       resource :prometheus,   only: :show, controller: :prometheus_proxy
       resource :alertmanager, only: :show, controller: :alertmanager_proxy

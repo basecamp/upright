@@ -21,6 +21,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to upright.new_admin_session_url(subdomain: "app")
   end
 
+  test "returns to the page that sent you to the login" do
+    on_subdomain "ams"
+    get upright.prometheus_path
+
+    sign_in
+
+    assert_redirected_to "http://ams.#{Upright.configuration.hostname}#{upright.prometheus_path}"
+  end
+
   test "session routes not accessible from site subdomain" do
     on_subdomain "ams"
     get upright.new_admin_session_path

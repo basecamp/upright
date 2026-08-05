@@ -122,6 +122,7 @@ shared:
       country: NL
       geohash: u17982
       provider: digitalocean
+      stores_metrics: true
 
     - code: sfo
       city: San Francisco
@@ -131,6 +132,8 @@ shared:
 ```
 
 Each site node identifies itself via the `SITE_SUBDOMAIN` environment variable, configured in your Kamal deploy.yml.
+
+`stores_metrics` marks the sites running a local Prometheus and Alertmanager. Those sites accept metric writes and serve the `/prometheus` and `/alertmanager` proxies, so losing one leaves the others still readable; probe-only sites serve neither. Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token` (`PROMETHEUS_OTLP_TOKEN` by default) instead of an admin session.
 
 ### Authentication
 

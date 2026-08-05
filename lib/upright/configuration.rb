@@ -36,6 +36,8 @@ class Upright::Configuration
   attr_accessor :prometheus_url
   attr_accessor :alert_webhook_url
 
+  attr_writer :proxy_token
+
   # Probe types
   attr_reader :probe_types
 
@@ -112,6 +114,10 @@ class Upright::Configuration
 
   def prometheus_url
     @prometheus_url || ENV.fetch("PROMETHEUS_URL", "http://localhost:9090")
+  end
+
+  def proxy_token
+    @proxy_token || ENV["PROMETHEUS_OTLP_TOKEN"]
   end
 
   def video_storage_dir

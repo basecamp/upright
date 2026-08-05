@@ -17,8 +17,14 @@
     <span class="header__divider"></span>
     <%= link_to "Jobs", upright.jobs_url(subdomain: current_or_default_site.code), class: "header__link" %>
     <span class="header__divider"></span>
-    <%= link_to "Prometheus", upright.prometheus_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
-    <%= link_to "Alertmanager", upright.alertmanager_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
+    <% if metrics_subdomain %>
+      <%= link_to "Prometheus", upright.prometheus_url(subdomain: metrics_subdomain), class: "header__link" %>
+      <%= link_to "Alertmanager", upright.alertmanager_url(subdomain: metrics_subdomain), class: "header__link" %>
+    <% else %>
+      <% available_on = "Available on #{metrics_sites_sentence}" %>
+      <%= tag.span "Prometheus", class: "header__link unavailable", title: available_on %>
+      <%= tag.span "Alertmanager", class: "header__link unavailable", title: available_on %>
+    <% end %>
   </nav>
 
   <div class="header__user">

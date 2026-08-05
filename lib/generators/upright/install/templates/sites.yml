@@ -8,6 +8,7 @@ shared:
       city: London
       country: GB
       geohash: gcpvj0
+      stores_metrics: true
 
 # Multi-site example:
 #
@@ -18,6 +19,7 @@ shared:
 #       country: NL
 #       geohash: u17982
 #       provider: digitalocean
+#       stores_metrics: true
 #
 #     - code: nyc
 #       city: New York City

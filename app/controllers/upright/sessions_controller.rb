@@ -8,10 +8,11 @@ class Upright::SessionsController < Upright::ApplicationController
   end
 
   def create
+    return_to = session[:return_to]
     reset_session
     user = Upright::User.from_omniauth(request.env["omniauth.auth"])
     session[:user_info] = { email: user.email, name: user.name }
-    redirect_to upright.root_path
+    redirect_to return_to || upright.root_path, allow_other_host: true
   end
 
   def destroy
