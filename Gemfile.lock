@@ -14,7 +14,7 @@ PATH
       opentelemetry-exporter-otlp
       opentelemetry-instrumentation-all
       opentelemetry-sdk
-      playwright-ruby-client (~> 1.59.0)
+      playwright-ruby-client (>= 1.59, < 1.63)
       prometheus-api-client
       prometheus-client
       propshaft
@@ -119,7 +119,7 @@ GEM
       racc
     builder (3.3.0)
     cgi (0.5.1)
-    concurrent-ruby (1.3.6)
+    concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
     crack (1.0.1)
       bigdecimal
@@ -205,7 +205,7 @@ GEM
     mime-types (3.7.0)
       logger
       mime-types-data (~> 3.2025, >= 3.2025.0507)
-    mime-types-data (3.2026.0203)
+    mime-types-data (3.2026.0701)
     mini_mime (1.1.5)
     minitest (6.0.3)
       drb (~> 2.0)
@@ -440,7 +440,7 @@ GEM
     parser (3.3.10.1)
       ast (~> 2.4.1)
       racc
-    playwright-ruby-client (1.59.0)
+    playwright-ruby-client (1.62.0)
       base64
       concurrent-ruby (>= 1.1.6)
       mime-types (>= 3.0)
@@ -656,7 +656,7 @@ CHECKSUMS
   brakeman (8.0.4) sha256=7bf921fa9638544835df9aa7b3e720a9a72c0267f34f92135955edd80d4dcf6f
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
   cgi (0.5.1) sha256=e93fcafc69b8a934fe1e6146121fa35430efa8b4a4047c4893764067036f18e9
-  concurrent-ruby (1.3.6) sha256=6b56837e1e7e5292f9864f34b69c5a2cbc75c0cf5338f1ce9903d10fa762d5ab
+  concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
   crack (1.0.1) sha256=ff4a10390cd31d66440b7524eb1841874db86201d5b70032028553130b6d4c7e
   crass (1.0.6) sha256=dc516022a56e7b3b156099abc81b6d2b08ea1ed12676ac7a5657617f012bd45d
@@ -696,7 +696,7 @@ CHECKSUMS
   mail (2.9.0) sha256=6fa6673ecd71c60c2d996260f9ee3dd387d4673b8169b502134659ece6d34941
   marcel (1.1.0) sha256=fdcfcfa33cc52e93c4308d40e4090a5d4ea279e160a7f6af988260fa970e0bee
   mime-types (3.7.0) sha256=dcebf61c246f08e15a4de34e386ebe8233791e868564a470c3fe77c00eed5e56
-  mime-types-data (3.2026.0203) sha256=54353d693af028847391c28361c07d4b8b689cad78c3e1cc272fb1205c6d2a2f
+  mime-types-data (3.2026.0701) sha256=cd8811e1fb89d836499ba0582368a10ee74cef929ba956d1d5ddca045e6a730f
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.3) sha256=88ac8a1de36c00692420e7cb3cc11a0773bbcb126aee1c249f320160a7d11411
   mission_control-jobs (1.1.0) sha256=b13da9cde3344fec7c744b79d2a34c3ecd454f45d4d593d4c968ba762315e84c
@@ -770,7 +770,7 @@ CHECKSUMS
   opentelemetry-semantic_conventions (1.37.0) sha256=1e2dc5ad649e19ba2fb0fa7c6f9303e5cdd8d3952511415cb07efe28a0f8f4c3
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.1) sha256=06f6a725d2cd91e5e7f2b7c32ba143631e1f7c8ae2fb918fc4cebec187e6a688
-  playwright-ruby-client (1.59.0) sha256=b9e66233ed7b83e917980badc27ecd233e244503c74772a3854dbd5d41438c21
+  playwright-ruby-client (1.62.0) sha256=44eb6051ab7987f68a1288a7db7892403e59680116739987729c5fecfdb55715
   pp (0.6.3) sha256=2951d514450b93ccfeb1df7d021cae0da16e0a7f95ee1e2273719669d0ab9df6
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
