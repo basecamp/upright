@@ -9,20 +9,32 @@ class Upright::Rollups::ProbeRollup < Upright::PersistentRecord
   scope :for_service, ->(code) { where(probe_service: code) if code.present? }
   scope :for_probe, ->(name) { where(probe_name: name) if name.present? }
 
-  PROMETHEUS_METRIC = "upright:probe_uptime_daily"
-
   def self.rollup_day(day)
-    fetch_uptime_for(day).each do |probe_uptime|
-      find_or_create_by(
-        probe_name:   probe_uptime.fetch(:probe_name),
-        probe_type:   probe_uptime[:probe_type],
-        probe_target: probe_uptime[:probe_target],
-        period_start: day.beginning_of_day
-      ) do |rollup|
-        rollup.probe_service   = probe_uptime[:probe_service]
-        rollup.uptime_fraction = probe_uptime.fetch(:uptime_fraction)
-      end
+    uptime = Upright::Rollups::DailyUptime.new(day)
+
+    uptime.covered.each { |probe_uptime| record probe_uptime, on: day }
+
+    uptime.gappy.tap do |left_unwritten|
+      Rails.logger.warn thin_coverage_warning(left_unwritten, on: day) if left_unwritten.any?
     end
+  end
+
+  def self.thin_coverage_warning(probe_uptimes, on:)
+    "[upright] #{on}: left #{probe_uptimes.size} rollups unwritten below #{Upright.configuration.rollup_minimum_coverage} coverage (#{probe_uptimes.map(&:probe_name).uniq.join(', ')})"
+  end
+  private_class_method :thin_coverage_warning
+
+  def self.record(probe_uptime, on:)
+    rollup = find_or_initialize_by(
+      probe_name:   probe_uptime.probe_name,
+      probe_type:   probe_uptime.probe_type,
+      probe_target: probe_uptime.probe_target,
+      period_start: on.beginning_of_day
+    )
+
+    rollup.probe_service   = probe_uptime.probe_service
+    rollup.uptime_fraction = probe_uptime.uptime_fraction
+    rollup.save!
   end
 
   def self.export_metrics
@@ -33,26 +45,6 @@ class Upright::Rollups::ProbeRollup < Upright::PersistentRecord
 
   def probe_key
     [ probe_name, probe_type, probe_target ]
-  end
-
-  def self.fetch_uptime_for(day)
-    query_time = [ day.end_of_day, Time.current ].min
-
-    response = Upright.prometheus_client.query(query: uptime_query, time: query_time.iso8601).deep_symbolize_keys
-
-    Array(response[:result]).map do |series|
-      {
-        probe_name:      series.dig(:metric, :name),
-        probe_type:      series.dig(:metric, :type),
-        probe_target:    series.dig(:metric, :probe_target),
-        probe_service:   series.dig(:metric, :probe_service).presence,
-        uptime_fraction: series.dig(:value, 1).to_f
-      }
-    end
-  end
-
-  def self.uptime_query
-    %(#{PROMETHEUS_METRIC}{environment="#{Rails.env}"})
   end
 
   def service

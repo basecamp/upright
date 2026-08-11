@@ -17,14 +17,11 @@ class Upright::Rollups::ProbeRollupTest < ActiveSupport::TestCase
     assert_equal "major_outage", rollup.status
   end
 
-  test "rollup_day creates a rollup per probe uptime with derived status" do
+  test "rollup_day records a rollup per probe with derived status" do
     day = Date.new(2026, 5, 1)
-    probe_uptimes = [
-      { probe_name: "Web", probe_type: "http", probe_target: "https://example.com", probe_service: "example_app", uptime_fraction: 1.0 },
-      { probe_name: "API", probe_type: "http", probe_target: "https://example.com/api", probe_service: "example_app", uptime_fraction: 0.85 }
-    ]
+    reads day, uptime(probe_name: "Web", uptime_fraction: 1.0),
+               uptime(probe_name: "API", probe_target: "https://example.com/api", uptime_fraction: 0.85)
 
-    Upright::Rollups::ProbeRollup.stubs(:fetch_uptime_for).with(day).returns(probe_uptimes)
     Upright::Rollups::ProbeRollup.rollup_day(day)
 
     web = Upright::Rollups::ProbeRollup.find_by!(probe_name: "Web", period_start: day.beginning_of_day)
@@ -39,35 +36,65 @@ class Upright::Rollups::ProbeRollupTest < ActiveSupport::TestCase
 
   test "rollup_day keeps probes that share a name but differ by type as distinct rows" do
     day = Date.new(2026, 5, 1)
-    probe_uptimes = [
-      { probe_name: "BC3", probe_type: "traceroute", probe_target: "3.basecamp.com", probe_service: nil, uptime_fraction: 1.0 },
-      { probe_name: "BC3", probe_type: "http", probe_target: "https://app.basecamp.com/up", probe_service: "bc5", uptime_fraction: 0.9 }
-    ]
+    reads day, uptime(probe_name: "BC3", probe_type: "traceroute", probe_target: "3.basecamp.com", probe_service: nil, uptime_fraction: 1.0),
+               uptime(probe_name: "BC3", probe_type: "http", probe_target: "https://app.basecamp.com/up", probe_service: "bc5", uptime_fraction: 0.9)
 
-    Upright::Rollups::ProbeRollup.stubs(:fetch_uptime_for).with(day).returns(probe_uptimes)
     Upright::Rollups::ProbeRollup.rollup_day(day)
 
     rollups = Upright::Rollups::ProbeRollup.where(probe_name: "BC3", period_start: day.beginning_of_day)
     assert_equal 2, rollups.count
-
-    http = rollups.find_by(probe_type: "http")
-    assert_equal "bc5", http.probe_service
-    assert_equal 0.9, http.uptime_fraction
-
-    traceroute = rollups.find_by(probe_type: "traceroute")
-    assert_nil traceroute.probe_service
+    assert_equal 0.9, rollups.find_by(probe_type: "http").uptime_fraction
+    assert_nil rollups.find_by(probe_type: "traceroute").probe_service
   end
 
-  test "rollup_day leaves existing rollups unchanged" do
+  test "rollup_day corrects an existing rollup rather than leaving it wrong forever" do
     existing = upright_rollups_probe_rollups(:example_web_may_11)
+    reads existing.period_start.to_date, uptime(
+      probe_name: existing.probe_name, probe_type: existing.probe_type,
+      probe_target: existing.probe_target, probe_service: existing.probe_service, uptime_fraction: 1.0
+    )
 
-    Upright::Rollups::ProbeRollup.stubs(:fetch_uptime_for).with(existing.period_start.to_date).returns([
-      { probe_name: existing.probe_name, probe_type: existing.probe_type, probe_target: existing.probe_target, probe_service: existing.probe_service, uptime_fraction: 1.0 }
-    ])
     Upright::Rollups::ProbeRollup.rollup_day(existing.period_start.to_date)
 
-    existing.reload
-    assert_equal 0.95, existing.uptime_fraction
-    assert_equal "degraded", existing.status
+    assert_equal 1.0, existing.reload.uptime_fraction
+    assert_equal "operational", existing.status
   end
+
+  test "rollup_day leaves a thinly covered probe unwritten and reports it" do
+    day = Date.new(2026, 5, 1)
+    reads day, uptime(probe_name: "Thin", coverage_fraction: 0.2),
+               uptime(probe_name: "Full", probe_target: "https://example.com/ok", uptime_fraction: 0.9)
+
+    gappy = Upright::Rollups::ProbeRollup.rollup_day(day)
+
+    assert_equal [ "Thin" ], gappy.map(&:probe_name)
+    assert_nil Upright::Rollups::ProbeRollup.find_by(probe_name: "Thin", period_start: day.beginning_of_day)
+    assert Upright::Rollups::ProbeRollup.find_by(probe_name: "Full", period_start: day.beginning_of_day)
+  end
+
+  test "rollup_day won't let a thin recompute overwrite a day it already got right" do
+    existing = upright_rollups_probe_rollups(:example_web_may_11)
+    reads existing.period_start.to_date, uptime(
+      probe_name: existing.probe_name, probe_type: existing.probe_type,
+      probe_target: existing.probe_target, probe_service: existing.probe_service,
+      uptime_fraction: 1.0, coverage_fraction: 0.1
+    )
+
+    Upright::Rollups::ProbeRollup.rollup_day(existing.period_start.to_date)
+
+    assert_equal 0.95, existing.reload.uptime_fraction
+  end
+
+  private
+    def uptime(probe_name:, probe_type: "http", probe_target: "https://example.com", probe_service: "example_app", uptime_fraction: 1.0, coverage_fraction: 1.0)
+      Upright::Rollups::ProbeUptime.new(
+        probe_name: probe_name, probe_type: probe_type, probe_target: probe_target,
+        probe_service: probe_service, uptime_fraction: uptime_fraction, coverage_fraction: coverage_fraction
+      )
+    end
+
+    def reads(day, *probe_uptimes)
+      daily = stub(covered: probe_uptimes.select(&:covered?), gappy: probe_uptimes.reject(&:covered?))
+      Upright::Rollups::DailyUptime.stubs(:new).with(day).returns(daily)
+    end
 end
