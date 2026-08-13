@@ -13,12 +13,15 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   def proxy
-    path = request.fullpath.sub(%r{^/prometheus}, "")
+    forward = sanitized_upstream_path(request.fullpath.delete_prefix("/prometheus"))
+    path = forward&.split("?", 2)&.first
 
-    if path.start_with?(*UNSUPPORTED_PATHS)
+    if forward.nil? || !upstream_host_ok?(prometheus_url, forward)
+      head :bad_request
+    elsif path.start_with?(*UNSUPPORTED_PATHS)
       head :not_found
     else
-      proxy_to_prometheus(path)
+      proxy_to_prometheus(forward)
     end
   end
 

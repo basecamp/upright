@@ -39,6 +39,10 @@ Gem::Specification.new do |spec|
   spec.add_dependency "playwright-ruby-client", "~> 1.56"
 
   # Observability
+  # Floor faraday at 2.14.3: earlier releases resolve a protocol-relative path
+  # (`//host/…`) against the connection URL in a way that can retarget the
+  # request at another host (SSRF, CVE-2026-25765).
+  spec.add_dependency "faraday", ">= 2.14.3"
   spec.add_dependency "prometheus-api-client"
   spec.add_dependency "yabeda"
   spec.add_dependency "yabeda-prometheus"
