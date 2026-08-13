@@ -35,6 +35,13 @@ class LoginCsrfTest < ActionDispatch::IntegrationTest
     assert_nil session[:user_info]
   end
 
+  test "a HEAD to the credential callback cannot plant a session" do
+    head "/auth/static_credentials/callback", params: { username: "admin", password: "known-to-attacker" }
+
+    assert_response :not_found
+    assert_nil session[:user_info]
+  end
+
   test "a cross-origin POST without a valid authenticity token is refused" do
     post "/auth/static_credentials/callback", params: { username: "admin", password: "known-to-attacker" }
 

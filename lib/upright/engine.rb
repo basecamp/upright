@@ -11,7 +11,17 @@ class Upright::Engine < ::Rails::Engine
       domain: :all,
       same_site: :lax,
       secure: !Rails.env.local?,
+      httponly: true,
       expire_after: 24.hours
+  end
+
+  # The proxy token stands in for an admin session on the metrics proxies, so a
+  # blank one in a deployed environment is a fail-open: any bearer value would be
+  # compared against "" . Refuse to boot without one outside local envs.
+  config.after_initialize do
+    if !Rails.env.local? && Upright.configuration.proxy_token.blank?
+      raise Upright::ConfigurationError, "Upright.configuration.proxy_token (or PROMETHEUS_OTLP_TOKEN) must be set outside development/test"
+    end
   end
 
   config.after_initialize do
