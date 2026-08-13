@@ -1,0 +1,23 @@
+test/models/upright/probes/http_probe_test.rb
+  s_6732c3c48d0ed9::t_fc5298cbac9408 171-213
+app/models/upright/probes/http_probe.rb
+  s_6732c3c48d0ed9::t_6bd9467bf8a7d4 117-121,126-132
+  s_6732c3c48d0ed9::t_30f695294686c0 108-116,122-125
+  s_6732c3c48d0ed9::t_511c933089f802 9-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "329df39e612095c16d3d0c8917671db677d458dc",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
