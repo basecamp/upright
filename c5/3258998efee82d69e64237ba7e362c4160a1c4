@@ -1,0 +1,33 @@
+upright.gemspec
+  s_6732c3c48d0ed9::t_37525eec0ba653 39-43
+test/integration/alertmanager_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_91c31e08d57d40 57-58
+app/controllers/upright/prometheus_proxy_controller.rb
+  s_6732c3c48d0ed9::t_af3afe05ceefb1 7,16-17,19-21,23-24,26
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_8fa11d90d92f87 123-126
+  s_6732c3c48d0ed9::t_652f1845db91be 87-122,127-144
+app/controllers/upright/alertmanager_proxy_controller.rb
+  s_6732c3c48d0ed9::t_2faa2ed3808176 10-19
+app/controllers/concerns/upright/proxy_authentication.rb
+  s_6732c3c48d0ed9::t_1c1b1d6139c902 4-15,35-40,46-56,59-75,78,83-84,86-96
+  s_6732c3c48d0ed9::t_7ca488b3d21b19 79-82,85
+test/integration/proxy_path_sanitization_test.rb
+  s_6732c3c48d0ed9::t_7405cd40ce8aee 1-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "c53258998efee82d69e64237ba7e362c4160a1c4",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
