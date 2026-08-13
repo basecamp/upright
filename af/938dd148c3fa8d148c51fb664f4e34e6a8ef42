@@ -1,0 +1,23 @@
+app/controllers/concerns/upright/proxy_authentication.rb
+  s_6732c3c48d0ed9::t_35f186ca3ac35a 4-9,11-12,27-41,43
+  s_6732c3c48d0ed9::t_c40e02899f4b56 10
+  s_6732c3c48d0ed9::t_9205a054ce2774 42
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_a647d49ede1d46 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "af938dd148c3fa8d148c51fb664f4e34e6a8ef42",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
