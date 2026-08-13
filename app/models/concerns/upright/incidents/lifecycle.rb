@@ -10,6 +10,7 @@ module Upright::Incidents::Lifecycle
     scope :past,     -> { resolved.order(starts_at: :desc) }
 
     scope :reactive, -> { where.not(type: "Upright::Maintenance").or(where(type: nil)) }
+    scope :planned,  -> { where(type: "Upright::Maintenance") }
 
     scope :for_service, ->(code) {
       joins(:affected_services).where(upright_incident_affected_services: { service_code: code })

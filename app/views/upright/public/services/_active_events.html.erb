@@ -12,8 +12,8 @@
           <p class="event__meta"><%= local_maintenance_window(event) %></p>
         <% end %>
 
-        <% if event.services.any? %>
-          <p class="event__services"><%= event.services.map(&:name).to_sentence %></p>
+        <% if event.public_services.any? %>
+          <p class="event__services"><%= event.public_services.map(&:name).to_sentence %></p>
         <% end %>
 
         <% if update = event.updates.first %>

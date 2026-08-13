@@ -3,6 +3,11 @@ module Upright::Services::LiveStatus
 
   OUTAGE_LOOKBACK = 24.hours
 
+  # Matches the public status page's `expires_in`, so a burst of anonymous
+  # hits costs at most one Prometheus round trip per service per window
+  # instead of amplifying every request into live queries.
+  CACHE_TTL = 15.seconds
+
   def live_status
     Upright::Status.for(live_up_fraction)
   end
@@ -25,20 +30,30 @@ module Upright::Services::LiveStatus
     end
 
     def live_down_fraction
-      response = Upright.prometheus_client.query(
-        query: live_down_query
-      ).deep_symbolize_keys
-      response.dig(:result, 0, :value, 1).to_f
+      cached :live_down_fraction do
+        response = Upright.prometheus_client.query(
+          query: live_down_query
+        ).deep_symbolize_keys
+        response.dig(:result, 0, :value, 1).to_f
+      end
     end
 
+    # Cached without regard to `now:` — a window up to CACHE_TTL stale is
+    # within the freshness the status page already advertises.
     def live_down_history(now:)
-      response = Upright.prometheus_client.query_range(
-        query: live_down_query,
-        start: (now - OUTAGE_LOOKBACK).iso8601,
-        end:   now.iso8601,
-        step:  "300s"
-      ).deep_symbolize_keys
-      response.dig(:result, 0, :values) || []
+      cached :live_down_history do
+        response = Upright.prometheus_client.query_range(
+          query: live_down_query,
+          start: (now - OUTAGE_LOOKBACK).iso8601,
+          end:   now.iso8601,
+          step:  "300s"
+        ).deep_symbolize_keys
+        response.dig(:result, 0, :values) || []
+      end
+    end
+
+    def cached(name, &block)
+      Rails.cache.fetch([ "upright", name, code ], expires_in: CACHE_TTL, &block)
     end
 
     def live_down_query
