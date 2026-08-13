@@ -14,7 +14,10 @@ module Upright::Playwright::TraceRecording
     end
 
     def start_trace
-      context.tracing.start(screenshots: true, snapshots: true)
+      # snapshots capture full DOM and network payloads, including Cookie and
+      # Authorization headers, turning traces into credential stores. Keep
+      # screenshots only.
+      context.tracing.start(screenshots: true, snapshots: false)
     end
 
     def stop_trace

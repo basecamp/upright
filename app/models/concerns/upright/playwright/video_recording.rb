@@ -48,7 +48,16 @@ module Upright::Playwright::VideoRecording
       self.video_artifacts ||= []
       video_artifacts << pending_video_recording.merge(path: video_path)
     ensure
+      delete_source_video
       self.pending_video_recording = nil
+    end
+
+    # Playwright writes its own source file per page; delete it after saving
+    # our copy so page@*.webm recordings don't accumulate on disk.
+    def delete_source_video
+      pending_video_recording&.fetch(:video)&.delete
+    rescue => error
+      Rails.error.report(error)
     end
 
     def attach_video(probe_result)
@@ -65,7 +74,9 @@ module Upright::Playwright::VideoRecording
       if logger.respond_to?(:struct)
         video_artifact = probe_result.artifacts.find { |attached| attached.content_type == "video/webm" }
         if video_artifact
-          logger.struct probe_artifact_url: Rails.application.routes.url_helpers.rails_blob_url(video_artifact, expires_in: 24.hours)
+          # Log the blob key, never a signed URL: signed URLs in logs/OTEL are
+          # bearer credentials for the recording.
+          logger.struct probe_artifact_key: video_artifact.key
         end
       end
 
