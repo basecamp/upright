@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+### Security
+
+- Fix an authenticated SSRF through the Prometheus/Alertmanager proxies: a
+  protocol-relative path (`//host`) could retarget the upstream request at an
+  arbitrary host (RFC1918, the Docker network, cloud metadata). Forwarded paths
+  are now validated and the resolved host is re-checked, with a `faraday >= 2.14.3`
+  floor (CVE-2026-25765).
+- Refuse cross-site requests to the metrics proxies on the session-cookie path
+  via a Fetch-Metadata / Origin gate; only same-origin, user-initiated, and
+  same-site top-level navigations are honoured (CVE-2026-67990).
+- Require a POST with a valid authenticity token on the `static_credentials`
+  sign-in callback, and fail closed when `ADMIN_PASSWORD` is unset instead of
+  shipping a default password (CVE-2026-67993).
+- Scope the session cookie to the configured hostname rather than its registrable
+  parent, so a sibling domain can't be handed the admin session.
+- Redact `Authorization`/`Cookie` credentials from probe logs, store HTTP probe
+  bodies as inert size-capped artifacts, stop recording Playwright snapshots and
+  logging signed blob URLs, and scope artifact downloads to probe results.
+- Restrict the public status page to incidents affecting a public-facing service,
+  and harden the generated deploy defaults (drop the OTEL Docker-socket mount,
+  bind services to loopback, ship a random proxy token and a CSP template).
+- Update Active Storage to close an arbitrary-file-read → RCE (rails 8.1.3.1,
+  CVE-2026-66066).
+
+### Changed
+
 - Add public status pages: live status, 90-day history, and an RSS feed (#79)
 - Export `upright_primary_site`, `upright_persistent_db_up`, and `upright_rollup_last_run_timestamp_seconds` for failover alerting; sites declare `primary: true`, and existing installs need `Upright::HealthMetricsJob` adding to `recurring.yml` (#116)
 - Add incidents and scheduled maintenance, with a public timeline and impact banner (#102)
