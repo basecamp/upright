@@ -1,0 +1,30 @@
+app/controllers/concerns/upright/proxy_guards.rb
+  s_6732c3c48d0ed9::t_85d71f97f508a8 39-43
+  s_6732c3c48d0ed9::t_b82c6277897c39 54-58
+  s_6732c3c48d0ed9::t_84b55f6db81112 8
+test/integration/prometheus_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_6dc14cf65816b9 14,29
+app/controllers/upright/sessions_controller.rb
+  s_6732c3c48d0ed9::t_3157d57d421132 33-41,43-44
+  s_6732c3c48d0ed9::t_94438a79fc0739 3-8,11
+test/integration/alertmanager_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_91a8ae1b9a5f30 14
+test/integration/proxy_path_sanitization_test.rb
+  s_6732c3c48d0ed9::t_7dcaa8550ca7d9 24-29
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d9afdbcac7e35321b18c8b49ce114b1a7da05de1",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
