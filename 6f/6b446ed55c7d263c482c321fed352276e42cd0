@@ -1,0 +1,47 @@
+test/integration/public/services_controller_test.rb
+  s_6732c3c48d0ed9::t_8a7c23a383dd6a 27-78
+app/models/upright/service.rb
+  s_6732c3c48d0ed9::t_255db2dfa931c2 11-13,15-16
+app/controllers/upright/public/services_controller.rb
+  s_6732c3c48d0ed9::t_a7165be4630f19 4-7
+app/views/upright/public/services/index.html.erb
+  s_6732c3c48d0ed9::t_6316c15c719546 4
+test/integration/public/incidents_controller_test.rb
+  s_6732c3c48d0ed9::t_66f093321daed8 15-46
+app/controllers/upright/public/incidents_controller.rb
+  s_6732c3c48d0ed9::t_dc57c489b001aa 3
+test/models/upright/service_live_status_test.rb
+  s_6732c3c48d0ed9::t_88b6b82c76db8e 1-43
+app/models/concerns/upright/services/live_status.rb
+  s_6732c3c48d0ed9::t_f03c4032672378 33-38,41-42,44-56
+  s_6732c3c48d0ed9::t_0c2080725c53c3 6-10
+app/models/concerns/upright/incidents/lifecycle.rb
+  s_6732c3c48d0ed9::t_95730c90c670e9 13
+app/views/upright/public/incidents/show.html.erb
+  s_6732c3c48d0ed9::t_213f94dd89952a 14-15
+app/models/upright/incident.rb
+  s_6732c3c48d0ed9::t_a6a21d8ae89fa8 23-27
+  s_6732c3c48d0ed9::t_c3dff2c32306ab 52-55
+test/fixtures/upright_incident_affected_services.yml
+  s_6732c3c48d0ed9::t_73ae15ebd99dce 7-10
+app/views/upright/public/services/_active_events.html.erb
+  s_6732c3c48d0ed9::t_f647128d508cdb 15-16
+app/controllers/upright/public/base_controller.rb
+  s_6732c3c48d0ed9::t_cf30250d66e2b2 1-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6f6b446ed55c7d263c482c321fed352276e42cd0",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
