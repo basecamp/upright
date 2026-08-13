@@ -1,0 +1,22 @@
+CHANGELOG.md
+  s_6732c3c48d0ed9::t_9206ab08baccf2 5-29
+  s_6732c3c48d0ed9::t_224807bc5e12e7 30
+Gemfile.lock
+  s_6732c3c48d0ed9::t_44ceb7111b645d 4,6,109,141,650,673,825
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1ca3c8aa951ddf1ea576ebea53cf7fc2aa27b953",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
