@@ -1,0 +1,29 @@
+app/controllers/upright/sessions_controller.rb
+  s_6732c3c48d0ed9::t_c277a79318953d 29-30,32-33,35
+  s_6732c3c48d0ed9::t_c642a5fa11c656 11
+  s_6732c3c48d0ed9::t_9a035ebcb625ea 40-50
+  s_6732c3c48d0ed9::t_0a005d0eccbf17 51-52
+test/integration/login_csrf_test.rb
+  s_6732c3c48d0ed9::t_8d5582b83b67df 38-44
+lib/upright/configuration.rb
+  s_6732c3c48d0ed9::t_ed9b2ef82d906f 176-181
+lib/upright/engine.rb
+  s_6732c3c48d0ed9::t_50de1dca8a5f75 14,18-24
+  s_6732c3c48d0ed9::t_cdc5d367365677 25-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6210042510ff25e76628a3116d1217442c1be6b0",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
