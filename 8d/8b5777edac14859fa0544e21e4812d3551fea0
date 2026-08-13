@@ -1,0 +1,21 @@
+lib/generators/upright/install/templates/recurring.yml
+  s_6732c3c48d0ed9::t_2dbc795cf2c1b4 27-30
+test/dummy/config/recurring.yml
+  s_6732c3c48d0ed9::t_e074d29aa8b11e 35-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "8d8b5777edac14859fa0544e21e4812d3551fea0",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
