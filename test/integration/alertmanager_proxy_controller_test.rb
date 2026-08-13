@@ -11,7 +11,7 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: "Alertmanager UI")
 
     sign_in
-    get "/alertmanager"
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
   end

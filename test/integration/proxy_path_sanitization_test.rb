@@ -21,6 +21,12 @@ class ProxyPathSanitizationTest < ActiveSupport::TestCase
     assert_nil sanitize("/..")
   end
 
+  test "rejects percent-encoding in the path (double-encoding bypass)" do
+    assert_nil sanitize("/%2f%2fevil.example/steal")
+    assert_nil sanitize("/%252d%252freload")
+    assert_nil sanitize("/api/%2e%2e/secret")
+  end
+
   test "rejects characters outside the path set" do
     assert_nil sanitize("/api/v1/query\nHost: evil")
     assert_nil sanitize("/api/ query")

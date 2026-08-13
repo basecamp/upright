@@ -5,7 +5,7 @@ module Upright::ProxyGuards
   # nothing outside the RFC 3986 path character set. This is what stops a request
   # like `/prometheus//169.254.169.254/…` from retargeting Faraday at another host
   # (SSRF, CVE-2026-25765).
-  SAFE_UPSTREAM_PATH = %r{\A/[A-Za-z0-9\-._~%!$&'()*+,;=:@/]*\z}
+  SAFE_UPSTREAM_PATH = %r{\A/[A-Za-z0-9\-._~!$&'()*+,;=:@/]*\z}
   MAX_UPSTREAM_QUERY = 4096
 
   included do
@@ -36,9 +36,11 @@ module Upright::ProxyGuards
       elsif origin.present?
         origin != request.base_url
       else
-        # No Fetch-Metadata and no Origin (a pre-Fetch-Metadata browser): fail
-        # closed on state-changing methods, allow plain reads.
-        !request.get? && !request.head?
+        # No Fetch-Metadata and no Origin: treat as cross-site and refuse. Every
+        # current browser sends Sec-Fetch-Site (and the embedded same-origin UI
+        # does too), so only a pre-2023 client omits it; failing closed keeps a
+        # header-less cross-site GET from riding the Lax session cookie.
+        true
       end
     end
 
@@ -49,7 +51,11 @@ module Upright::ProxyGuards
       path, separator, query = raw.to_s.partition("?")
       path = "/" if path.empty?
 
-      if path.start_with?("//") || path.include?("..") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
+      # Also reject any percent-encoding in the path: the proxied UIs only
+      # percent-encode query strings, and a double-encoded separator (%252f → %2f
+      # → /) would otherwise decode on the upstream and slip an authority override
+      # or a denied prefix past these checks.
+      if path.start_with?("//") || path.include?("..") || path.include?("%") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
         nil
       else
         "#{path}#{separator}#{query}"

@@ -11,7 +11,7 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
     stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
     sign_in
 
-    get "/prometheus/graph"
+    get "/prometheus/graph", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
   end
@@ -26,7 +26,7 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "proxy requires authentication" do
-    get "/prometheus/graph"
+    get "/prometheus/graph", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :redirect
     assert response.location.end_with?("/session/new")
