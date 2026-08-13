@@ -1,0 +1,21 @@
+test/integration/artifacts_controller_test.rb
+  s_6732c3c48d0ed9::t_91301cab154511 30-41
+app/controllers/upright/artifacts_controller.rb
+  s_6732c3c48d0ed9::t_4bc64990f1046d 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "0cc111277d24c39b96321a37f082a4c0bf370b35",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
