@@ -11,6 +11,7 @@ class Upright::Engine < ::Rails::Engine
       domain: :all,
       same_site: :lax,
       secure: Rails.env.production?,
+      httponly: true,
       expire_after: 24.hours
   end
 
