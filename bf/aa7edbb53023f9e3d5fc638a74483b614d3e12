@@ -1,0 +1,43 @@
+lib/upright/engine.rb
+  s_6732c3c48d0ed9::t_1931083183e511 20-22,24-26
+lib/generators/upright/install/install_generator.rb
+  s_6732c3c48d0ed9::t_aed062da66aade 20-24
+test/integration/proxy_path_sanitization_test.rb
+  s_6732c3c48d0ed9::t_41afaa059ceec5 29-36
+test/integration/public/services_controller_test.rb
+  s_6732c3c48d0ed9::t_25f9168d7f8578 69-81
+test/integration/prometheus_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_7a2dc7b794bdd0 14,33,69,75
+app/controllers/concerns/upright/proxy_authentication.rb
+  s_6732c3c48d0ed9::t_13caa58c8901c6 8
+  s_6732c3c48d0ed9::t_3f66606db78e1d 74-79
+  s_6732c3c48d0ed9::t_18670658af3b89 59-63
+test/integration/sessions_controller_test.rb
+  s_6732c3c48d0ed9::t_2f143349acdc99 26
+test/integration/alertmanager_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_3bd1d7c49a8e32 14,44
+  s_6732c3c48d0ed9::t_51855c2cca866d 24
+app/views/upright/public/services/_upcoming_maintenance.html.erb
+  s_6732c3c48d0ed9::t_ef2efc918918a5 11-12
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_c9317855e6e4a5 114-123
+app/controllers/upright/sessions_controller.rb
+  s_6732c3c48d0ed9::t_564052828445b0 34-42,44-45
+  s_6732c3c48d0ed9::t_50c5ba83cbc936 3-8,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "bfaa7edbb53023f9e3d5fc638a74483b614d3e12",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
