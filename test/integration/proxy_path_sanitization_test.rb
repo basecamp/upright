@@ -26,6 +26,14 @@ class ProxyPathSanitizationTest < ActiveSupport::TestCase
     assert_nil sanitize("/api/ query")
   end
 
+  test "rejects percent-encoding in the path (double-encoding bypass)" do
+    # %2f%2f -> // and %252f%252f -> %2f%2f -> // once the upstream decodes it;
+    # rejecting any encoding in the path stops the authority/prefix bypass.
+    assert_nil sanitize("/%2f%2fevil.example/steal")
+    assert_nil sanitize("/%252d%252freload")
+    assert_nil sanitize("/api/%2e%2e/secret")
+  end
+
   test "rejects an over-long query" do
     assert_nil sanitize("/api/v1/query?" + ("a" * (Upright::ProxyAuthentication::MAX_UPSTREAM_QUERY + 1)))
   end

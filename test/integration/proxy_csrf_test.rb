@@ -111,6 +111,16 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
+  test "a session GET with no provenance headers fails closed" do
+    reload = stub_request(:get, "http://localhost:9090/-/reload")
+    sign_in
+
+    get "/prometheus/-/reload"
+
+    assert_response :forbidden
+    assert_not_requested reload
+  end
+
   test "a same-site top-level GET navigation between our subdomains is allowed" do
     stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
     sign_in

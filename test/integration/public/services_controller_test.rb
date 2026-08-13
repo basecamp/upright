@@ -66,6 +66,19 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Internal tools are down/, response.body)
   end
 
+  test "upcoming maintenance affecting a mix of services names only the public ones" do
+    Upright::Maintenance.create! title: "Planned failover", impact: "maintenance",
+      starts_at: 1.hour.from_now, ends_at: 2.hours.from_now,
+      service_codes: [ "example_app", "internal_tools" ]
+
+    get upright.public_services_root_path
+
+    assert_response :success
+    assert_match "Planned failover", response.body
+    assert_match "Example App", response.body
+    assert_no_match(/Internal Tools/, response.body)
+  end
+
   private
     def raise_public_incident(impact: "major")
       Upright::Incident.create! title: "Example App is on fire", impact: impact,

@@ -17,9 +17,13 @@ class Upright::Engine < ::Rails::Engine
 
   # The proxy token stands in for an admin session on the metrics proxies, so a
   # blank one in a deployed environment is a fail-open: any bearer value would be
-  # compared against "" . Refuse to boot without one outside local envs.
+  # compared against "" . Refuse to boot without one outside local envs — but not
+  # during `assets:precompile`, which Rails runs with SECRET_KEY_BASE_DUMMY and no
+  # runtime secrets (the Docker image builds before the token is available).
   config.after_initialize do
-    if !Rails.env.local? && Upright.configuration.proxy_token.blank?
+    building_assets = ENV["SECRET_KEY_BASE_DUMMY"].present?
+
+    if !Rails.env.local? && !building_assets && Upright.configuration.proxy_token.blank?
       raise Upright::ConfigurationError, "Upright.configuration.proxy_token (or PROMETHEUS_OTLP_TOKEN) must be set outside development/test"
     end
   end

@@ -11,7 +11,7 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: "Alertmanager UI")
 
     sign_in
-    get "/alertmanager"
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
   end
@@ -21,7 +21,7 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
     sign_in
     on_subdomain :ams
 
-    get "/alertmanager/api/v2/status"
+    get "/alertmanager/api/v2/status", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
   end
@@ -41,7 +41,7 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
     sign_in
     on_subdomain :nyc
 
-    get "/alertmanager"
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :not_found
   end

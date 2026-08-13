@@ -17,7 +17,11 @@ module Upright
       def copy_initializers
         template "upright.rb", "config/initializers/upright.rb"
         template "omniauth.rb", "config/initializers/omniauth.rb"
-        template "content_security_policy.rb", "config/initializers/content_security_policy.rb", force: true
+        # Never force: an app may already run an enforced CSP, and silently
+        # replacing it with this commented template would disable it. On a
+        # collision Thor prompts instead of overwriting; the recommended policy is
+        # documented for the operator to merge.
+        template "content_security_policy.rb", "config/initializers/content_security_policy.rb"
       end
 
       def copy_sites_config
