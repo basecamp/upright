@@ -1,0 +1,24 @@
+test/models/upright/http/request_test.rb
+  s_6732c3c48d0ed9::t_429cb89157c3c7 1-74
+app/models/upright/http/request.rb
+  s_6732c3c48d0ed9::t_6b00602f6ce961 66
+  s_6732c3c48d0ed9::t_53d498c590f104 2-6
+  s_6732c3c48d0ed9::t_d06b698e996169 58-60,64-65
+  s_6732c3c48d0ed9::t_d2d982fe9b4d6e 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d1fd669248f564b9c68cf7de03b4dee735a1eb74",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
