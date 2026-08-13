@@ -1,5 +1,5 @@
 class Upright::ArtifactsController < Upright::ApplicationController
   def show
-    @artifact = ActiveStorage::Attachment.find(params[:id])
+    @artifact = ActiveStorage::Attachment.where(record_type: "Upright::ProbeResult").find(params[:id])
   end
 end
