@@ -7,7 +7,16 @@ class Upright::AlertmanagerProxyController < Upright::ApplicationController
   end
 
   def proxy
-    proxy_to_alertmanager request.fullpath.delete_prefix("/alertmanager"), body: request.body&.read
+    forward = sanitized_upstream_path(request.fullpath.delete_prefix("/alertmanager"))
+    path = forward&.split("?", 2)&.first
+
+    if forward.nil? || !upstream_host_ok?(alertmanager_url, forward)
+      head :bad_request
+    elsif token_forbidden_path?(path)
+      head :forbidden
+    else
+      proxy_to_alertmanager forward, body: request.body&.read
+    end
   end
 
   private

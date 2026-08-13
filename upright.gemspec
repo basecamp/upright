@@ -36,6 +36,11 @@ Gem::Specification.new do |spec|
   spec.add_dependency "frozen_record"
   spec.add_dependency "typhoeus"
 
+  # HTTP client for the metrics proxies. Floor at 2.14.3: earlier releases let a
+  # protocol-relative path (`//host`) override the upstream authority via
+  # URI#merge, an SSRF through the proxies (CVE-2026-25765 / -33637 / -54297).
+  spec.add_dependency "faraday", ">= 2.14.3"
+
   # Playwright (browser automation)
   # Keep in sync with Upright::PLAYWRIGHT_VERSION in lib/upright/version.rb
   spec.add_dependency "playwright-ruby-client", "~> 1.59.0"

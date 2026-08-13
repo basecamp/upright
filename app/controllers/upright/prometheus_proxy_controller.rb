@@ -4,6 +4,7 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   skip_forgery_protection
 
   skip_before_action :authenticate_user, only: :otlp
+  skip_before_action :block_cross_site_session_requests, only: :otlp
   before_action :authenticate_proxy_token, only: :otlp
 
   UNSUPPORTED_PATHS = %w[/api/v1/notifications]
@@ -12,12 +13,17 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   def proxy
-    path = request.fullpath.sub(%r{^/prometheus}, "")
+    forward = sanitized_upstream_path(request.fullpath.delete_prefix("/prometheus"))
+    path = forward&.split("?", 2)&.first
 
-    if path.start_with?(*UNSUPPORTED_PATHS)
+    if forward.nil? || !upstream_host_ok?(Upright.configuration.prometheus_url, forward)
+      head :bad_request
+    elsif path.start_with?(*UNSUPPORTED_PATHS)
       head :not_found
+    elsif token_forbidden_path?(path)
+      head :forbidden
     else
-      proxy_to_prometheus(path)
+      proxy_to_prometheus(forward)
     end
   end
 
