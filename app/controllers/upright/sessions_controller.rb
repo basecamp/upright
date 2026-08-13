@@ -1,8 +1,8 @@
 class Upright::SessionsController < Upright::ApplicationController
   skip_before_action :authenticate_user, only: [ :new, :create ]
-  skip_forgery_protection only: :create
 
   before_action :ensure_not_signed_in, only: [ :new, :create ]
+  before_action :require_post_for_credential_callback, only: :create
 
   def new
   end
@@ -23,6 +23,18 @@ class Upright::SessionsController < Upright::ApplicationController
   private
     def ensure_not_signed_in
       redirect_to upright.site_root_path if session[:user_info].present?
+    end
+
+    # The credential (static_credentials) callback must arrive as a POST so it
+    # passes through Rails' authenticity-token check: a cross-site top-level GET
+    # carries the Lax session cookie and could otherwise plant an attacker-chosen
+    # session (CVE-2026-67993). External identity providers (e.g. OpenID Connect)
+    # legitimately redirect back via GET and are validated by OmniAuth's own
+    # state nonce before we reach here, so they are exempt.
+    def require_post_for_credential_callback
+      if request.get? && params[:provider].to_s == "static_credentials"
+        head :not_found
+      end
     end
 
     def upright
