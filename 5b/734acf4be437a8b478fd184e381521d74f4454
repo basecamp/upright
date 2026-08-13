@@ -1,0 +1,27 @@
+app/controllers/upright/prometheus_proxy_controller.rb
+  s_6732c3c48d0ed9::t_4dda11f19475c7 2-3,7
+app/controllers/upright/alertmanager_proxy_controller.rb
+  s_6732c3c48d0ed9::t_e5af49ca545694 2-3
+test/integration/alertmanager_proxy_controller_test.rb
+  s_6732c3c48d0ed9::t_d8e3100b10e948 27
+app/controllers/concerns/upright/proxy_guards.rb
+  s_6732c3c48d0ed9::t_c80a77d4d1d03a 1-37
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_fb0876239fa6bc 1-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "5b734acf4be437a8b478fd184e381521d74f4454",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
