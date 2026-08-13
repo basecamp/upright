@@ -1,0 +1,32 @@
+test/models/upright/playwright/video_recording_test.rb
+  s_6732c3c48d0ed9::t_35b24de6354ec6 45
+  s_6732c3c48d0ed9::t_d0c4bbeed744ce 1-44,46-62
+app/models/concerns/upright/playwright/trace_recording.rb
+  s_6732c3c48d0ed9::t_8520e49ee504f7 17-20
+test/jobs/upright/playwright_video_sweep_job_test.rb
+  s_6732c3c48d0ed9::t_852a59bd5f9104 1-41
+app/models/concerns/upright/playwright/video_recording.rb
+  s_6732c3c48d0ed9::t_fe07f726b0a4b2 77-79
+  s_6732c3c48d0ed9::t_dc2c0d4206625d 51,55-60
+  s_6732c3c48d0ed9::t_7fb4ed5bc616ff 61-62
+app/jobs/upright/playwright_video_sweep_job.rb
+  s_6732c3c48d0ed9::t_89dcbbddf39364 1-21
+test/models/upright/playwright/trace_recording_test.rb
+  s_6732c3c48d0ed9::t_c2f57f48601d03 1-21
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "9525db7c9ce307148bc8f772a8a0ce3cb39c3d50",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
