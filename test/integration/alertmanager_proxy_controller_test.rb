@@ -24,7 +24,7 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: '{"silenceID":"abc-123"}', headers: { "Content-Type" => "application/json" })
 
     sign_in
-    post "/alertmanager/api/v2/silences", params: silence_json, headers: { "Content-Type" => "application/json" }
+    post "/alertmanager/api/v2/silences", params: silence_json, headers: { "Content-Type" => "application/json", "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
     assert_requested stub

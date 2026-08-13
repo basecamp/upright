@@ -1,7 +1,10 @@
 class Upright::PrometheusProxyController < Upright::ApplicationController
+  include Upright::ProxyGuards
+
   skip_forgery_protection
 
   skip_before_action :authenticate_user, only: :otlp
+  skip_before_action :block_cross_site_session_requests, only: :otlp
   before_action :authenticate_otlp_token, only: :otlp
 
   UNSUPPORTED_PATHS = %w[/api/v1/notifications]
