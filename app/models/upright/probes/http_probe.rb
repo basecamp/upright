@@ -6,6 +6,11 @@ class Upright::Probes::HTTPProbe < FrozenRecord::Base
 
   DEFAULT_EXPECTED_STATUS = 200..399
 
+  # Response bodies are stored as viewable/downloadable artifacts: cap their
+  # size and never store them as text/html, which would be same-origin XSS.
+  MAX_STORED_BODY_BYTES = 1.megabyte
+  TRUNCATION_NOTICE = "\n\n[TRUNCATED: response body exceeded #{MAX_STORED_BODY_BYTES} bytes]".freeze
+
   attr_accessor :last_response
 
   def check
@@ -100,7 +105,31 @@ class Upright::Probes::HTTPProbe < FrozenRecord::Base
 
     def attach_response_body(probe_result)
       if last_response && last_response.body.present?
-        Upright::Artifact.new(name: "response.#{last_response.file_extension}", content: last_response.body).attach_to(probe_result)
+        # Attach directly with identify: false — the body is untrusted remote
+        # content, and ActiveStorage's content sniffing would otherwise restore
+        # text/html and make the stored artifact same-origin XSS when previewed.
+        probe_result.artifacts.attach(
+          io: StringIO.new(stored_body),
+          filename: "response.#{stored_body_extension}",
+          content_type: stored_body_content_type,
+          identify: false
+        )
+      end
+    end
+
+    def stored_body_extension
+      last_response.file_extension == "html" ? "txt" : last_response.file_extension
+    end
+
+    def stored_body_content_type
+      Marcel::MimeType.for(extension: stored_body_extension)
+    end
+
+    def stored_body
+      if last_response.body.bytesize > MAX_STORED_BODY_BYTES
+        last_response.body.byteslice(0, MAX_STORED_BODY_BYTES) + TRUNCATION_NOTICE
+      else
+        last_response.body
       end
     end
 end
