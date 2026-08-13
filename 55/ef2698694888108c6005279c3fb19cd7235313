@@ -1,0 +1,27 @@
+app/views/upright/artifacts/show.html.erb
+  s_6732c3c48d0ed9::t_c2cdbb170b8d94 7-14
+test/integration/trace_viewer_isolation_test.rb
+  s_6732c3c48d0ed9::t_ba7ef5b183c982 1-64
+test/fixtures/active_storage/attachments.yml
+  s_6732c3c48d0ed9::t_10a3c3e0a60f0d 21-25
+app/helpers/upright/artifacts_helper.rb
+  s_6732c3c48d0ed9::t_2c31ed317f67a0 1-17
+test/fixtures/active_storage/blobs.yml
+  s_6732c3c48d0ed9::t_7bff6eb1bb3453 41-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "55ef2698694888108c6005279c3fb19cd7235313",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
