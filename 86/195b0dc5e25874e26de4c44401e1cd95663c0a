@@ -1,0 +1,56 @@
+lib/generators/upright/install/templates/docker-compose.yml
+  s_6732c3c48d0ed9::t_3f0eab0a9f4cfe 13-18
+  s_6732c3c48d0ed9::t_1418fe318b48bf 25
+test/models/upright/traceroute/result_test.rb
+  s_6732c3c48d0ed9::t_2078b2e4ddecac 25-38
+app/models/upright/traceroute/result.rb
+  s_6732c3c48d0ed9::t_b002d493df5c09 41
+  s_6732c3c48d0ed9::t_d16db23c89aeda 7-10,18-19
+test/dummy/probes/ping_probe.rb
+  s_6732c3c48d0ed9::t_24244beebc14e3 7-10,12-14
+README.md
+  s_6732c3c48d0ed9::t_e039be53c29258 217-220,222-224
+  s_6732c3c48d0ed9::t_9891254d04ad2e 563
+  s_6732c3c48d0ed9::t_72afdd31351902 451
+  s_6732c3c48d0ed9::t_6be3f5a405a7c8 80
+  s_6732c3c48d0ed9::t_3b67910e2211ba 156,158-159
+  s_6732c3c48d0ed9::t_4ce3537b91eb78 150
+lib/generators/upright/install/templates/upright.rb
+  s_6732c3c48d0ed9::t_c15cf5b39b7c0f 11-18
+lib/generators/upright/install/templates/content_security_policy.rb
+  s_6732c3c48d0ed9::t_fc8d6c6a8f44f3 1-43
+lib/generators/upright/install/templates/deploy.yml
+  s_6732c3c48d0ed9::t_06c05376d99d82 66-72
+  s_6732c3c48d0ed9::t_51b70bde511c82 51
+  s_6732c3c48d0ed9::t_554ad3b251e91d 88-92
+lib/generators/upright/install/install_generator.rb
+  s_6732c3c48d0ed9::t_844d6241a4e59b 20
+  s_6732c3c48d0ed9::t_0e57be7b4a69c8 110
+lib/generators/upright/install/templates/otel_collector.yml
+  s_6732c3c48d0ed9::t_fb030bc236716d 5-10
+app/models/upright/traceroute/ip_metadata_lookup.rb
+  s_6732c3c48d0ed9::t_b207814fd12f5c 58,63
+  s_6732c3c48d0ed9::t_651e4948551a95 6-11,13
+  s_6732c3c48d0ed9::t_a6869869c94624 74-85
+test/models/upright/traceroute/ip_metadata_lookup_test.rb
+  s_6732c3c48d0ed9::t_83e03cfe6ba968 112-122
+app/javascript/upright/controllers/sites_map_controller.js
+  s_6732c3c48d0ed9::t_169b78cbeb149d 17
+  s_6732c3c48d0ed9::t_2fbad93b92aff0 24-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "86195b0dc5e25874e26de4c44401e1cd95663c0a",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
