@@ -17,6 +17,7 @@ module Upright
       def copy_initializers
         template "upright.rb", "config/initializers/upright.rb"
         template "omniauth.rb", "config/initializers/omniauth.rb"
+        template "content_security_policy.rb", "config/initializers/content_security_policy.rb", force: true
       end
 
       def copy_sites_config
@@ -106,7 +107,7 @@ module Upright
         say "  2. Configure your servers in config/deploy.yml"
         say "  3. Configure sites in config/sites.yml"
         say "  4. Add probes in probes/*.yml"
-        say "  5. Set ADMIN_PASSWORD env var (default: upright)"
+        say "  5. Set the ADMIN_PASSWORD env var — required, there is no default password"
         say ""
         say "For production, review config/initializers/upright.rb and update:"
         say "  config.hostname = \"example.com\""

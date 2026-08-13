@@ -77,6 +77,7 @@ Visit http://app.my-upright.localhost:3000 to see your Upright instance.
 The `upright:install` generator creates:
 
 - `config/initializers/upright.rb` - Engine configuration
+- `config/initializers/content_security_policy.rb` - Ready-to-enable CSP covering the engine's CDN dependencies
 - `config/sites.yml` - Site definitions for each VPS you host Upright on
 - `config/prometheus/prometheus.yml` - Prometheus configuration
 - `config/alertmanager/alertmanager.yml` - AlertManager configuration
@@ -146,16 +147,16 @@ production:
     schedule: every minute
 ```
 
-`stores_metrics` marks the sites running a local Prometheus and Alertmanager. Those sites accept metric writes and serve the `/prometheus` and `/alertmanager` proxies, so losing one leaves the others still readable; probe-only sites serve neither. Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token` (`PROMETHEUS_OTLP_TOKEN` by default) instead of an admin session.
+`stores_metrics` marks the sites running a local Prometheus and Alertmanager. Those sites accept metric writes and serve the `/prometheus` and `/alertmanager` proxies, so losing one leaves the others still readable; probe-only sites serve neither. Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token` instead of an admin session. The install generator writes a random token into `config/initializers/upright.rb`; every site must share the same value, and setting the `PROMETHEUS_OTLP_TOKEN` env var overrides it for rotation.
 
 ### Authentication
 
 #### Static Credentials
 
-Upright uses static credentials by default with username `admin` and password `upright`.
+Upright uses static credentials by default with username `admin` and the password taken from the `ADMIN_PASSWORD` environment variable.
 
-> [!WARNING]
-> Change the default password before deploying to production by setting the `ADMIN_PASSWORD` environment variable.
+> [!IMPORTANT]
+> There is no default password: `ADMIN_PASSWORD` must be set, and sign-in fails closed without it. Set it as a Kamal secret in production (the generated `config/deploy.yml` already lists it) and export it locally for development.
 
 
 #### OpenID Connect
@@ -213,8 +214,14 @@ class PingProbe < FrozenRecord::Base
 
   stagger_by_site 3.seconds
 
+  # Hostnames, IPv4, and IPv6 addresses only. The first character may not be
+  # a dash, so a configured host can never be mistaken for a ping flag.
+  HOST_PATTERN = /\A[a-z0-9:][a-z0-9:._-]*\z/i
+
   def check
-    @ping_output, status = Open3.capture2e("ping", "-c", "1", "-W", "5", host)
+    raise ArgumentError, "invalid ping host: #{host.inspect}" unless HOST_PATTERN.match?(host.to_s)
+
+    @ping_output, status = Open3.capture2e("ping", "-c", "1", "-W", "5", "--", host)
     status.success?
   end
 
@@ -441,6 +448,7 @@ proxy:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - ADMIN_PASSWORD
   tags:
     amsterdam:
       SITE_SUBDOMAIN: ams
@@ -552,7 +560,7 @@ bin/dev
 
 Visit http://app.upright.localhost:3000 and sign in with:
 - **Username**: `admin`
-- **Password**: `upright` (or value of `ADMIN_PASSWORD` env var)
+- **Password**: the value of the `ADMIN_PASSWORD` env var, e.g. `ADMIN_PASSWORD=upright bin/dev` (a throwaway value like this is fine for local testing only — never for a deployed site)
 
 ### Testing Playwright Probes
 

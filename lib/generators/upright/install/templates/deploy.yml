@@ -48,6 +48,7 @@ env:
   secret:
     - RAILS_MASTER_KEY
     - PROMETHEUS_OTLP_TOKEN
+    - ADMIN_PASSWORD
   tags:
     london:
       SITE_SUBDOMAIN: lon
@@ -62,7 +63,13 @@ volumes:
 
 accessories:
   otel_collector:
-    image: otel/opentelemetry-collector-contrib:0.126.0
+    # Pinned by digest so deploys are immutable; the tag is documentation only.
+    image: otel/opentelemetry-collector-contrib:0.126.0@sha256:973747f78266a8ffec428417727e6b704559e9a30e4be8c1cca2899facd68689
+    # The collector runs unprivileged and only receives OTLP over the private
+    # Docker network — it does not mount the Docker socket or host log
+    # directories. To collect container logs, prefer a filelog receiver over
+    # a read-only mount of the specific log path rather than the Docker socket,
+    # which grants root-equivalent control of the host.
     env:
       secret:
         - OTEL_GATEWAY_USERNAME
@@ -71,11 +78,6 @@ accessories:
         - PROMETHEUS_OTLP_TOKEN
     files:
       - config/otel_collector.yml:/etc/otelcol-contrib/config.yaml
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers
-    options:
-      user: 0
     roles:
       - jobs
 
@@ -83,12 +85,16 @@ accessories:
     image: prom/prometheus:v3.2.1
     hosts:
       - <%= app_domain %>
+    # No published port: Prometheus is only reachable over the private Docker
+    # network (the app proxies it). --web.enable-lifecycle is deliberately
+    # omitted — the unauthenticated reload/quit endpoints aren't needed since
+    # config changes redeploy the accessory; if you add it back, front it with
+    # --web.config.file authentication.
     cmd: >-
       --config.file=/etc/prometheus/prometheus.yml
       --storage.tsdb.path=/prometheus
       --storage.tsdb.retention.time=30d
       --web.enable-otlp-receiver
-      --web.enable-lifecycle
     files:
       - config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - config/prometheus/rules/upright.rules.yml:/etc/prometheus/rules/upright.rules.yml
