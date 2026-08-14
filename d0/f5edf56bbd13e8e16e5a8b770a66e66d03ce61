@@ -1,0 +1,35 @@
+CHANGELOG.md
+  s_6732c3c48d0ed9::t_ea4aca1a9a24e8 13-15
+  s_6732c3c48d0ed9::t_a873d2ae6acda9 30-43
+test/integration/proxy_path_sanitization_test.rb
+  s_6732c3c48d0ed9::t_e9e1eafb22e9c2 37-44
+lib/upright/configuration.rb
+  s_6732c3c48d0ed9::t_3f0156f0d74f73 176
+app/controllers/concerns/upright/proxy_authentication.rb
+  s_6732c3c48d0ed9::t_4693255d8937a2 74-80
+  s_6732c3c48d0ed9::t_2c94a54d54d1b3 50-55
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_70978185b8bad3 124-125,130-131
+test/models/upright/traceroute/result_test.rb
+  s_6732c3c48d0ed9::t_388bccac079300 27
+app/models/upright/traceroute/result.rb
+  s_6732c3c48d0ed9::t_79e18ee070a50c 7-10
+lib/upright/engine.rb
+  s_6732c3c48d0ed9::t_39e81214af214a 9-14,17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d0f5edf56bbd13e8e16e5a8b770a66e66d03ce61",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
