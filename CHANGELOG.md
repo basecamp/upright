@@ -19,8 +19,9 @@
 - Scope the session cookie to the configured hostname rather than its registrable
   parent, so a sibling domain can't be handed the admin session.
 - Redact `Authorization`/`Cookie` credentials from probe logs, store HTTP probe
-  bodies as inert size-capped artifacts, stop recording Playwright snapshots and
-  logging signed blob URLs, and scope artifact downloads to probe results.
+  bodies as inert size-capped artifacts, don't record Playwright traces for
+  authenticated probes (and drop snapshots/signed-blob-URL logging for the rest),
+  and scope artifact downloads to probe results.
 - Restrict the public status page to incidents affecting a public-facing service,
   and harden the generated deploy defaults (drop the OTEL Docker-socket mount,
   bind services to loopback, ship a random proxy token and a CSP template).
