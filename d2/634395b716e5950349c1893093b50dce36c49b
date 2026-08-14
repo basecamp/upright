@@ -1,0 +1,25 @@
+app/models/concerns/upright/playwright/trace_recording.rb
+  s_6732c3c48d0ed9::t_816a7fdeb8618b 17-23,28-29
+CHANGELOG.md
+  s_6732c3c48d0ed9::t_e77c3aa407bcce 22-24
+test/models/upright/playwright/trace_recording_test.rb
+  s_6732c3c48d0ed9::t_c18e239c6e9e31 7,13,22-28
+  s_6732c3c48d0ed9::t_e7559e135b5779 29-31
+  s_6732c3c48d0ed9::t_e89d72ce3a3762 32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "d2634395b716e5950349c1893093b50dce36c49b",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
