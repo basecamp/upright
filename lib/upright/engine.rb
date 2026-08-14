@@ -6,9 +6,14 @@ class Upright::Engine < ::Rails::Engine
 
   # Session store configuration
   initializer "upright.session_store", before: :load_config_initializers do |app|
+    # Scope the cookie to the configured hostname (resolved per-request, since the
+    # host app sets it in an initializer that runs after this one) rather than
+    # `domain: :all`, which — with a multi-label hostname like upright.example.com
+    # — would hand the cookie to the registrable parent and every sibling under it
+    # (F-08).
     app.config.session_store :cookie_store,
       key: "_upright_session",
-      domain: :all,
+      domain: ->(_request) { Upright.configuration.hostname&.then { |h| ".#{h}" } },
       same_site: :lax,
       secure: Rails.env.production?,
       httponly: true,

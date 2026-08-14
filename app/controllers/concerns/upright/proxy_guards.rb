@@ -27,12 +27,12 @@ module Upright::ProxyGuards
       origin = request.headers["Origin"]
 
       if site.present?
-        # Same-origin (the embedded UI) and user-initiated `none` (typed URL /
-        # bookmark) are fine; a same-site *top-level GET navigation* is an admin
-        # moving between our own subdomains. Everything else — cross-site, and any
-        # same-site sub-resource or write — is refused.
-        !(site.in?(%w[ same-origin none ]) ||
-          (site == "same-site" && request.get? && request.headers["Sec-Fetch-Mode"] == "navigate"))
+        # Only same-origin (the embedded UI) and user-initiated `none` (a typed
+        # URL or bookmark) are allowed. same-site is refused too: a sibling on the
+        # same registrable domain (evil.example.com vs ams.upright.example.com) is
+        # same-site, and a top-level navigation from it would otherwise carry the
+        # Lax cookie into a forged proxy request.
+        !site.in?(%w[ same-origin none ])
       elsif origin.present?
         origin != request.base_url
       else
@@ -51,11 +51,11 @@ module Upright::ProxyGuards
       path, separator, query = raw.to_s.partition("?")
       path = "/" if path.empty?
 
-      # Also reject any percent-encoding in the path: the proxied UIs only
-      # percent-encode query strings, and a double-encoded separator (%252f → %2f
-      # → /) would otherwise decode on the upstream and slip an authority override
-      # or a denied prefix past these checks.
-      if path.start_with?("//") || path.include?("..") || path.include?("%") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
+      # Reject any dot-segment (`.`/`..`) and any percent-encoding in the path.
+      # Faraday resolves the path with URI#merge, which collapses `.`/`..` and
+      # decodes escapes, so `/./-/reload` or `/%252d%252freload` would otherwise
+      # slip an authority override or a denied prefix past these checks.
+      if path.start_with?("//") || path.match?(%r{(?:\A|/)\.\.?(?:/|\z)}) || path.include?("%") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
         nil
       else
         "#{path}#{separator}#{query}"

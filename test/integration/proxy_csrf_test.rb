@@ -109,13 +109,14 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
-  test "a same-site top-level GET navigation between our subdomains is allowed" do
-    stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
+  test "a same-site request is refused (a sibling domain is same-site, not same-origin)" do
+    stub = stub_request(:get, "http://localhost:9090/graph")
     sign_in
 
     get "/prometheus/graph", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
 
-    assert_response :success
+    assert_response :forbidden
+    assert_not_requested stub
   end
 
   test "a normal query still forwards on the session path" do
