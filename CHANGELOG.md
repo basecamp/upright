@@ -10,8 +10,9 @@
   are now validated and the resolved host is re-checked, with a `faraday >= 2.14.3`
   floor (CVE-2026-25765).
 - Refuse cross-site requests to the metrics proxies on the session-cookie path
-  via a Fetch-Metadata / Origin gate; only same-origin, user-initiated, and
-  same-site top-level navigations are honoured (CVE-2026-67990).
+  via a Fetch-Metadata / Origin gate; only same-origin and user-initiated (`none`)
+  requests are honoured, and missing provenance headers fail closed
+  (CVE-2026-67990).
 - Require a POST with a valid authenticity token on the `static_credentials`
   sign-in callback, and fail closed when `ADMIN_PASSWORD` is unset instead of
   shipping a default password (CVE-2026-67993).
@@ -25,6 +26,20 @@
   bind services to loopback, ship a random proxy token and a CSP template).
 - Update Active Storage to close an arbitrary-file-read → RCE (rails 8.1.3.1,
   CVE-2026-66066).
+
+### Upgrading
+
+Some of the security fixes live in generated, host-owned config that a gem
+upgrade does not rewrite. Existing installs should apply these by hand:
+
+- `config/initializers/omniauth.rb`: fail closed when `ADMIN_PASSWORD` is unset
+  instead of `ENV.fetch("ADMIN_PASSWORD", "upright")`, so the well-known default
+  password is removed (compare against the current install template).
+- `config/recurring.yml`: add the `sweep_playwright_videos` entry
+  (`class: "Upright::PlaywrightVideoSweepJob"`) so stranded recordings from a
+  crashed run are still cleaned up.
+- `config/initializers/content_security_policy.rb`: adopt the recommended policy
+  from the install template if you don't already enforce a CSP.
 
 ### Changed
 

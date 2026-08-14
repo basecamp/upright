@@ -24,7 +24,7 @@ class Upright::Traceroute::ResultTest < ActiveSupport::TestCase
   end
 
   test "accepts hostnames and IP addresses" do
-    [ "example.com", "sub-domain.example.com", "8.8.8.8", "2001:4860:4860::8888", "::1" ].each do |host|
+    [ "example.com", "sub-domain.example.com", "8.8.8.8", "2001:4860:4860::8888", "::1", "fe80::1%eth0" ].each do |host|
       assert Upright::Traceroute::Result.new(host), "expected #{host.inspect} to be accepted"
     end
   end

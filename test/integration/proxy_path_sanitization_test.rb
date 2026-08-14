@@ -34,6 +34,14 @@ class ProxyPathSanitizationTest < ActiveSupport::TestCase
     assert_nil sanitize("/api/%2e%2e/secret")
   end
 
+  test "rejects a single-dot segment that URI#merge would collapse" do
+    # /./-/reload -> /-/reload after normalization, bypassing the /-/ deny.
+    assert_nil sanitize("/./-/reload")
+    assert_nil sanitize("/api/./v1")
+    assert_nil sanitize("/.")
+    assert_equal "/api/v1.json", sanitize("/api/v1.json") # a dot inside a segment is fine
+  end
+
   test "rejects an over-long query" do
     assert_nil sanitize("/api/v1/query?" + ("a" * (Upright::ProxyAuthentication::MAX_UPSTREAM_QUERY + 1)))
   end

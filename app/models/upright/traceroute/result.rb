@@ -4,9 +4,10 @@ class Upright::Traceroute::Result
   PROBE_COUNT = 10
   MAX_HOPS = 30
 
-  # Hostnames, IPv4, and IPv6 addresses only. The first character may not be
-  # a dash, so a configured host can never be mistaken for an mtr flag.
-  HOST_PATTERN = /\A[a-z0-9:][a-z0-9:._-]*\z/i
+  # Hostnames, IPv4, and IPv6 addresses (including a link-local zone such as
+  # fe80::1%eth0) only. The first character may not be a dash, so a configured
+  # host can never be mistaken for an mtr flag.
+  HOST_PATTERN = /\A[a-z0-9:][a-z0-9:._-]*(?:%[a-z0-9._-]+)?\z/i
 
   attr_reader :host, :hops, :raw_json
 

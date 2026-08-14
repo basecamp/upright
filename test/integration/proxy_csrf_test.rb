@@ -121,13 +121,14 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested reload
   end
 
-  test "a same-site top-level GET navigation between our subdomains is allowed" do
-    stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
+  test "a same-site request is refused (a sibling domain is same-site, not same-origin)" do
+    stub = stub_request(:get, "http://localhost:9090/graph")
     sign_in
 
     get "/prometheus/graph", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
 
-    assert_response :success
+    assert_response :forbidden
+    assert_not_requested stub
   end
 
   # --- WP1: SSRF path lock (F-01 / CVE-2026-25765). The path-authority-override

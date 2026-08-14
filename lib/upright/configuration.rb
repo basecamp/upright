@@ -173,11 +173,6 @@ class Upright::Configuration
         hosts << /\A#{Regexp.escape(domain)}#{port_suffix}\z/
       end
       Rails.application.config.hosts = hosts
-      # Derive tld_length from the configured hostname's depth rather than forcing
-      # 1. This keeps subdomain parsing correct for multi-label hostnames and, for
-      # `domain: :all` session cookies, scopes the cookie to `.#{hostname}` instead
-      # of the registrable parent — so a sibling like evil.example.com can't be
-      # handed the admin session when the app runs at upright.example.com (F-08).
-      Rails.application.config.action_dispatch.tld_length = hostname.count(".")
+      Rails.application.config.action_dispatch.tld_length = 1
     end
 end
