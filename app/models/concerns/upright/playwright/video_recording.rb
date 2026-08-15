@@ -42,12 +42,14 @@ module Upright::Playwright::VideoRecording
     def save_video
       return unless pending_video_recording
 
+      video = pending_video_recording.fetch(:video)
       video_path = video_dir.join("#{SecureRandom.hex}.webm").to_s
-      pending_video_recording.fetch(:video).save_as(video_path)
+      video.save_as(video_path)
 
       self.video_artifacts ||= []
       video_artifacts << pending_video_recording.merge(path: video_path)
     ensure
+      video&.delete rescue Rails.error.report($!)
       self.pending_video_recording = nil
     end
 
