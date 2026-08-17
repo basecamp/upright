@@ -1,23 +1,40 @@
 version: 2
 updates:
-- package-ecosystem: bundler
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-  cooldown:
-    semver-major-days: 7
-    semver-minor-days: 3
-    semver-patch-days: 2
-    default-days: 7
-- package-ecosystem: github-actions
-  directory: "/"
-  groups:
-    github-actions:
-      patterns:
-        - "*"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 10
-  cooldown:
-    default-days: 10
+  - package-ecosystem: bundler
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Chicago
+    # One grouped PR per run. fetch-metadata reports the group's highest
+    # update-type, so an all-patch/minor group still auto-merges while a
+    # group containing a major falls through to human review.
+    groups:
+      bundler:
+        patterns: [ "*" ]
+    commit-message:
+      prefix: "deps"
+    labels: [ dependencies ]
+    cooldown:
+      default-days: 7
+      semver-major-days: 7
+      semver-minor-days: 3
+      semver-patch-days: 2
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: America/Chicago
+    groups:
+      github-actions:
+        patterns: [ "*" ]
+    commit-message:
+      prefix: "deps(actions)"
+    labels: [ dependencies, github_actions ]
+    # github-actions supports only default-days (no semver-granular cooldown).
+    cooldown:
+      default-days: 10
