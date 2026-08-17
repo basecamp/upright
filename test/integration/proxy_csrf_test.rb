@@ -119,6 +119,14 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
+  test "a same-site navigation to the framed proxy page is allowed (post-login return)" do
+    sign_in
+
+    get "/framed/prometheus", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
+
+    assert_response :success
+  end
+
   test "a normal query still forwards on the session path" do
     stub_request(:get, "http://localhost:9090/api/v1/query?query=up").to_return(status: 200, body: "{}")
     sign_in

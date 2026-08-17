@@ -39,6 +39,11 @@ class ProxyPathSanitizationTest < ActiveSupport::TestCase
     assert_nil sanitize("/api/ query")
   end
 
+  test "rejects a path with a null byte or broken encoding" do
+    assert_nil sanitize("/api/v1/query\0")
+    assert_nil sanitize("/api/\xC3(")
+  end
+
   test "rejects an over-long query" do
     assert_nil sanitize("/api/v1/query?" + ("a" * (Upright::ProxyGuards::MAX_UPSTREAM_QUERY + 1)))
   end

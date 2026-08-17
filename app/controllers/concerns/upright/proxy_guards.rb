@@ -9,15 +9,18 @@ module Upright::ProxyGuards
   MAX_UPSTREAM_QUERY = 4096
 
   included do
-    prepend_before_action :block_cross_site_session_requests
+    # Only the forwarding `proxy` action needs the cross-site gate. `show` just
+    # renders the framed UI wrapper (no upstream call, no state change), so gating
+    # it too would 403 a legitimate same-site navigation to it — e.g. an operator
+    # following the header link from a site subdomain to app.<hostname>.
+    prepend_before_action :block_cross_site_session_requests, only: :proxy
   end
 
   private
     # CSRF gate for the browser (session-cookie) path. Rails token CSRF is skipped
     # on the proxies because the embedded Prometheus/Alertmanager UIs make
     # same-origin requests that can't carry an authenticity token, so we gate with
-    # Fetch-Metadata / Origin instead (CVE-2026-67990). The token-authenticated
-    # OTLP ingest endpoint skips this gate and stays on its own 401 path.
+    # Fetch-Metadata / Origin instead (CVE-2026-67990).
     def block_cross_site_session_requests
       head :forbidden if cross_site_request?
     end
@@ -55,7 +58,9 @@ module Upright::ProxyGuards
       # Faraday resolves the path with URI#merge, which collapses `.`/`..` and
       # decodes escapes, so `/./-/reload` or `/%252d%252freload` would otherwise
       # slip an authority override or a denied prefix past these checks.
-      if path.start_with?("//") || path.match?(%r{(?:\A|/)\.\.?(?:/|\z)}) || path.include?("%") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
+      # Rack::Utils.valid_path? runs first: it screens null bytes and broken
+      # encoding, which would otherwise raise out of String#match?.
+      if !Rack::Utils.valid_path?(path) || path.start_with?("//") || path.match?(%r{(?:\A|/)\.\.?(?:/|\z)}) || path.include?("%") || !path.match?(SAFE_UPSTREAM_PATH) || query.length > MAX_UPSTREAM_QUERY
         nil
       else
         "#{path}#{separator}#{query}"

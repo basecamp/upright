@@ -12,14 +12,24 @@ Security backport release for v0.3.0 installs.
   are now validated and the resolved host is re-checked, with a `faraday >= 2.14.3`
   floor (CVE-2026-25765).
 - Refuse cross-site requests to the metrics proxies on the session-cookie path
-  via a Fetch-Metadata / Origin gate; only same-origin, user-initiated, and
-  same-site top-level navigations are honoured (CVE-2026-67990).
+  via a Fetch-Metadata / Origin gate; only same-origin and user-initiated (`none`)
+  requests are honoured, and missing provenance headers fail closed
+  (CVE-2026-67990).
 - Require a POST with a valid authenticity token on the `static_credentials`
   sign-in callback, and fail closed when `ADMIN_PASSWORD` is unset instead of
   shipping a default password (CVE-2026-67993).
 - Scope the session cookie to the configured hostname rather than its registrable
   parent, so a sibling domain can't be handed the admin session, and mark it
   httponly (F-08).
+
+### Upgrading
+
+The `static_credentials` fail-closed password fix lives in the install template,
+which a gem upgrade does not copy back over an existing app. Existing v0.3.0
+installs must update `config/initializers/omniauth.rb` by hand so an unset
+`ADMIN_PASSWORD` no longer falls back to the well-known `upright` default — set
+`ADMIN_PASSWORD`, or mirror the current template (which drops the default). The
+SSRF and proxy/login CSRF fixes are in engine code and apply automatically.
 
 ## v0.3.0
 

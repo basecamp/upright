@@ -11,7 +11,7 @@ module AuthenticationHelper
 
     on_subdomain :app
     # Mirror the real sign-in form, which posts to the callback (see
-    # sessions#create's require_post_for_credential_callback guard).
+    # sessions#create's verify_credential_callback guard).
     post upright.auth_callback_url(provider)
   end
 
