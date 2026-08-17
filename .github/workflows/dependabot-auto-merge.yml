@@ -1,0 +1,174 @@
+name: Dependabot auto-merge
+
+# Zero-touch automation for Bundler PATCH/MINOR updates only. Everything else
+# (bundler major, all github-actions PRs) stays human-gated: never
+# auto-approved, never auto-merged.
+#
+# Why pull_request_target: the workflow definition comes from the BASE branch,
+# so PR-controlled code can never redefine the job that holds write
+# permissions. The trade-off (a privileged token alongside an untrusted head)
+# is neutralized by never checking out or executing anything PR-controlled:
+# both jobs work exclusively through the GitHub API.
+on: pull_request_target # zizmor: ignore[dangerous-triggers] -- no checkout and no PR-controlled code executes anywhere in this workflow; jobs are gated to the dependabot actor + triggering_actor + author + head-ref prefix, and the automerge job re-validates head SHA, changed-file allowlist, and Dependabot-signed commits via the API before acting
+
+permissions: {}
+
+# One run per PR; a new push supersedes the in-flight validation of stale state.
+concurrency:
+  group: dependabot-auto-merge-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  metadata:
+    name: Dependabot metadata
+    if: github.actor == 'dependabot[bot]' && github.triggering_actor == 'dependabot[bot]' && github.event.pull_request.user.login == 'dependabot[bot]' && startsWith(github.event.pull_request.head.ref, 'dependabot/bundler/') # zizmor: ignore[bot-conditions] -- the actor checks are deliberately paired with the unspoofable pull_request.user.login check; actor + triggering_actor stop a human-triggered event from re-entering this path
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read # fetch-metadata only reads the PR
+    outputs:
+      update-type: ${{ steps.metadata.outputs.update-type }}
+      package-ecosystem: ${{ steps.metadata.outputs.package-ecosystem }}
+    steps:
+      # fetch-metadata reads the PR; it also independently verifies the user
+      # and Dependabot's signed commits (skip-verification defaults to false).
+      - id: metadata
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+  automerge:
+    name: Auto-merge bundler patch/minor
+    needs: metadata
+    # Actor/author gating happened at the metadata job (a skipped metadata job
+    # skips this one), and the first step below independently re-validates all
+    # of it via the API before anything privileged runs. fetch-metadata emits
+    # the full "version-update:" prefix — match it exactly.
+    if: >
+      needs.metadata.outputs.package-ecosystem == 'bundler' &&
+      (needs.metadata.outputs.update-type == 'version-update:semver-patch' ||
+       needs.metadata.outputs.update-type == 'version-update:semver-minor')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # gh pr merge --auto needs the merge permission
+      pull-requests: write # gh pr review --approve and auto-merge state
+    steps:
+      - name: Re-validate the PR via the API (nothing checked out, nothing executed)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          EVENT_ACTOR: ${{ github.actor }}
+          EVENT_TRIGGERING_ACTOR: ${{ github.triggering_actor }}
+        run: |
+          fail() { echo "::error::$1"; exit 1; }
+
+          [ "$EVENT_ACTOR" = "dependabot[bot]" ] || fail "actor is ${EVENT_ACTOR}"
+          [ "$EVENT_TRIGGERING_ACTOR" = "dependabot[bot]" ] || fail "triggering actor is ${EVENT_TRIGGERING_ACTOR}"
+
+          pr="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}")"
+          author="$(jq -r .user.login <<<"$pr")"
+          head_ref="$(jq -r .head.ref <<<"$pr")"
+          head_sha="$(jq -r .head.sha <<<"$pr")"
+          head_repo="$(jq -r .head.repo.full_name <<<"$pr")"
+
+          [ "$author" = "dependabot[bot]" ] || fail "author is ${author}"
+          case "$head_ref" in
+            dependabot/bundler/*) ;;
+            *) fail "head ref is ${head_ref}" ;;
+          esac
+          # TOCTOU guard: the head we validated is the head we merge (also
+          # enforced at merge time with --match-head-commit).
+          [ "$head_sha" = "$EVENT_HEAD_SHA" ] || fail "head moved: ${head_sha} != ${EVENT_HEAD_SHA}"
+          # The branch must live in this repo (Dependabot's own branch, which
+          # maintainers control) — fork heads are never auto-merged.
+          [ "$head_repo" = "$REPO" ] || fail "head repo is ${head_repo}"
+
+          # Changed-file allowlist: a bundler update may touch only the
+          # Gemfile and its lock. Deliberately excludes upright.gemspec: a
+          # gemspec-touching bump (e.g. playwright-ruby-client) requires the
+          # multi-file Playwright version sync (version.rb, gemspec,
+          # package.json, generator Dockerfile, docker-compose) and must be
+          # reviewed by a human.
+          files="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/files" --paginate --jq '.[].filename')"
+          [ -n "$files" ] || fail "no changed files reported"
+          while IFS= read -r file; do
+            case "$file" in
+              Gemfile|Gemfile.lock) ;;
+              *) fail "unexpected changed file: ${file}" ;;
+            esac
+          done <<<"$files"
+
+          # Every commit must be Dependabot's and signature-verified.
+          commits="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}/commits" --paginate --slurp | jq 'add')"
+          jq --exit-status 'length > 0' <<<"$commits" >/dev/null || fail "no commits"
+          jq --exit-status 'all(.[]; .author.login == "dependabot[bot]" and .commit.verification.verified == true)' <<<"$commits" >/dev/null \
+            || fail "unverified or non-Dependabot commits present"
+
+          echo "PR #${PR_NUMBER} re-validated at ${EVENT_HEAD_SHA}"
+      - name: Approve at the validated head and enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          EVENT_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # Narrow the validate->approve window, then pin the approval itself
+          # to the validated commit via the API (gh pr review has no
+          # head-binding flag). The merge is additionally pinned with
+          # --match-head-commit, and the revoke job below plus the
+          # dismiss-stale-reviews branch rule cover later head movement.
+          current="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq .head.sha)"
+          if [ "$current" != "$EVENT_HEAD_SHA" ]; then
+            echo "::error::Head moved to ${current} after validation; refusing to approve"
+            exit 1
+          fi
+          gh api --method POST "repos/${REPO}/pulls/${PR_NUMBER}/reviews" \
+            -f commit_id="$EVENT_HEAD_SHA" \
+            -f event=APPROVE \
+            -f body="Auto-approving a Dependabot bundler patch/minor update at ${EVENT_HEAD_SHA}. The required CI check still gates the merge."
+          gh pr merge "$PR_URL" --auto --squash --match-head-commit "$EVENT_HEAD_SHA"
+
+  # Auto-merge enablement survives pushes by users with write access, and
+  # those human-triggered synchronize events skip the validation path above.
+  # Retract the automation instead: dismiss-stale-reviews (branch rule)
+  # retracts the bot approval; this job retracts the pending auto-merge.
+  revoke:
+    name: Revoke auto-merge on human intervention
+    if: github.event.action == 'synchronize' && github.event.pull_request.user.login == 'dependabot[bot]' && github.triggering_actor != 'dependabot[bot]' && startsWith(github.event.pull_request.head.ref, 'dependabot/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # disabling auto-merge requires merge authority
+      pull-requests: write # auto-merge state lives on the PR
+    steps:
+      - name: Disable any pending auto-merge
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          enabled="$(gh api "repos/${REPO}/pulls/${PR_NUMBER}" --jq '.auto_merge != null')"
+          if [ "$enabled" = "true" ]; then
+            gh pr merge "$PR_URL" --disable-auto
+            echo "Auto-merge disabled: a non-Dependabot actor pushed to this Dependabot PR."
+          else
+            echo "Auto-merge was not enabled; nothing to revoke."
+          fi
+      - name: Dismiss any standing bot approvals
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # The main ruleset's dismiss-stale-reviews rule already retracts
+          # approvals on push; this makes the workflow self-contained rather
+          # than dependent on that setting staying configured.
+          gh api "repos/${REPO}/pulls/${PR_NUMBER}/reviews" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and .state == "APPROVED") | .id' |
+          while IFS= read -r review_id; do
+            gh api --method PUT "repos/${REPO}/pulls/${PR_NUMBER}/reviews/${review_id}/dismissals" \
+              -f message="Dismissing the automated approval: a non-Dependabot actor pushed to this PR after it was granted."
+            echo "Dismissed review ${review_id}"
+          done
