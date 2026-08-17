@@ -10,7 +10,8 @@ Gem::Specification.new do |spec|
   spec.description = "A Rails engine for browser-based health probes and uptime monitoring via Prometheus metrics"
   spec.license     = "MIT"
 
-  spec.metadata["homepage_uri"]    = spec.homepage
+  # No homepage_uri metadata: it would duplicate spec.homepage, which
+  # `gem build --strict` (the release pipeline's build) rejects.
   spec.metadata["source_code_uri"] = "https://github.com/basecamp/upright"
   spec.metadata["changelog_uri"]   = "https://github.com/basecamp/upright/blob/main/CHANGELOG.md"
 

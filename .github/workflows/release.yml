@@ -1,0 +1,363 @@
+name: Release
+
+# Tag push (v*) runs the full pipeline: test -> build -> publish -> confirm ->
+# attest -> github-release. workflow_dispatch is always a no-publish rehearsal:
+# test -> build only, no environment prompt, no credentials, no attestation.
+#
+# Artifact identity flows forward by digest: build emits the gem's SHA-256 as a
+# job output, and every downstream job re-downloads the artifact and asserts
+# that digest before acting. Only canonical, registry-confirmed bytes are ever
+# attested or attached to the GitHub Release.
+on:
+  push:
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+permissions: {}
+
+# GitHub retains only ONE pending run per concurrency group. Rapid successive
+# release tags are prohibited — cut one release at a time, or the middle run
+# gets silently dropped.
+concurrency:
+  group: release-publishing
+  cancel-in-progress: false
+
+env:
+  # The packaging toolchain is pinned exactly: identical source must produce
+  # identical bytes, and RubyGems version changes change gem digests.
+  RUBY_VERSION: "4.0.6"
+  RUBYGEMS_VERSION: "4.0.18"
+
+jobs:
+  test:
+    name: Test and lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # zizmor: ignore[cache-poisoning,ref-version-mismatch] -- pinned at v1.321.0; this test job only lints and runs the suite, and the artifact is built in the separate build job with bundler-cache disabled, so a poisoned bundler cache cannot reach the packaged bytes
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: true
+      - name: Install Playwright
+        run: npm install && npx playwright install --with-deps chromium
+      - run: bin/rubocop -f github
+      - run: bin/rails test
+        env:
+          RAILS_ENV: test
+
+  # Executes the repo-controlled gemspec, so it deliberately holds no
+  # credentials and no privileged permissions.
+  build:
+    name: Build and verify the gem
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.version.outputs.prerelease }}
+      gem_sha256: ${{ steps.digest.outputs.gem_sha256 }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require the tagged commit to be on origin/main
+        if: github.event_name == 'push'
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit ${GITHUB_SHA} is not an ancestor of origin/main"
+            exit 1
+          fi
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: false
+      - name: Pin the packaging toolchain
+        run: |
+          gem update --system "$RUBYGEMS_VERSION"
+          gem --version
+      - name: Determine the version (tag must match Upright::VERSION on tag pushes)
+        id: version
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version="$(ruby -Ilib -rupright/version -e 'puts Upright::VERSION')"
+          if [ "$EVENT_NAME" = "push" ] && [ "v${version}" != "$REF_NAME" ]; then
+            echo "::error::Tag ${REF_NAME} does not match Upright::VERSION ${version}"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          # RubyGems prerelease semantics (letter-bearing versions like
+          # 0.4.0.rc1), not a naive hyphen check.
+          prerelease="$(ruby -e 'puts Gem::Version.new(ARGV[0]).prerelease?' "$version")"
+          echo "prerelease=${prerelease}" >> "$GITHUB_OUTPUT"
+      - name: Build the gem (reproducibly — timestamps come from the commit)
+        run: |
+          SOURCE_DATE_EPOCH="$(git log -1 --format=%ct)" gem build --strict upright.gemspec
+      - name: Verify the packaged gem (rehearsals included)
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ruby script/release/verify_package.rb "upright-${VERSION}.gem" upright "$VERSION"
+      - name: Record the artifact digest
+        id: digest
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gem_sha256="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          echo "gem_sha256=${gem_sha256}" >> "$GITHUB_OUTPUT"
+          echo "upright-${VERSION}.gem sha256=${gem_sha256}"
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: rubygem
+          path: upright-${{ steps.version.outputs.version }}.gem
+          if-no-files-found: error
+      # The unprivileged confirm job runs these scripts without checking out
+      # the repo. The OIDC-capable publish job deliberately does not download
+      # or execute them.
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-scripts
+          path: |
+            script/release/registry.rb
+            script/release/registry_confirm.rb
+          if-no-files-found: error
+
+  # The only job that can mint RubyGems credentials. Gated by the
+  # release-rubygems environment (required reviewer + OIDC trusted publishing).
+  # No checkout and no build-produced executable code: only the .gem artifact
+  # enters this job. Registry reconciliation is workflow-owned shell below.
+  publish:
+    name: Publish to RubyGems
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    environment: release-rubygems
+    permissions:
+      id-token: write # OIDC token exchange for RubyGems trusted publishing; nothing else
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      GEM_SHA256: ${{ needs.build.outputs.gem_sha256 }}
+    steps:
+      - name: Validate unprivileged build outputs against the release ref
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          if [[ ! "$VERSION" =~ ^[0-9]+(\.[A-Za-z0-9]+)*$ ]]; then
+            echo "::error::Build output is not a plausible gem version"
+            exit 1
+          fi
+          if [ "v${VERSION}" != "$REF_NAME" ]; then
+            echo "::error::Build output version ${VERSION} does not match release ref ${REF_NAME}"
+            exit 1
+          fi
+          if [[ ! "$GEM_SHA256" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::Build output is not a lowercase SHA-256 digest"
+            exit 1
+          fi
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: rubygem
+      - name: Verify artifact identity (digest must match the build job's)
+        run: |
+          actual="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          if [ "$actual" != "$GEM_SHA256" ]; then
+            echo "::error::Artifact digest ${actual} does not match build output ${GEM_SHA256}"
+            exit 1
+          fi
+      - name: Reconcile with the registry (total state machine; fails closed)
+        id: reconcile
+        run: |
+          registry_url="https://rubygems.org/api/v2/rubygems/upright/versions/${VERSION}.json"
+          response_body="$(mktemp)"
+          trap 'rm -f "$response_body"' EXIT
+
+          attempt=1
+          while [ "$attempt" -le 5 ]; do
+            : > "$response_body"
+            status=""
+            retry_reason=""
+
+            if status="$(curl --disable --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 40 \
+              --proto '=https' \
+              --output "$response_body" \
+              --write-out '%{http_code}' \
+              "$registry_url")"; then
+              case "$status" in
+                200)
+                  if ! published_version="$(jq --exit-status --raw-output \
+                    '.number | select(type == "string")' "$response_body")"; then
+                    echo "::error::RubyGems returned malformed version metadata"
+                    exit 1
+                  fi
+                  if ! published_sha="$(jq --exit-status --raw-output \
+                    '.sha | strings | select(test("^[0-9A-Fa-f]{64}$")) | ascii_downcase' \
+                    "$response_body")"; then
+                    echo "::error::RubyGems returned malformed digest metadata"
+                    exit 1
+                  fi
+                  if [ "$published_version" != "$VERSION" ]; then
+                    echo "::error::RubyGems returned metadata for a different version; expected ${VERSION}"
+                    exit 1
+                  fi
+                  if [ "$published_sha" != "$GEM_SHA256" ]; then
+                    echo "::error::upright ${VERSION} is already published with sha256 ${published_sha}; our artifact is ${GEM_SHA256}"
+                    exit 1
+                  fi
+                  decision="skip"
+                  break
+                  ;;
+                404)
+                  decision="push"
+                  break
+                  ;;
+                429|5??)
+                  retry_reason="HTTP ${status}"
+                  ;;
+                *)
+                  echo "::error::Unexpected HTTP ${status} from ${registry_url}"
+                  exit 1
+                  ;;
+              esac
+            else
+              retry_reason="network failure"
+            fi
+
+            if [ "$attempt" -ge 5 ]; then
+              echo "::error::RubyGems unavailable after ${attempt} attempts (${retry_reason})"
+              exit 1
+            fi
+            sleep "$((2 * attempt))"
+            attempt="$((attempt + 1))"
+          done
+
+          echo "decision=${decision}" >> "$GITHUB_OUTPUT"
+          echo "registry decision: ${decision}"
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        if: steps.reconcile.outputs.decision == 'push'
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: false
+      - name: Pin the packaging toolchain (same pins as build)
+        if: steps.reconcile.outputs.decision == 'push'
+        run: gem update --system "$RUBYGEMS_VERSION"
+      - name: Configure RubyGems trusted-publishing credentials (OIDC)
+        if: steps.reconcile.outputs.decision == 'push'
+        uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
+      - name: Re-verify artifact identity and push the gem
+        if: steps.reconcile.outputs.decision == 'push'
+        run: |
+          actual="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          if [ "$actual" != "$GEM_SHA256" ]; then
+            echo "::error::Artifact digest ${actual} changed after reconciliation; expected ${GEM_SHA256}"
+            exit 1
+          fi
+          gem push "upright-${VERSION}.gem"
+      - name: Scrub credentials (runs even when the push fails)
+        if: always()
+        run: |
+          rm -f ~/.gem/credentials
+          {
+            echo "RUBYGEMS_API_KEY="
+            echo "BUNDLE_GEM__PUSH_KEY="
+            echo "GEM_HOST_API_KEY="
+          } >> "$GITHUB_ENV"
+
+  # Registry confirmation deliberately lives OUTSIDE the credentialed job: no
+  # OIDC, no credentials, no checkout — just the public registry and math.
+  confirm:
+    name: Confirm publication
+    if: github.event_name == 'push'
+    needs: [ build, publish ]
+    runs-on: ubuntu-latest
+    permissions: {}
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      GEM_SHA256: ${{ needs.build.outputs.gem_sha256 }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: rubygem
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: release-scripts
+          path: script/release
+      - name: Verify artifact identity (digest must match the build job's)
+        run: |
+          actual="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          if [ "$actual" != "$GEM_SHA256" ]; then
+            echo "::error::Artifact digest ${actual} does not match build output ${GEM_SHA256}"
+            exit 1
+          fi
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+          bundler-cache: false
+      - name: Confirm the registry serves exactly our bytes
+        run: ruby script/release/registry_confirm.rb upright "$VERSION" "$GEM_SHA256" 300
+
+  # Attestation happens only after the registry has confirmed publication, so
+  # only canonical bytes are ever attested. No checkout, no environment.
+  attest:
+    name: Attest provenance
+    if: github.event_name == 'push'
+    needs: [ build, confirm ]
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # Sigstore signing needs the OIDC identity
+      attestations: write # the attestation is stored via the attestations API
+      contents: read # download-artifact reads this run's artifacts
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      GEM_SHA256: ${{ needs.build.outputs.gem_sha256 }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: rubygem
+      - name: Verify artifact identity (digest must match the build job's)
+        run: |
+          actual="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          if [ "$actual" != "$GEM_SHA256" ]; then
+            echo "::error::Artifact digest ${actual} does not match build output ${GEM_SHA256}"
+            exit 1
+          fi
+      - name: Attest build provenance (SLSA predicate)
+        uses: actions/attest@508db95dd578ae2727ebd6217d5ba78e4fbda05d # v4.2.1
+        with:
+          subject-path: upright-${{ needs.build.outputs.version }}.gem
+
+  github-release:
+    name: GitHub Release
+    if: github.event_name == 'push'
+    needs: [ build, publish, confirm, attest ]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # creating the release and uploading its asset writes to the repo
+    env:
+      VERSION: ${{ needs.build.outputs.version }}
+      GEM_SHA256: ${{ needs.build.outputs.gem_sha256 }}
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: rubygem
+      - name: Verify artifact identity (digest must match the build job's)
+        run: |
+          actual="$(sha256sum "upright-${VERSION}.gem" | awk '{ print $1 }')"
+          if [ "$actual" != "$GEM_SHA256" ]; then
+            echo "::error::Artifact digest ${actual} does not match build output ${GEM_SHA256}"
+            exit 1
+          fi
+      - name: Create the GitHub Release with the exact gem attached
+        uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # zizmor: ignore[superfluous-actions,ref-version-mismatch] -- pinned at v3.0.2; deliberate: fail_on_unmatched_files + generate_release_notes + prerelease handling in one reviewed, pinned action beats reimplementing them in shell
+        with:
+          generate_release_notes: true
+          files: upright-${{ needs.build.outputs.version }}.gem
+          fail_on_unmatched_files: true
+          prerelease: ${{ needs.build.outputs.prerelease == 'true' }}
