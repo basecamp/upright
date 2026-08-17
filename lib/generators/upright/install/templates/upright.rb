@@ -9,12 +9,13 @@ Upright.configure do |config|
   # config.playwright_cli_path = "npx playwright"
 
   # Token authenticating machine callers: collectors writing metrics and jobs
-  # reading a peer site's /prometheus and /alertmanager proxies. Randomly
-  # generated at install time — every site must share the same value, so treat
-  # it like any other secret when adding sites. Set the PROMETHEUS_OTLP_TOKEN
-  # env var (already wired as a Kamal secret in config/deploy.yml) to rotate it
-  # without editing this file.
-  config.proxy_token = ENV.fetch("PROMETHEUS_OTLP_TOKEN", "<%= SecureRandom.hex(32) %>")
+  # reading a peer site's /prometheus and /alertmanager proxies. It stands in for
+  # an admin session on those paths, so treat it as a secret: generate a strong
+  # value (e.g. `bin/rails secret`) and provide it via PROMETHEUS_OTLP_TOKEN
+  # (already wired as a Kamal secret in config/deploy.yml) rather than committing
+  # it into this file. Every site must share the same value; required outside
+  # development (the engine refuses to boot without it).
+  config.proxy_token = ENV["PROMETHEUS_OTLP_TOKEN"]
 
   # OpenTelemetry endpoint
   # config.otel_endpoint = ENV["OTEL_EXPORTER_OTLP_ENDPOINT"]

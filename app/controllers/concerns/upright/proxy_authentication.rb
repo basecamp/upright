@@ -20,7 +20,11 @@ module Upright::ProxyAuthentication
   TOKEN_DENIED_PREFIXES = %w[ /-/ ]
 
   included do
-    prepend_before_action :block_cross_site_session_requests
+    # Only the forwarding action needs the cross-site gate. `show` just renders
+    # the framed UI wrapper (no upstream call, no state change), so gating it too
+    # would 403 a legitimate same-site navigation back to it after a
+    # cross-subdomain login redirect. `otlp` authenticates by token, not session.
+    prepend_before_action :block_cross_site_session_requests, only: :proxy
   end
 
   private
@@ -125,10 +129,11 @@ module Upright::ProxyAuthentication
         path.match?(SAFE_UPSTREAM_PATH)
     end
 
-    # A token may read through the proxy but not drive destructive or
-    # state-changing upstream endpoints; those stay on the same-origin session UI.
+    # A token may read through the proxy (including Prometheus' POST form of
+    # /api/v1/query for expressions too long for the URL) but not reach the
+    # destructive lifecycle endpoints (`/-/reload`, `/-/quit`); those stay on the
+    # same-origin session UI. Deny by path, not by verb.
     def token_forbidden_path?(path)
-      proxy_token_provided? &&
-        ((!request.get? && !request.head?) || path.start_with?(*TOKEN_DENIED_PREFIXES))
+      proxy_token_provided? && path.start_with?(*TOKEN_DENIED_PREFIXES)
     end
 end

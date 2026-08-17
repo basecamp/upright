@@ -157,6 +157,23 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "a token may POST a read query (long expressions use Prometheus' POST form)" do
+    stub_request(:post, "http://localhost:9090/api/v1/query").to_return(status: 200, body: "{}")
+
+    post "/prometheus/api/v1/query", params: "query=up",
+      headers: { "Authorization" => "Bearer test-token", "Content-Type" => "application/x-www-form-urlencoded" }
+
+    assert_response :success
+  end
+
+  test "a same-site navigation to the framed proxy page is allowed (post-login return)" do
+    sign_in
+
+    get "/framed/prometheus", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
+
+    assert_response :success
+  end
+
   # --- WP4: tightened Fetch-Metadata policy ---
 
   test "same-site sub-resource POST is refused" do
