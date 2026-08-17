@@ -27,10 +27,13 @@ module Upright
         "BUNDLE_GEMFILE" => nil, "BUNDLE_PATH" => nil
       }.freeze
 
-      # Live wiring: subprocesses run for real.
+      # Live wiring: subprocesses run for real, the reference gemspec and the
+      # git-tracked file list come from the checkout. Tests inject all three.
       def self.live(gem_file, name:, version:, out: $stdout)
         new(gem_file, name: name, version: version, out: out,
-            runner: ->(env, *command) { Kernel.system(env, *command) })
+            runner: ->(env, *command) { Kernel.system(env, *command) },
+            reference: -> { Gem::Specification.load(GEMSPEC) },
+            tracked_files: -> { `git ls-files -z`.split("\0") })
       end
 
       # CLI entry point; returns a process exit status.
@@ -52,11 +55,13 @@ module Upright
         1
       end
 
-      def initialize(gem_file, name:, version:, runner:, out: $stdout)
+      def initialize(gem_file, name:, version:, runner:, reference:, tracked_files:, out: $stdout)
         @gem_file = gem_file
         @name = name
         @version = version
         @runner = runner
+        @reference = reference
+        @tracked_files = tracked_files
         @out = out
       end
 
@@ -74,8 +79,8 @@ module Upright
           raise "got #{spec.version}" unless spec.version.to_s == @version
         end
 
-        reference = check("reference gemspec loads (#{GEMSPEC})") do
-          Gem::Specification.load(GEMSPEC) or raise "could not load #{GEMSPEC}"
+        reference = check("reference gemspec loads") do
+          @reference.call or raise "could not load the reference gemspec"
         end
 
         # Guards against build-environment contamination without freezing
@@ -101,7 +106,7 @@ module Upright
         # (the tag's tracked content) makes that contamination a failure
         # instead of a silently wider gem.
         check("packaged files exactly match the gemspec's git-tracked file list") do
-          tracked = git_tracked_files
+          tracked = @tracked_files.call
           raise "git ls-files reported nothing; is this a checkout?" if tracked.empty?
           expected = (reference.files & tracked).select { |path| File.file?(path) }
           raise "gemspec file list resolved to nothing" if expected.empty?
@@ -142,10 +147,6 @@ module Upright
       private
         def dependency_list(spec)
           spec.dependencies.map { |dep| "#{dep.name} (#{dep.type}, #{dep.requirement})" }.sort
-        end
-
-        def git_tracked_files
-          `git ls-files -z`.split("\0")
         end
 
         def check(description)
