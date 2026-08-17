@@ -8,8 +8,8 @@
           <span class="upcoming__when"><%= local_maintenance_window(maintenance) %></span>
         </div>
 
-        <% if maintenance.services.any? %>
-          <p class="event__services"><%= maintenance.services.map(&:name).to_sentence %></p>
+        <% if maintenance.public_services.any? %>
+          <p class="event__services"><%= maintenance.public_services.map(&:name).to_sentence %></p>
         <% end %>
 
         <% if (update = maintenance.updates.first) && update.body.present? %>

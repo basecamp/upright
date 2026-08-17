@@ -14,11 +14,21 @@ export default class extends Controller {
 
       L.marker([site.lat, site.lon])
         .addTo(map)
-        .bindPopup(`<strong>${site.hostname}</strong><br>${site.city}`)
+        .bindPopup(this.popupContent(site))
         .on("mouseover", function() { this.openPopup() })
         .on("mouseout", function() { this.closePopup() })
         .on("click", () => window.location.href = site.url)
     }
+  }
+
+  // Build the popup as DOM nodes so hostname and city render as text,
+  // never as HTML.
+  popupContent(site) {
+    const content = document.createElement("div")
+    const hostname = document.createElement("strong")
+    hostname.textContent = site.hostname
+    content.append(hostname, document.createElement("br"), site.city ?? "")
+    return content
   }
 
   get tileUrl() {

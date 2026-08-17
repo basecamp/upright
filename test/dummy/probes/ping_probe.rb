@@ -4,8 +4,14 @@ class PingProbe < FrozenRecord::Base
 
   stagger_by_site 3.seconds
 
+  # Hostnames, IPv4, and IPv6 addresses only. The first character may not be
+  # a dash, so a configured host can never be mistaken for a ping flag.
+  HOST_PATTERN = /\A[a-z0-9:][a-z0-9:._-]*\z/i
+
   def check
-    @ping_output, status = Open3.capture2e("ping", "-c", "1", "-W", "5", host)
+    raise ArgumentError, "invalid ping host: #{host.inspect}" unless HOST_PATTERN.match?(host.to_s)
+
+    @ping_output, status = Open3.capture2e("ping", "-c", "1", "-W", "5", "--", host)
     status.success?
   end
 

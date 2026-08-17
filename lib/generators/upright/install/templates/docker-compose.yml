@@ -10,14 +10,19 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      - '--web.enable-lifecycle'
+      # Host networking would otherwise listen on all interfaces; keep the
+      # dev server loopback-only. --web.enable-lifecycle is deliberately
+      # omitted — its unauthenticated reload/quit endpoints aren't needed
+      # (restart the container to reload config); if you add it back, pair
+      # it with --web.config.file authentication.
+      - '--web.listen-address=127.0.0.1:9090'
       - '--web.enable-remote-write-receiver'
 
   alertmanager:
     image: prom/alertmanager:v0.28.1
     container_name: <%= app_name %>-alertmanager
     ports:
-      - "9093:9093"
+      - "127.0.0.1:9093:9093"
     volumes:
       - ./config/alertmanager/development/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager

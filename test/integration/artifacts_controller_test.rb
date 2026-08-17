@@ -27,6 +27,18 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
     assert_select "source[src*='rails/active_storage/blobs']"
   end
 
+  test "returns 404 for attachments that do not belong to probe results" do
+    foreign_attachment = ActiveStorage::Attachment.create!(
+      name: "artifacts",
+      record: upright_incidents(:upcoming),
+      blob: active_storage_blobs(:http_log)
+    )
+
+    get upright.site_artifact_path(foreign_attachment)
+
+    assert_response :not_found
+  end
+
   test "redirects to authentication when not signed in" do
     sign_out
     attachment = active_storage_attachments(:http_artifact)

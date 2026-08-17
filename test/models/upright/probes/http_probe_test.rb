@@ -168,6 +168,49 @@ class Upright::Probes::HTTPProbeTest < ActiveSupport::TestCase
     assert_equal '{"status": "ok"}', response_artifact.download
   end
 
+  test "stores HTML response bodies as plain text, never text/html" do
+    stub_request(:get, "https://example.com/").to_return(
+      status: 200,
+      body: "<html><script>alert(1)</script></html>",
+      headers: { "Content-Type" => "text/html" }
+    )
+    set_test_site
+    probe = Upright::Probes::HTTPProbe.new(name: "test", url: "https://example.com/")
+    probe.logger = null_logger
+
+    probe.check_and_record
+
+    result = Upright::ProbeResult.last
+    response_artifact = result.artifacts.find { |a| a.filename.to_s.start_with?("response") }
+
+    assert_not_nil response_artifact
+    assert_equal "response.txt", response_artifact.filename.to_s
+    assert_equal "text/plain", response_artifact.content_type
+  end
+
+  test "truncates oversized response bodies" do
+    body = "a" * (Upright::Probes::HTTPProbe::MAX_STORED_BODY_BYTES + 1024)
+    stub_request(:get, "https://example.com/").to_return(
+      status: 200,
+      body: body,
+      headers: { "Content-Type" => "text/plain" }
+    )
+    set_test_site
+    probe = Upright::Probes::HTTPProbe.new(name: "test", url: "https://example.com/")
+    probe.logger = null_logger
+
+    probe.check_and_record
+
+    result = Upright::ProbeResult.last
+    assert_equal "ok", result.status, "truncation must not affect probe success"
+
+    response_artifact = result.artifacts.find { |a| a.filename.to_s.start_with?("response") }
+    stored = response_artifact.download
+
+    assert_operator stored.bytesize, :<=, Upright::Probes::HTTPProbe::MAX_STORED_BODY_BYTES + 100
+    assert_match(/\[TRUNCATED/, stored)
+  end
+
   private
     def null_logger
       Logger.new("/dev/null").tap do |l|

@@ -3,6 +3,7 @@ PATH
   specs:
     upright (0.3.0)
       cgi
+      faraday (>= 2.14.3)
       frozen_record
       geared_pagination
       importmap-rails

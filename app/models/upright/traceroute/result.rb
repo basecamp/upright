@@ -4,6 +4,11 @@ class Upright::Traceroute::Result
   PROBE_COUNT = 10
   MAX_HOPS = 30
 
+  # Hostnames, IPv4, and IPv6 addresses (including a link-local zone such as
+  # fe80::1%eth0) only. The first character may not be a dash, so a configured
+  # host can never be mistaken for an mtr flag.
+  HOST_PATTERN = /\A[a-z0-9:][a-z0-9:._-]*(?:%[a-z0-9._-]+)?\z/i
+
   attr_reader :host, :hops, :raw_json
 
   def self.for(host)
@@ -11,6 +16,8 @@ class Upright::Traceroute::Result
   end
 
   def initialize(host)
+    raise ArgumentError, "invalid traceroute host: #{host.inspect}" unless HOST_PATTERN.match?(host.to_s)
+
     @host = host
     @hops = []
   end
@@ -32,7 +39,7 @@ class Upright::Traceroute::Result
         "--aslookup",
         "--report-cycles", PROBE_COUNT.to_s,
         "--max-ttl", MAX_HOPS.to_s,
-        host.to_s
+        "--", host.to_s
       )
 
       Rails.logger.info stdout

@@ -1,0 +1,33 @@
+require "test_helper"
+
+class Upright::Playwright::TraceRecordingTest < ActiveSupport::TestCase
+  class TraceHost
+    include ActiveSupport::Callbacks
+    define_callbacks :page_ready, :page_close
+    include Upright::Playwright::FormAuthentication
+    include Upright::Playwright::TraceRecording
+
+    attr_accessor :context
+  end
+
+  test "starts a screenshots-only trace for an unauthenticated probe" do
+    tracing = mock("tracing")
+    tracing.expects(:start).with(screenshots: true, snapshots: false)
+
+    host = TraceHost.new
+    host.context = stub(tracing: tracing)
+
+    host.send(:start_trace)
+  end
+
+  test "does not trace an authenticated probe (its network data carries credentials)" do
+    tracing = mock("tracing")
+    tracing.expects(:start).never
+
+    host = TraceHost.new
+    host.authentication_service = :example
+    host.context = stub(tracing: tracing)
+
+    host.send(:start_trace)
+  end
+end
