@@ -50,6 +50,30 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
+  test "a null Origin on the session path is forbidden when Sec-Fetch is absent" do
+    # A sandboxed iframe or a cross-origin redirect sends `Origin: null`.
+    stub = stub_request(:post, "http://localhost:9093/api/v2/silences")
+    sign_in
+
+    post "/alertmanager/api/v2/silences",
+      params: { comment: "forged" }.to_json,
+      headers: { "Content-Type" => "application/json", "Origin" => "null" }
+
+    assert_response :forbidden
+    assert_not_requested stub
+  end
+
+  test "a non-bearer Authorization header buys no exemption from the gate" do
+    stub = stub_request(:get, "http://localhost:9090/-/reload")
+    sign_in
+
+    get "/prometheus/-/reload",
+      headers: { "Authorization" => "Basic #{Base64.strict_encode64("user:pass")}", "Sec-Fetch-Site" => "cross-site" }
+
+    assert_response :forbidden
+    assert_not_requested stub
+  end
+
   # --- Legitimate traffic still forwards ---
 
   test "same-origin session request forwards to prometheus" do

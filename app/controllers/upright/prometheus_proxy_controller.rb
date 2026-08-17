@@ -1,8 +1,6 @@
 class Upright::PrometheusProxyController < Upright::ApplicationController
   include Upright::ProxyAuthentication
 
-  skip_forgery_protection
-
   skip_before_action :authenticate_user, only: :otlp
   skip_before_action :block_cross_site_session_requests, only: :otlp
   before_action :authenticate_proxy_token, only: :otlp
@@ -13,17 +11,16 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   def proxy
-    forward = sanitized_upstream_path(request.fullpath.delete_prefix("/prometheus"))
-    path = forward&.split("?", 2)&.first
+    url = upstream_url(Upright.configuration.prometheus_url, request.fullpath.delete_prefix("/prometheus"))
 
-    if forward.nil? || !upstream_host_ok?(Upright.configuration.prometheus_url, forward)
+    if url.nil?
       head :bad_request
-    elsif path.start_with?(*UNSUPPORTED_PATHS)
+    elsif url.path.start_with?(*UNSUPPORTED_PATHS)
       head :not_found
-    elsif token_forbidden_path?(path)
+    elsif token_forbidden_path?(url.path)
       head :forbidden
     else
-      proxy_to_prometheus(forward)
+      proxy_to_prometheus(url)
     end
   end
 
@@ -37,10 +34,10 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   private
-    def proxy_to_prometheus(path, method: request.method, body: nil)
+    def proxy_to_prometheus(url, method: request.method, body: nil)
       response = prometheus_connection.run_request(
         method.downcase.to_sym,
-        path,
+        url.to_s,
         body,
         { "Content-Type" => request.content_type }
       )

@@ -6,9 +6,10 @@
 
 - Fix an authenticated SSRF through the Prometheus/Alertmanager proxies: a
   protocol-relative path (`//host`) could retarget the upstream request at an
-  arbitrary host (RFC1918, the Docker network, cloud metadata). Forwarded paths
-  are now validated and the resolved host is re-checked, with a `faraday >= 2.14.3`
-  floor (CVE-2026-25765).
+  arbitrary host (RFC1918, the Docker network, cloud metadata). The upstream URL
+  is now built structurally — scheme, host and port always come from the
+  configured upstream — and the forwarded path is validated, with a
+  `faraday >= 2.14.3` floor (CVE-2026-25765).
 - Refuse cross-site requests to the metrics proxies on the session-cookie path
   via a Fetch-Metadata / Origin gate; only same-origin and user-initiated (`none`)
   requests are honoured, and missing provenance headers fail closed

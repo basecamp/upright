@@ -1,27 +1,24 @@
 class Upright::AlertmanagerProxyController < Upright::ApplicationController
   include Upright::ProxyAuthentication
 
-  skip_forgery_protection
-
   def show
   end
 
   def proxy
-    forward = sanitized_upstream_path(request.fullpath.delete_prefix("/alertmanager"))
-    path = forward&.split("?", 2)&.first
+    url = upstream_url(alertmanager_url, request.fullpath.delete_prefix("/alertmanager"))
 
-    if forward.nil? || !upstream_host_ok?(alertmanager_url, forward)
+    if url.nil?
       head :bad_request
-    elsif token_forbidden_path?(path)
+    elsif token_forbidden_path?(url.path)
       head :forbidden
     else
-      proxy_to_alertmanager forward, body: request.body&.read
+      proxy_to_alertmanager url, body: request.body&.read
     end
   end
 
   private
-    def proxy_to_alertmanager(path, method: request.method, body: nil)
-      response = Faraday.new(url: alertmanager_url).run_request(method.downcase.to_sym, path, body, { "Content-Type" => request.content_type })
+    def proxy_to_alertmanager(url, method: request.method, body: nil)
+      response = Faraday.new(url: alertmanager_url).run_request(method.downcase.to_sym, url.to_s, body, { "Content-Type" => request.content_type })
 
       render body: response.body, status: response.status, content_type: response.headers["content-type"]
     end
