@@ -1,0 +1,5 @@
+# Same dependencies as the root Gemfile, but without its lockfile: the
+# committed multi-platform lock (arm64-darwin + x86_64-linux) can't resolve
+# on ruby-head, where no precompiled native gems exist for the unreleased
+# ABI. Fresh single-platform resolution compiles them from source instead.
+eval_gemfile "../Gemfile"

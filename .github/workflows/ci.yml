@@ -1,28 +1,36 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches: [ main ]
+  pull_request:
+  workflow_dispatch:
 
+# Least privilege: no default grants; every job declares exactly what it needs.
 permissions: {}
+
+# One run per ref; superseded pushes cancel stale runs (but never on main).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  RUBY_VERSION: ruby-4.0.0
 
 jobs:
   lint:
+    name: RuboCop
     runs-on: ubuntu-latest
     permissions:
       contents: read
     env:
-      RUBY_VERSION: ruby-4.0.0
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
-      - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
@@ -40,59 +48,112 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
-  lint-actions:
-    name: GitHub Actions audit
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-
-      - name: Run actionlint
-        uses: rhysd/actionlint@914e7df21a07ef503a81201c76d2b11c789d3fca # v1.7.12
-
-      - name: Run zizmor
-        uses: zizmorcore/zizmor-action@192e21d79ab29983730a13d1382995c2307fbcaa # v0.5.7
-        with:
-          advanced-security: false
-
   security:
+    name: Brakeman
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
         with:
-          ruby-version: ruby-4.0.0
+          ruby-version: ${{ env.RUBY_VERSION }}
           bundler-cache: true
 
       - name: Run Brakeman security scan
         run: bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error
 
-  test:
+  lint-actions:
+    name: actionlint + zizmor
     runs-on: ubuntu-latest
     permissions:
       contents: read
-
     steps:
-      - name: Checkout code
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@9eb537ca036ebaed86729dcb9309076e4c5c3b74 # v1.314.0
+      - name: Ensure ShellCheck is available (actionlint shells out to it)
+        run: |
+          if ! command -v shellcheck >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install --yes shellcheck
+          fi
+          shellcheck --version
+
+      - name: Install actionlint (checksum-verified; it is not a GitHub action)
+        env:
+          ACTIONLINT_VERSION: "1.7.12"
+          ACTIONLINT_SHA256: "8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8"
+        run: |
+          curl --silent --show-error --fail --location --output actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum --check
+          mkdir --parents "${RUNNER_TEMP}/actionlint"
+          tar --extract --gzip --file actionlint.tar.gz --directory "${RUNNER_TEMP}/actionlint" actionlint
+          rm actionlint.tar.gz
+          echo "${RUNNER_TEMP}/actionlint" >> "$GITHUB_PATH"
+
+      - name: Run actionlint
+        run: actionlint -color
+
+      - name: Run zizmor (pedantic, over the whole tree — dependabot.yml included)
+        uses: zizmorcore/zizmor-action@3dc1ecc9bcb9e94e9b2c709687979e1298497054 # v0.6.2
         with:
-          ruby-version: ruby-4.0.0
+          inputs: .
+          collect: all
+          persona: pedantic
+          advanced-security: false
+          annotations: true
+
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          show-openssf-scorecard: false
+
+  test:
+    name: Ruby ${{ matrix.ruby }} / Rails ${{ matrix.rails }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    # head/main probes surface breakage early without blocking a merge.
+    continue-on-error: ${{ matrix.experimental || false }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Floor leg: oldest supported Ruby x oldest supported Rails.
+          - { ruby: "3.4",  rails: "8.0",  gemfile: gemfiles/rails-8.0.gemfile }
+          # Primary leg: the committed Gemfile.lock.
+          - { ruby: "4.0",  rails: "8.1" }
+          - { ruby: "head", rails: "8.1",  gemfile: gemfiles/head.gemfile, experimental: true }
+          - { ruby: "4.0",  rails: "main", gemfile: gemfiles/rails-main.gemfile, experimental: true }
+    env:
+      # The primary leg uses the committed Gemfile.lock; the gemfiles/
+      # probes resolve fresh (no lockfiles). setup-ruby keys its bundler
+      # cache off BUNDLE_GEMFILE automatically.
+      BUNDLE_GEMFILE: ${{ matrix.gemfile || 'Gemfile' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
 
       - name: Install Playwright
@@ -107,6 +168,23 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
-          name: screenshots
+          name: screenshots-ruby-${{ matrix.ruby }}-rails-${{ matrix.rails }}
           path: ${{ github.workspace }}/tmp/screenshots
           if-no-files-found: ignore
+
+  # Stable fan-in for branch protection: require exactly one check ("CI")
+  # regardless of how the matrix or job list evolves. Experimental matrix
+  # legs report success even when they fail (continue-on-error), so they
+  # never block here.
+  ci:
+    name: CI
+    if: always()
+    needs: [ lint, security, lint-actions, dependency-review, test ]
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Fail if any required job failed or was cancelled
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
+      - name: All green
+        run: echo "All required jobs succeeded (or were legitimately skipped)."
