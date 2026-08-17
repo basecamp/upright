@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_000001) do
+ActiveRecord::Schema[8.0].define(version: 2026_07_09_000001) do
   create_table "upright_incident_affected_services", force: :cascade do |t|
     t.integer "incident_id", null: false
     t.string "service_code", null: false

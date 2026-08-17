@@ -26,7 +26,7 @@ services:
       - '--storage.path=/alertmanager'
 
   playwright:
-    image: jacoblincool/playwright:chromium-server-1.55.0
+    image: jacoblincool/playwright:chromium-server-1.59.0
     container_name: upright-playwright
     ports:
       - "53333:53333"

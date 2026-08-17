@@ -459,7 +459,7 @@ env:
 
 accessories:
   playwright:
-    image: jacoblincool/playwright:chromium-server-1.55.0
+    image: jacoblincool/playwright:chromium-server-1.59.0
     port: "127.0.0.1:53333:53333"
     roles:
       - jobs
