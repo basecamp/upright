@@ -1,0 +1,29 @@
+test/integration/proxy_path_sanitization_test.rb
+  s_6732c3c48d0ed9::t_b8dd61a4786906 42-46
+CHANGELOG.md
+  s_6732c3c48d0ed9::t_5a1d18e64e6a2c 15-17,25-32
+  s_6732c3c48d0ed9::t_b75b896e6b8f1c 33
+test/lib/helpers/authentication_helper.rb
+  s_6732c3c48d0ed9::t_6b1a5c966aefe0 14
+test/integration/proxy_csrf_test.rb
+  s_6732c3c48d0ed9::t_c454be338941a4 122-129
+app/controllers/concerns/upright/proxy_guards.rb
+  s_6732c3c48d0ed9::t_b73fa3e245fef4 12-16,23
+  s_6732c3c48d0ed9::t_5838a539710614 61-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "68cec194bee8632ef97b7247e1f30e9956896b11",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
