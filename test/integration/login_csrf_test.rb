@@ -43,7 +43,14 @@ class LoginCsrfTest < ActionDispatch::IntegrationTest
   end
 
   test "a cross-origin POST without a valid authenticity token is refused" do
-    post "/auth/static_credentials/callback", params: { username: "admin", password: "known-to-attacker" }
+    # A browser's cross-origin POST carries cross-site provenance. Sending it
+    # keeps the test faithful on Rails 8.1 (token verification; the foreign
+    # Origin fails valid_request_origin?) and on Rails main, whose 8.2 defaults
+    # verify via Sec-Fetch-Site alone and would wave through a header-less
+    # non-SSL POST no browser would send.
+    post "/auth/static_credentials/callback",
+      params: { username: "admin", password: "known-to-attacker" },
+      headers: { "Sec-Fetch-Site" => "cross-site", "Origin" => "https://attacker.example" }
 
     assert_response :unprocessable_content
     assert_nil session[:user_info]

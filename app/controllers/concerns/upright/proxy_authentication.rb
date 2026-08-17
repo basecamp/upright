@@ -34,9 +34,13 @@ module Upright::ProxyAuthentication
 
     # Specifically "carries a bearer token", not "carries any Authorization
     # header": a `Basic` header belongs on the session path, and shouldn't buy an
-    # exemption from the cross-site gate on its way to a 401.
+    # exemption from the cross-site gate on its way to a 401. The scheme is
+    # checked here rather than left to Token.token_and_options, whose scheme
+    # matching widened from Token/Bearer to any Authorization scheme on Rails
+    # main — parsing breadth this gate must not inherit.
     def proxy_token_provided?
-      ActionController::HttpAuthentication::Token.token_and_options(request).present?
+      request.authorization.to_s.match?(/\A(Token|Bearer)\s/) &&
+        ActionController::HttpAuthentication::Token.token_and_options(request).present?
     end
 
     def authenticate_proxy_token
