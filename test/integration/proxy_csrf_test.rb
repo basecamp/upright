@@ -63,6 +63,54 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
+  test "Rails token verification stays in the chain as a backstop for the gate" do
+    # The gate refuses cross-site requests before verification is consulted. This
+    # asserts the second layer is still there: with the gate out of the way, a
+    # session POST carrying neither an authenticity token nor same-origin
+    # provenance is still refused rather than forwarded.
+    stub = stub_request(:post, "http://localhost:9093/api/v2/silences")
+    Upright::AlertmanagerProxyController.any_instance.stubs(:block_cross_site_session_requests)
+    sign_in
+
+    with_forgery_protection do
+      post "/alertmanager/api/v2/silences",
+        params: { comment: "forged" }.to_json,
+        headers: { "Content-Type" => "application/json", "Sec-Fetch-Site" => "cross-site" }
+    end
+
+    assert_response 422
+    assert_not_requested stub
+  end
+
+  test "a same-origin session POST is verified without an authenticity token" do
+    silence_json = { comment: "real" }.to_json
+    stub = stub_request(:post, "http://localhost:9093/api/v2/silences")
+      .with(body: silence_json)
+      .to_return(status: 200, body: '{"silenceID":"abc-123"}', headers: { "Content-Type" => "application/json" })
+    sign_in
+
+    with_forgery_protection do
+      post "/alertmanager/api/v2/silences",
+        params: silence_json,
+        headers: { "Content-Type" => "application/json", "Sec-Fetch-Site" => "same-origin" }
+    end
+
+    assert_response :success
+    assert_requested stub
+  end
+
+  test "a token-authenticated write is verified without an authenticity token" do
+    stub = stub_request(:post, "http://localhost:9090/api/v1/otlp/v1/metrics").to_return(status: 200)
+
+    with_forgery_protection do
+      post "/prometheus/api/v1/otlp/v1/metrics",
+        headers: { "Authorization" => "Bearer test-token", "Content-Type" => "application/x-protobuf" }
+    end
+
+    assert_response :success
+    assert_requested stub
+  end
+
   test "a non-bearer Authorization header buys no exemption from the gate" do
     stub = stub_request(:get, "http://localhost:9090/-/reload")
     sign_in

@@ -41,6 +41,16 @@ module ActiveSupport
       original_values.each { |k, v| ENV[k] = v }
     end
 
+    # The test environment turns forgery protection off, so anything asserting how
+    # a controller verifies a request has to switch it back on for the duration.
+    def with_forgery_protection
+      original = ActionController::Base.allow_forgery_protection
+      ActionController::Base.allow_forgery_protection = true
+      yield
+    ensure
+      ActionController::Base.allow_forgery_protection = original
+    end
+
     def stub_ip_api_batch(response_body = "[]")
       stub_request(:post, "http://ip-api.com/batch").to_return(status: 200, body: response_body)
     end

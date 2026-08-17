@@ -20,11 +20,6 @@ module Upright::ProxyAuthentication
   TOKEN_DENIED_PREFIXES = %w[ /-/ ]
 
   included do
-    # The embedded Prometheus/Alertmanager UIs make same-origin requests that
-    # can't carry an authenticity token, so the proxies trade Rails token CSRF
-    # for the Fetch-Metadata gate below. Both halves live here so a new proxy
-    # controller can't pick up one without the other.
-    skip_forgery_protection
     prepend_before_action :block_cross_site_session_requests
   end
 
@@ -50,10 +45,24 @@ module Upright::ProxyAuthentication
       end
     end
 
+    # The proxies can't demand an authenticity token: the embedded Prometheus and
+    # Alertmanager UIs post from JS we don't render, so there's no token to embed.
+    # Rather than skipping Rails' verification, widen what counts as verified — a
+    # valid token, a bearer token (not an ambient credential, so a cross-site page
+    # can't attach one), or same-origin provenance. Cross-site requests are
+    # already refused by #block_cross_site_session_requests; leaving verification
+    # in the chain means removing that gate can't quietly leave the proxies with
+    # no CSRF defence at all.
+    def verified_request?
+      super || proxy_token_provided? || !cross_site_request?
+    end
+
     # CSRF gate for the browser (session-cookie) path: nothing in Action Pack
-    # reads Fetch-Metadata, so we gate on it here (CVE-2026-67990). Automation
-    # authenticates with a bearer token and is out of scope; a missing/invalid
-    # token is not exempt — it simply falls through to a 401 at authentication.
+    # reads Fetch-Metadata, so we gate on it here (CVE-2026-67990). Unlike Rails'
+    # token verification this covers GET too, because a proxied GET can reach a
+    # state-changing upstream endpoint. Automation authenticates with a bearer
+    # token and is out of scope; a missing/invalid token is not exempt — it simply
+    # falls through to a 401 at authentication.
     def block_cross_site_session_requests
       head :forbidden if !proxy_token_provided? && cross_site_request?
     end
