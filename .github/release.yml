@@ -1,0 +1,17 @@
+changelog:
+  exclude:
+    authors:
+      - dependabot[bot]
+  categories:
+    - title: Breaking changes
+      labels: [ breaking ]
+    - title: Features
+      labels: [ enhancement ]
+    - title: Bug fixes
+      labels: [ bug ]
+    - title: CI & Infrastructure
+      labels: [ ci, dependencies, github_actions ]
+    - title: Documentation
+      labels: [ documentation ]
+    - title: Other changes
+      labels: [ "*" ]

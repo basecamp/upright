@@ -1,0 +1,15 @@
+# Release- and security-sensitive paths require Jeremy's review. Deliberately
+# scoped — no `*` rule and no Gemfile.lock rule — so Dependabot's bundler
+# lockfile PRs don't deadlock on code-owner review. Tests remain gated by the
+# >= 1 approving review rule plus the required CI check.
+/.github/            @jeremy
+/app/                @jeremy
+/config/             @jeremy
+/db/                 @jeremy
+/lib/                @jeremy
+/public/             @jeremy
+/script/release/     @jeremy
+/Rakefile            @jeremy
+/upright.gemspec     @jeremy
+/Gemfile             @jeremy
+/RELEASING.md        @jeremy
