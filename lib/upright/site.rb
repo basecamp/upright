@@ -25,6 +25,14 @@ module Upright
       URI.parse(url).host
     end
 
+    def current?
+      code == Upright.current_site&.code
+    end
+
+    def prometheus_client
+      current? ? Upright.prometheus_client : peer_prometheus_client
+    end
+
     def provider
       @provider.to_s.inquiry
     end
@@ -50,6 +58,18 @@ module Upright
     end
 
     private
+      def peer_prometheus_client
+        Prometheus::ApiClient.client(url: prometheus_proxy_url, headers: proxy_authorization, options: { timeout: 30 })
+      end
+
+      def prometheus_proxy_url
+        "#{url.chomp("/")}/prometheus"
+      end
+
+      def proxy_authorization
+        { "Authorization" => "Bearer #{Upright.configuration.proxy_token}" }
+      end
+
       def coordinates
         @coordinates ||= Upright::Geohash.decode(geohash).first
       end

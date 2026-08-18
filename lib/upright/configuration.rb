@@ -38,6 +38,9 @@ class Upright::Configuration
 
   attr_writer :proxy_token
 
+  attr_writer :rollup_minimum_coverage
+  attr_writer :rollup_evaluation_interval
+
   # Probe types
   attr_reader :probe_types
 
@@ -118,6 +121,14 @@ class Upright::Configuration
 
   def proxy_token
     @proxy_token || ENV["PROMETHEUS_OTLP_TOKEN"]
+  end
+
+  def rollup_minimum_coverage
+    @rollup_minimum_coverage || 0.9
+  end
+
+  def rollup_evaluation_interval
+    @rollup_evaluation_interval || 30.seconds
   end
 
   def video_storage_dir

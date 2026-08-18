@@ -9,7 +9,11 @@ groups:
       # Keep probe_service so the public status page can read live status per service.
       - record: upright:probe_down_fraction
         expr: |
-          count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up == 0)
+          (
+            count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up == 0)
+            or
+            count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up) * 0
+          )
           /
           count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up)
 

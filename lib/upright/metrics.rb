@@ -71,6 +71,11 @@ module Upright::Metrics
               aggregation: :most_recent,
               tags: []
 
+            gauge :rollup_skipped_probes,
+              comment: "Probes the last rollup run left unwritten for insufficient Prometheus coverage",
+              aggregation: :most_recent,
+              tags: []
+
             gauge :rollup_last_run_timestamp_seconds,
               comment: "Unix time of the most recently written daily rollup",
               aggregation: :max,
