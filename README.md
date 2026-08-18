@@ -136,10 +136,13 @@ Each site node identifies itself via the `SITE_SUBDOMAIN` environment variable, 
 
 #### Static Credentials
 
-Upright uses static credentials by default with username `admin` and password `upright`.
+Upright uses static credentials with username `admin`. There is no default
+password: set the `ADMIN_PASSWORD` environment variable to a strong value.
 
 > [!WARNING]
-> Change the default password before deploying to production by setting the `ADMIN_PASSWORD` environment variable.
+> Sign-in fails closed when `ADMIN_PASSWORD` is unset — the admin login is
+> disabled until you set it. For local development you can export a throwaway
+> value, e.g. `ADMIN_PASSWORD=upright bin/dev`.
 
 
 #### OpenID Connect
