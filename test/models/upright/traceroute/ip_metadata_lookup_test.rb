@@ -109,6 +109,17 @@ class Upright::Traceroute::IpMetadataLookupTest < ActiveSupport::TestCase
     assert_requested stub, times: 1
   end
 
+  test "uses the TLS pro endpoint when an API key is configured" do
+    Upright::Traceroute::IpMetadataLookup.stubs(:api_key).returns("test-key")
+    stub = stub_request(:post, "https://pro.ip-api.com/batch?key=test-key")
+      .to_return(status: 200, body: [ { "query" => "8.8.8.8", "status" => "success", "as" => "AS15169" } ].to_json)
+
+    results = Upright::Traceroute::IpMetadataLookup.for_many([ "8.8.8.8" ])
+
+    assert_equal "AS15169", results["8.8.8.8"][:as]
+    assert_requested stub, times: 1
+  end
+
   test "handles missing as field" do
     stub_ip_api_request(response: [ { "query" => "8.8.8.8", "status" => "success", "isp" => "Google LLC" } ])
 

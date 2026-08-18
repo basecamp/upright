@@ -1,7 +1,7 @@
 <div class="status-page">
   <h1 class="status-page__title">Status</h1>
 
-  <%= render "overall_banner", status: @services.overall_status %>
+  <%= render "overall_banner", status: @overall_status %>
   <%= render "degraded_list", degraded: @services.degraded %>
 
   <%= render "active_events", incidents: @active_incidents, maintenances: @active_maintenances %>

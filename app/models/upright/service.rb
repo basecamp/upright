@@ -8,10 +8,12 @@ class Upright::Service < FrozenRecord::Base
 
   scope :public_facing, -> { where(public: true) }
 
-  def self.overall_status
+  # The public status page passes `incidents: Upright::Incident.public_facing`
+  # so internal-only incidents and maintenances never color the public banner.
+  def self.overall_status(incidents: Upright::Incident.all)
     probe_statuses = all.reject(&:maintenance_active?).map(&:live_status)
-    worst = Upright::Status.worst(probe_statuses + Upright::Incident.active_statuses)
-    worst == :operational && Upright::Maintenance.active.any? ? :maintenance : worst
+    worst = Upright::Status.worst(probe_statuses + incidents.active_statuses)
+    worst == :operational && incidents.planned.active.any? ? :maintenance : worst
   end
 
   def self.by_history(past: 90.days)

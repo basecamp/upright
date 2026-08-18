@@ -14,10 +14,19 @@ module Upright::Playwright::TraceRecording
     end
 
     def start_trace
-      context.tracing.start(screenshots: true, snapshots: true)
+      # Authenticated probes are not traced at all: a trace records network
+      # activity, which for an authenticated context includes Cookie and
+      # Authorization headers. Unauthenticated probes carry no credentials, so
+      # they still get a screenshots-only trace with snapshots (DOM + network
+      # payloads) disabled.
+      return if authentication_service.present?
+
+      context.tracing.start(screenshots: true, snapshots: false)
     end
 
     def stop_trace
+      return if authentication_service.present?
+
       trace_path = trace_dir.join("#{SecureRandom.hex}.zip").to_s
       FileUtils.mkdir_p(trace_dir)
       context.tracing.stop(path: trace_path)

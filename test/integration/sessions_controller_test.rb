@@ -23,7 +23,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
 
   test "returns to the page that sent you to the login" do
     on_subdomain "ams"
-    get upright.prometheus_path
+    get upright.prometheus_path, headers: { "Sec-Fetch-Site" => "same-origin" }
 
     sign_in
 

@@ -20,6 +20,11 @@ class Upright::Incident < Upright::PersistentRecord
   has_many :updates, -> { order(created_at: :desc) }, class_name: "Upright::IncidentUpdate", inverse_of: :incident, dependent: :destroy
   has_many :affected_services, class_name: "Upright::IncidentAffectedService", inverse_of: :incident, dependent: :destroy
 
+  # An incident is public-facing when it affects at least one public service.
+  # Everything else — internal-only or untagged — stays off the public status
+  # page entirely (fail closed).
+  scope :public_facing, -> { for_service(Upright::Service.public_facing.map(&:code)).distinct }
+
   validates :title, :starts_at, presence: true
   validates :status, inclusion: { in: ->(incident) { incident.class::STATUSES } }
   validates :impact, inclusion: { in: ->(incident) { incident.class::IMPACTS } }
@@ -42,6 +47,10 @@ class Upright::Incident < Upright::PersistentRecord
 
   def services
     service_codes.filter_map { |code| Upright::Service.find_by(code: code) }
+  end
+
+  def public_services
+    services.select { |service| service[:public] }
   end
 
   private

@@ -52,7 +52,7 @@ Failing over is moving the flag and deploying, then repointing DNS.
 
 Sites running a local Prometheus and Alertmanager. They accept metric writes from every site's collector and serve the `/prometheus` and `/alertmanager` proxies, so losing one leaves the others readable. Probe-only sites serve neither, and 404 those paths rather than proxying to something that isn't there.
 
-Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token`, which defaults to `PROMETHEUS_OTLP_TOKEN`, instead of an admin session.
+Machine callers — collectors writing metrics, jobs reading a peer — authenticate with `Upright.configuration.proxy_token` instead of an admin session. The install generator writes a random token into `config/initializers/upright.rb`; every site must share the same value, and setting the `PROMETHEUS_OTLP_TOKEN` env var overrides it for rotation.
 
 These sites are also expected to reach the `persistent` database. Probe-only sites aren't asked to: where they're firewalled off it, a connection attempt hangs rather than being refused, which ties up a worker on every run.
 

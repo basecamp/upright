@@ -11,8 +11,8 @@
       <% if @incident.maintenance? %>
         <span><%= local_maintenance_window(@incident) %></span>
       <% end %>
-      <% if @incident.services.any? %>
-        <span><%= @incident.services.map(&:name).to_sentence %></span>
+      <% if @incident.public_services.any? %>
+        <span><%= @incident.public_services.map(&:name).to_sentence %></span>
       <% end %>
     </div>
   </header>
