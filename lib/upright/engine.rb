@@ -12,7 +12,11 @@ class Upright::Engine < ::Rails::Engine
     # — would hand the cookie to the registrable parent and every sibling under it
     # (F-08).
     app.config.session_store :cookie_store,
-      key: "_upright_session",
+      # Bumped from "_upright_session" so upgrading from 0.3.0 (which scoped the
+      # cookie to the registrable parent via domain: :all) doesn't leave that old,
+      # broadly-scoped cookie usable: the new key ignores it, and it ages out at
+      # its original expiry. Costs a one-time re-login on upgrade (F-08).
+      key: "_upright_session_v2",
       domain: ->(_request) { Upright.configuration.hostname&.then { |h| ".#{h}" } },
       same_site: :lax,
       secure: Rails.env.production?,

@@ -24,6 +24,10 @@ Security backport release for v0.3.0 installs.
 
 ### Upgrading
 
+Everyone signs in again once: the session cookie key changed so a 0.3.0 cookie
+scoped to the registrable parent can't linger usable after the scope tightened
+(F-08).
+
 The `static_credentials` fail-closed password fix lives in the install template,
 which a gem upgrade does not copy back over an existing app. Existing v0.3.0
 installs must update `config/initializers/omniauth.rb` by hand so an unset
