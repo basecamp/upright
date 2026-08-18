@@ -1,0 +1,21 @@
+CHANGELOG.md
+  s_6732c3c48d0ed9::t_3c819a3e9b810a 27-30
+lib/upright/engine.rb
+  s_6732c3c48d0ed9::t_1c99d174b31c82 15-19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "387f73bbc5bdff41dd0c366cc89592f968df6538",
+  "prompts": {},
+  "sessions": {
+    "s_6732c3c48d0ed9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "302dde0c-25bd-4989-b697-2cbe9d412a0f",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Jeremy Daer <jeremy@37signals.com>"
+    }
+  }
+}
