@@ -13,7 +13,11 @@ class Upright::Engine < ::Rails::Engine
     # (F-08). This is independent of tld_length, so custom status domains still
     # parse normally.
     app.config.session_store :cookie_store,
-      key: "_upright_session",
+      # Bumped from "_upright_session" so upgrading from a build that scoped the
+      # cookie to the registrable parent (domain: :all) doesn't leave that old,
+      # broadly-scoped cookie usable: the new key ignores it, and it ages out at
+      # its original expiry. Costs a one-time re-login on upgrade (F-08).
+      key: "_upright_session_v2",
       domain: ->(_request) { Upright.configuration.hostname&.then { |h| ".#{h}" } },
       same_site: :lax,
       secure: !Rails.env.local?,

@@ -31,6 +31,10 @@
 
 ### Upgrading
 
+- Everyone signs in again once: the session cookie key changed so a cookie from
+  a build that scoped it to the registrable parent can't linger usable after the
+  scope tightened (F-08).
+
 Some of the security fixes live in generated, host-owned config that a gem
 upgrade does not rewrite. Existing installs should apply these by hand:
 
