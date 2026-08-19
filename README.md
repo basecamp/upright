@@ -564,13 +564,31 @@ Probes::Playwright::MyServiceAuthProbe.check
 
 ### Upgrading Playwright
 
-Playwright versions are pinned via `Upright::PLAYWRIGHT_VERSION` in `lib/upright/version.rb`. This drives the Ruby gem, npm package, and trace viewer versions. To upgrade:
+Playwright versions are pinned via `Upright::PLAYWRIGHT_VERSION` in `lib/upright/version.rb`. This drives the Ruby gem and npm package versions. To upgrade:
 
 1. Update `PLAYWRIGHT_VERSION` in `lib/upright/version.rb`
 2. Update the version in `package.json`
-3. Run `bin/setup` (or manually: `npm install && npx playwright install chromium && rake playwright:sync`)
+3. Run `bin/setup` (or manually: `npm install && npx playwright install chromium`)
 4. Run `bin/rails test` to verify compatibility
-5. Commit the updated `public/trace-viewer/` files, `package.json`, and `package-lock.json`
+5. Commit the updated `package.json` and `package-lock.json`
+
+### Viewing Playwright Traces
+
+Upright stores a Playwright trace as a probe result artifact and does not serve
+the Playwright Trace Viewer. The viewer renders a trace's tags and attributes as
+HTML in its own origin, so serving it from Upright's hostname would let a trace
+run script against an admin session.
+
+Download the trace from the artifact popover and open it locally:
+
+```bash
+npx playwright show-trace trace.zip
+```
+
+To open traces in the browser instead, host the viewer on an origin outside
+`config.hostname` and set `config.trace_viewer_url` to it. Upright then links to
+`<trace_viewer_url>?trace=<signed artifact URL>` in a new tab; the viewer's
+origin needs to be allowed to fetch that URL cross-origin.
 
 ### Running Tests
 

@@ -67,7 +67,6 @@ class Upright::Engine < ::Rails::Engine
 
   initializer "upright.assets" do |app|
     app.config.assets.paths << root.join("app/javascript")
-    app.middleware.use ::ActionDispatch::Static, root.join("public").to_s
   end
 
   initializer "upright.importmap", before: "importmap" do |app|

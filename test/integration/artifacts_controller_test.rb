@@ -27,6 +27,34 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
     assert_select "source[src*='rails/active_storage/blobs']"
   end
 
+  test "offers a trace for download rather than rendering it in the admin origin" do
+    attachment = active_storage_attachments(:playwright_trace_artifact)
+
+    get upright.site_artifact_path(attachment)
+
+    assert_response :success
+    assert_select "iframe", false
+    assert_select "code", text: "npx playwright show-trace trace.zip"
+  end
+
+  test "links a trace to a configured viewer origin" do
+    Upright.configuration.stubs(:trace_viewer_url).returns("https://traces.example.net/index.html")
+    attachment = active_storage_attachments(:playwright_trace_artifact)
+
+    get upright.site_artifact_path(attachment)
+
+    assert_response :success
+    assert_select "a[rel='noopener noreferrer'][target='_blank']" do |links|
+      assert_match %r{\Ahttps://traces\.example\.net/index\.html\?trace=http}, links.first[:href]
+    end
+  end
+
+  test "does not serve the trace viewer from the admin origin" do
+    get "/trace-viewer/index.html"
+
+    assert_response :not_found
+  end
+
   test "returns 404 for attachments that do not belong to probe results" do
     foreign_attachment = ActiveStorage::Attachment.create!(
       name: "artifacts",

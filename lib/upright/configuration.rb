@@ -27,6 +27,13 @@ class Upright::Configuration
   # Playwright
   attr_accessor :playwright_cli_path
 
+  # Origin serving the Playwright Trace Viewer, e.g.
+  # "https://traces.example.net/index.html". Upright doesn't serve the viewer:
+  # it renders trace contents as HTML in its own origin, so an admin-origin
+  # viewer turns a probe artifact into same-origin script. Unset means traces
+  # are download-only.
+  attr_reader :trace_viewer_url
+
   # Authentication
   attr_accessor :auth_provider
   attr_accessor :auth_options
@@ -85,9 +92,16 @@ class Upright::Configuration
     @stale_failure_threshold = 30.days
     @failure_retention_limit = 20_000
 
+    @trace_viewer_url = nil
+
     @public_status_enabled = false
     @public_status_custom_domains = []
     @public_stylesheets = nil
+  end
+
+  def trace_viewer_url=(url)
+    @trace_viewer_url = url.presence
+    validate_trace_viewer_url
   end
 
   def public_status_subdomain
@@ -162,6 +176,7 @@ class Upright::Configuration
   def hostname=(value)
     @hostname = value
     configure_allowed_hosts
+    validate_trace_viewer_url
   end
 
   def hostname
@@ -177,6 +192,23 @@ class Upright::Configuration
   end
 
   private
+    # The viewer only isolates a trace if it runs somewhere Upright's cookies
+    # don't. Checked on either assignment, since the generated initializer sets
+    # the hostname first but nothing enforces that order.
+    def validate_trace_viewer_url
+      return if @trace_viewer_url.blank?
+
+      host = URI.parse(@trace_viewer_url).host
+
+      if host.blank?
+        raise Upright::ConfigurationError, "config.trace_viewer_url must be an absolute URL, got #{@trace_viewer_url.inspect}"
+      elsif @hostname.present? && (host == @hostname || host.end_with?(".#{@hostname}"))
+        raise Upright::ConfigurationError, "config.trace_viewer_url must be outside #{@hostname}, so a trace can't run on Upright's origin"
+      end
+    rescue URI::InvalidURIError
+      raise Upright::ConfigurationError, "config.trace_viewer_url is not a valid URL: #{@trace_viewer_url.inspect}"
+    end
+
     def configure_allowed_hosts
       port_suffix = Rails.env.local? ? "(:\\d+)?" : ""
       hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]
