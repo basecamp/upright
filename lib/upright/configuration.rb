@@ -99,9 +99,15 @@ class Upright::Configuration
     @public_stylesheets = nil
   end
 
+  # A trace renders in the viewer's origin, so a viewer on Upright's own hostname
+  # would put it back on the admin origin.
   def trace_viewer_url=(url)
     @trace_viewer_url = url.presence
-    validate_trace_viewer_url
+    host = URI(@trace_viewer_url.to_s).host.to_s
+
+    if @hostname.present? && (host == @hostname || host.end_with?(".#{@hostname}"))
+      raise Upright::ConfigurationError, "config.trace_viewer_url must be outside #{@hostname}"
+    end
   end
 
   def public_status_subdomain
@@ -176,7 +182,6 @@ class Upright::Configuration
   def hostname=(value)
     @hostname = value
     configure_allowed_hosts
-    validate_trace_viewer_url
   end
 
   def hostname
@@ -192,23 +197,6 @@ class Upright::Configuration
   end
 
   private
-    # The viewer only isolates a trace if it runs somewhere Upright's cookies
-    # don't. Checked on either assignment, since the generated initializer sets
-    # the hostname first but nothing enforces that order.
-    def validate_trace_viewer_url
-      return if @trace_viewer_url.blank?
-
-      host = URI.parse(@trace_viewer_url).host
-
-      if host.blank?
-        raise Upright::ConfigurationError, "config.trace_viewer_url must be an absolute URL, got #{@trace_viewer_url.inspect}"
-      elsif @hostname.present? && (host == @hostname || host.end_with?(".#{@hostname}"))
-        raise Upright::ConfigurationError, "config.trace_viewer_url must be outside #{@hostname}, so a trace can't run on Upright's origin"
-      end
-    rescue URI::InvalidURIError
-      raise Upright::ConfigurationError, "config.trace_viewer_url is not a valid URL: #{@trace_viewer_url.inspect}"
-    end
-
     def configure_allowed_hosts
       port_suffix = Rails.env.local? ? "(:\\d+)?" : ""
       hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]

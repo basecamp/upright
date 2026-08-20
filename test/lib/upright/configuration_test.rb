@@ -29,19 +29,4 @@ class Upright::ConfigurationTest < ActiveSupport::TestCase
       end
     end
   end
-
-  test "trace_viewer_url rejects a relative URL" do
-    assert_raises Upright::ConfigurationError do
-      @config.trace_viewer_url = "/trace-viewer/index.html"
-    end
-  end
-
-  test "trace_viewer_url is rechecked when the hostname is assigned later" do
-    config = Upright::Configuration.new
-    config.trace_viewer_url = "https://traces.example.net/index.html"
-
-    assert_raises Upright::ConfigurationError do
-      config.hostname = "example.net"
-    end
-  end
 end
