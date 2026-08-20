@@ -1,13 +1,11 @@
-# Unauthenticated by design: the configured trace viewer fetches from its own
-# origin, so a purpose-scoped signed id stands in for the admin session.
 class Upright::TracesController < Upright::ApplicationController
-  include ActiveStorage::Streaming
   include ActiveStorage::DisableSession
 
   PURPOSE = :upright_trace
   EXPIRES_IN = 24.hours
 
   skip_before_action :authenticate_user
+  skip_forgery_protection
 
   before_action :allow_trace_viewer_origin
   before_action :answer_preflight, if: -> { request.options? }
@@ -18,10 +16,15 @@ class Upright::TracesController < Upright::ApplicationController
   end
 
   def show
-    if request.headers["Range"].present?
-      send_blob_byte_range_data @trace, request.headers["Range"]
+    expires_in EXPIRES_IN, public: false
+    response.headers["Accept-Ranges"] = "bytes"
+
+    if request.head?
+      send_trace_size
+    elsif (range = request.headers["Range"]).present?
+      send_trace_range range
     else
-      send_whole_trace
+      send_trace @trace.download
     end
   end
 
@@ -44,12 +47,29 @@ class Upright::TracesController < Upright::ApplicationController
       head :no_content
     end
 
-    def send_whole_trace
-      expires_in EXPIRES_IN, public: false
-      response.headers["Accept-Ranges"] = "bytes"
+    def send_trace_size
       response.headers["Content-Length"] = @trace.byte_size.to_s
+      response.headers["Content-Type"] = @trace.content_type_for_serving
 
-      send_blob_stream @trace
+      head :ok
+    end
+
+    def send_trace_range(header)
+      ranges = Rack::Utils.get_byte_ranges(header, @trace.byte_size)
+      return head :range_not_satisfiable unless ranges&.one?
+
+      range = ranges.first
+      response.headers["Content-Range"] = "bytes #{range.begin}-#{range.end}/#{@trace.byte_size}"
+
+      send_trace @trace.download_chunk(range), status: :partial_content
+    end
+
+    def send_trace(data, status: :ok)
+      send_data data,
+        status: status,
+        type: @trace.content_type_for_serving,
+        disposition: :inline,
+        filename: @trace.filename.sanitized
     end
 
     def set_trace
