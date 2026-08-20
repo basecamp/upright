@@ -16,6 +16,17 @@ Upright.configure do |config|
   # without editing this file.
   config.proxy_token = ENV.fetch("PROMETHEUS_OTLP_TOKEN", "<%= SecureRandom.hex(32) %>")
 
+  # Viewer that trace artifacts link to, https://trace.playwright.dev by
+  # default. Upright doesn't serve one: the viewer renders a trace's contents as
+  # HTML in its own origin, so a viewer on this hostname would let a probe
+  # artifact run script against the admin session, and Upright refuses a URL
+  # under config.hostname for that reason.
+  #
+  # Following a link hands the viewer's origin a URL it can read for 24 hours.
+  # Point this at a viewer you host to keep traces to yourself, or assign nil to
+  # keep them download-only, for `npx playwright show-trace`.
+  # config.trace_viewer_url = "https://traces.example.net/index.html"
+
   # OpenTelemetry endpoint
   # config.otel_endpoint = ENV["OTEL_EXPORTER_OTLP_ENDPOINT"]
 

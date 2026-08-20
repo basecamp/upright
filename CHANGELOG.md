@@ -4,6 +4,18 @@
 
 ### Security
 
+- Stop serving the Playwright Trace Viewer from Upright's origin, and stop
+  vendoring it. The viewer serialised a trace's tags and attributes into
+  `text/html` on the admin origin, so a crafted trace ZIP executed script there
+  and could read admin pages and CSRF tokens. Traces are now download-only
+  linked to the viewer at `config.trace_viewer_url`, which defaults to upstream's
+  hosted `https://trace.playwright.dev` and can be pointed at a viewer you host
+  or set to nil for download-only traces (`npx playwright show-trace`). A URL
+  under `config.hostname` is refused. The viewer reads the trace through
+  `Upright::TracesController`, which sends `Access-Control-Allow-Origin` for that
+  viewer's origin alone and authorizes the request with a purpose-scoped signed
+  id that expires after 24 hours instead of the admin session. Following a trace
+  link therefore hands the viewer's origin a URL it can read for 24 hours.
 - Fix an authenticated SSRF through the Prometheus/Alertmanager proxies: a
   protocol-relative path (`//host`) could retarget the upstream request at an
   arbitrary host (RFC1918, the Docker network, cloud metadata). The upstream URL
@@ -42,6 +54,9 @@ upgrade does not rewrite. Existing installs should apply these by hand:
   crashed run are still cleaned up.
 - `config/initializers/content_security_policy.rb`: adopt the recommended policy
   from the install template if you don't already enforce a CSP.
+- `config/initializers/upright.rb`: trace artifacts now link to
+  `https://trace.playwright.dev` by default. Set `config.trace_viewer_url` to a
+  viewer you host, or to nil, if you don't want trace URLs handed to that origin.
 
 ### Changed
 

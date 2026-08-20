@@ -5,6 +5,8 @@ class Upright::Configuration
   # Public status pages live at status.<hostname>; custom CNAMEs match by subdomain.
   PUBLIC_STATUS_SUBDOMAIN = "status"
 
+  DEFAULT_TRACE_VIEWER_URL = "https://trace.playwright.dev/"
+
   # Core settings
   attr_accessor :service_name
   attr_accessor :user_agent
@@ -26,6 +28,8 @@ class Upright::Configuration
 
   # Playwright
   attr_accessor :playwright_cli_path
+
+  attr_reader :trace_viewer_url
 
   # Authentication
   attr_accessor :auth_provider
@@ -85,9 +89,26 @@ class Upright::Configuration
     @stale_failure_threshold = 30.days
     @failure_retention_limit = 20_000
 
+    self.trace_viewer_url = ENV.fetch("TRACE_VIEWER_URL", DEFAULT_TRACE_VIEWER_URL)
+
     @public_status_enabled = false
     @public_status_custom_domains = []
     @public_stylesheets = nil
+  end
+
+  def trace_viewer_url=(url)
+    @trace_viewer_url = url.presence
+    host = trace_viewer_uri&.host
+
+    if @trace_viewer_url && (host.nil? || admin_domain?(host))
+      raise Upright::ConfigurationError, "config.trace_viewer_url must be an http(s) URL outside #{@hostname}"
+    end
+  end
+
+  def trace_viewer_origin
+    trace_viewer_uri&.then do |url|
+      "#{url.scheme}://#{url.host}#{":#{url.port}" unless url.port == url.default_port}"
+    end
   end
 
   def public_status_subdomain
@@ -177,6 +198,23 @@ class Upright::Configuration
   end
 
   private
+    def trace_viewer_uri
+      url = URI(@trace_viewer_url.to_s)
+      url if url.is_a?(URI::HTTP) && url.host.present?
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    # DNS is case-insensitive and tolerates a trailing dot, so compare folded.
+    def admin_domain?(host)
+      return false if @hostname.blank?
+
+      host = host.downcase.chomp(".")
+      admin = @hostname.downcase
+
+      host == admin || host.end_with?(".#{admin}")
+    end
+
     def configure_allowed_hosts
       port_suffix = Rails.env.local? ? "(:\\d+)?" : ""
       hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]

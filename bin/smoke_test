@@ -288,15 +288,15 @@ wait "$JOBS_PID" 2>/dev/null || true
 JOBS_PID=""
 
 # -------------------------------------------------------------------
-# Step 10: Verify trace viewer is served
+# Step 10: Verify the trace viewer is not served from this origin
 # -------------------------------------------------------------------
-echo "=> Checking trace viewer is accessible"
+echo "=> Checking the trace viewer is not served from the app origin"
 status=$(curl -s -o /dev/null -w "%{http_code}" $RESOLVE "$APP_URL/trace-viewer/index.html" 2>/dev/null || true)
 
-if [[ "$status" == "200" ]]; then
+if [[ "$status" == "404" ]]; then
   echo "   OK (HTTP $status)"
 else
-  echo "   FAIL: trace viewer returned HTTP $status"
+  echo "   FAIL: the app origin serves the trace viewer (HTTP $status)"
   exit 1
 fi
 

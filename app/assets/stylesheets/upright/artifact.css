@@ -75,11 +75,6 @@
     flex: 1;
     overflow: auto;
     padding: var(--block-space);
-
-    &:has(.artifact__trace-viewer) {
-      overflow: hidden;
-      padding: 0;
-    }
   }
 
   .artifact__body video {
@@ -122,10 +117,10 @@
     }
   }
 
-  .artifact__trace-viewer {
-    border: 0;
-    height: 100%;
-    width: 100%;
+  .artifact__trace {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
   }
 
   td .artifact + .artifact {

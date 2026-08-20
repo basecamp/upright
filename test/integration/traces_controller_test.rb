@@ -1,0 +1,105 @@
+require "test_helper"
+
+class TracesControllerTest < ActionDispatch::IntegrationTest
+  setup do
+    on_subdomain "ams"
+    Upright.configuration.stubs(:trace_viewer_url).returns("https://traces.example.net/index.html")
+    Upright.configuration.stubs(:trace_viewer_origin).returns("https://traces.example.net")
+    @trace = active_storage_attachments(:playwright_trace_artifact)
+    @trace.blob.upload(StringIO.new("PK\x03\x04 stand-in for a trace"))
+    @trace.blob.save!
+  end
+
+  teardown do
+    @trace.blob.service.delete(@trace.blob.key)
+  end
+
+  test "serves a trace to the viewer origin without a session" do
+    get trace_path(@trace)
+
+    assert_response :success
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+    assert_equal "Origin", response.headers["Vary"]
+  end
+
+  test "advertises the archive size and range support" do
+    get trace_path(@trace)
+
+    assert_response :success
+    assert_equal "bytes", response.headers["Accept-Ranges"]
+    assert_equal @trace.blob.byte_size.to_s, response.headers["Content-Length"]
+  end
+
+  test "reports the size on a HEAD request, which is how the viewer asks" do
+    head trace_path(@trace)
+
+    assert_response :success
+    assert_equal @trace.blob.byte_size.to_s, response.headers["Content-Length"]
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+  end
+
+  test "answers a range request with the requested bytes" do
+    get trace_path(@trace), headers: { "Range" => "bytes=0-3" }
+
+    assert_response :partial_content
+    assert_equal 4, response.body.bytesize
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+    assert_match "Content-Range", response.headers["Access-Control-Expose-Headers"]
+  end
+
+  test "answers the preflight the viewer's service worker triggers" do
+    with_forgery_protection do
+      process :options, trace_path(@trace), headers: {
+        "Origin" => "https://traces.example.net",
+        "Access-Control-Request-Method" => "GET",
+        "Access-Control-Request-Headers" => "x-pw-serviceworker"
+      }
+    end
+
+    assert_response :no_content
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+    assert_equal "GET, HEAD, OPTIONS", response.headers["Access-Control-Allow-Methods"]
+    assert_equal "x-pw-serviceworker", response.headers["Access-Control-Allow-Headers"]
+  end
+
+  test "refuses a preflight when no viewer is configured" do
+    Upright.configuration.stubs(:trace_viewer_origin).returns(nil)
+
+    with_forgery_protection do
+      process :options, trace_path(@trace), headers: { "Origin" => "https://traces.example.net" }
+    end
+
+    assert_response :not_found
+  end
+
+  test "404s when no viewer is configured" do
+    Upright.configuration.stubs(:trace_viewer_origin).returns(nil)
+
+    get trace_path(@trace)
+
+    assert_response :not_found
+  end
+
+  test "404s a signed id for an artifact that isn't a trace" do
+    get trace_path(active_storage_attachments(:http_artifact))
+
+    assert_response :not_found
+  end
+
+  test "404s a signed id signed for another purpose" do
+    get upright.site_trace_path(signed_id: @trace.signed_id(purpose: :something_else))
+
+    assert_response :not_found
+  end
+
+  test "404s a tampered signed id" do
+    get upright.site_trace_path(signed_id: "not-a-signed-id")
+
+    assert_response :not_found
+  end
+
+  private
+    def trace_path(attachment)
+      upright.site_trace_path(signed_id: Upright::TracesController.signed_id_for(attachment))
+    end
+end

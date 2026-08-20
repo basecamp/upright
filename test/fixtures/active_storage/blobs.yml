@@ -53,3 +53,11 @@ stale_log:
   service_name: local
   byte_size: 30
   checksum: <%= Digest::MD5.base64digest("Sample log content for testing") %>
+
+playwright_trace:
+  key: playwright_trace_key
+  filename: trace.zip
+  content_type: application/zip
+  service_name: local
+  byte_size: 100
+  checksum: <%= Digest::MD5.base64digest("fake trace content") %>
