@@ -24,6 +24,22 @@ class TracesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Origin", response.headers["Vary"]
   end
 
+  test "advertises the archive size and range support" do
+    get trace_path(@trace)
+
+    assert_response :success
+    assert_equal "bytes", response.headers["Accept-Ranges"]
+    assert_equal @trace.blob.byte_size.to_s, response.headers["Content-Length"]
+  end
+
+  test "reports the size on a HEAD request, which is how the viewer asks" do
+    head trace_path(@trace)
+
+    assert_response :success
+    assert_equal @trace.blob.byte_size.to_s, response.headers["Content-Length"]
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+  end
+
   test "answers a range request with the requested bytes" do
     get trace_path(@trace), headers: { "Range" => "bytes=0-3" }
 

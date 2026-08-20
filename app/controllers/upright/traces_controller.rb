@@ -4,6 +4,9 @@
 # purpose-scoped, expiring, and only resolvable to a probe result's trace.
 class Upright::TracesController < Upright::ApplicationController
   include ActiveStorage::Streaming
+  # Nothing here reads or writes the session, and a Set-Cookie on a cross-origin
+  # response is noise at best.
+  include ActiveStorage::DisableSession
 
   PURPOSE = :upright_trace
   EXPIRES_IN = 24.hours
@@ -23,6 +26,18 @@ class Upright::TracesController < Upright::ApplicationController
     if request.headers["Range"].present?
       send_blob_byte_range_data @trace, request.headers["Range"]
     else
+      # ActiveStorage::Blobs::ProxyController uses http_cache_forever here. A
+      # trace URL carries its own authorization and stops working after
+      # EXPIRES_IN, so cache it privately for that long rather than forever and
+      # publicly.
+      expires_in EXPIRES_IN, public: false
+
+      # The viewer sizes the archive from Content-Length before asking for any
+      # range, and won't ask at all without Accept-Ranges. Streaming sets
+      # neither, so both are set here, as the proxy controller does.
+      response.headers["Accept-Ranges"] = "bytes"
+      response.headers["Content-Length"] = @trace.byte_size.to_s
+
       send_blob_stream @trace
     end
   end
