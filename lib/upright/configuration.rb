@@ -103,20 +103,18 @@ class Upright::Configuration
   # would put it back on the admin origin.
   def trace_viewer_url=(url)
     @trace_viewer_url = url.presence
-    host = URI(@trace_viewer_url.to_s).host.to_s
 
-    if @hostname.present? && (host == @hostname || host.end_with?(".#{@hostname}"))
-      raise Upright::ConfigurationError, "config.trace_viewer_url must be outside #{@hostname}"
+    unless isolated_trace_viewer?
+      raise Upright::ConfigurationError, "config.trace_viewer_url must be an http(s) URL outside #{@hostname}"
     end
   end
 
   # The viewer's origin on its own, for the CORS header that lets it read a
   # trace. Nil when no viewer is configured.
   def trace_viewer_origin
-    url = URI(@trace_viewer_url.to_s)
-    return if url.host.blank?
-
-    "#{url.scheme}://#{url.host}#{":#{url.port}" unless url.port == url.default_port}"
+    trace_viewer_uri&.then do |url|
+      "#{url.scheme}://#{url.host}#{":#{url.port}" unless url.port == url.default_port}"
+    end
   end
 
   def public_status_subdomain
@@ -206,6 +204,29 @@ class Upright::Configuration
   end
 
   private
+    # URI::HTTPS subclasses URI::HTTP, so this admits both and rejects anything
+    # without a scheme and host — a hostless value would otherwise leave
+    # #trace_viewer_origin with no origin to send.
+    def trace_viewer_uri
+      url = URI(@trace_viewer_url.to_s)
+      url if url.is_a?(URI::HTTP) && url.host.present?
+    rescue URI::InvalidURIError
+      nil
+    end
+
+    def isolated_trace_viewer?
+      return true if @trace_viewer_url.blank?
+      return false if trace_viewer_uri.nil?
+      return true if @hostname.blank?
+
+      # DNS is case-insensitive and tolerates a trailing dot; the guard has to be
+      # too, or an equivalent spelling of the admin host passes it.
+      host = trace_viewer_uri.host.downcase.chomp(".")
+      admin = @hostname.downcase
+
+      host != admin && !host.end_with?(".#{admin}")
+    end
+
     def configure_allowed_hosts
       port_suffix = Rails.env.local? ? "(:\\d+)?" : ""
       hosts = [ /.*\.#{Regexp.escape(hostname)}#{port_suffix}/, /#{Regexp.escape(hostname)}#{port_suffix}/ ]

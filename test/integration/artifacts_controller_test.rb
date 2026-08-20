@@ -52,6 +52,21 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "merges the trace into a viewer URL that already has a query and a fragment" do
+    Upright.configuration.stubs(:trace_viewer_url).returns("https://traces.example.net/?mode=dark#/main")
+    attachment = active_storage_attachments(:playwright_trace_artifact)
+
+    get upright.site_artifact_path(attachment)
+
+    assert_response :success
+    assert_select "a[rel='noopener noreferrer']" do |links|
+      url = URI(links.first[:href])
+
+      assert_match(/\Amode=dark&trace=/, url.query)
+      assert_equal "/main", url.fragment
+    end
+  end
+
   test "does not serve the trace viewer from the admin origin" do
     get "/trace-viewer/index.html"
 

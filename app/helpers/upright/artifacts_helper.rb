@@ -9,7 +9,11 @@ module Upright::ArtifactsHelper
     viewer = Upright.configuration.trace_viewer_url
     return if viewer.blank?
 
-    "#{viewer}?trace=#{CGI.escape(trace_url_for(artifact))}"
+    # Merged into the query rather than appended, so a viewer URL that already
+    # carries one keeps it, and a fragment stays after it.
+    URI(viewer).tap do |url|
+      url.query = [ url.query, "trace=#{CGI.escape(trace_url_for(artifact))}" ].compact.join("&")
+    end.to_s
   end
 
   private
