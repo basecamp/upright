@@ -9,7 +9,11 @@ module Upright::ArtifactsHelper
     viewer = Upright.configuration.trace_viewer_url
     return if viewer.blank?
 
-    trace = main_app.rails_blob_url(artifact, disposition: :inline, expires_in: 24.hours, host: request.host)
-    "#{viewer}?trace=#{CGI.escape(trace)}"
+    "#{viewer}?trace=#{CGI.escape(trace_url_for(artifact))}"
   end
+
+  private
+    def trace_url_for(artifact)
+      site_trace_url(signed_id: Upright::TracesController.signed_id_for(artifact), host: request.host)
+    end
 end

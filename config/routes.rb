@@ -40,6 +40,10 @@ Upright::Engine.routes.draw do
 
     resources :artifacts, only: :show, as: :site_artifacts
 
+    # Read by the configured trace viewer from its own origin, so it can't rely
+    # on the admin session. See Upright::TracesController.
+    get "traces/:signed_id", to: "traces#show", as: :site_trace
+
     scope :framed do
       resource :jobs, only: :show
     end

@@ -9,7 +9,11 @@
   `text/html` on the admin origin, so a crafted trace ZIP executed script there
   and could read admin pages and CSRF tokens. Traces are now download-only
   (`npx playwright show-trace`), or open in a viewer hosted outside
-  `config.hostname` via `config.trace_viewer_url`.
+  `config.hostname` via `config.trace_viewer_url`. A configured viewer reads the
+  trace through `Upright::TracesController`, which sends
+  `Access-Control-Allow-Origin` for that viewer's origin alone and authorizes the
+  request with a purpose-scoped signed id that expires after 24 hours instead of
+  the admin session.
 - Fix an authenticated SSRF through the Prometheus/Alertmanager proxies: a
   protocol-relative path (`//host`) could retarget the upstream request at an
   arbitrary host (RFC1918, the Docker network, cloud metadata). The upstream URL

@@ -45,7 +45,10 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "a[rel='noopener noreferrer'][target='_blank']" do |links|
-      assert_match %r{\Ahttps://traces\.example\.net/index\.html\?trace=http}, links.first[:href]
+      viewer, _separator, trace = links.first[:href].partition("?trace=")
+
+      assert_equal "https://traces.example.net/index.html", viewer
+      assert_match %r{\Ahttp://ams\.[^/]+/traces/}, CGI.unescape(trace)
     end
   end
 

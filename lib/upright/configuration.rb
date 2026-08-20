@@ -110,6 +110,15 @@ class Upright::Configuration
     end
   end
 
+  # The viewer's origin on its own, for the CORS header that lets it read a
+  # trace. Nil when no viewer is configured.
+  def trace_viewer_origin
+    url = URI(@trace_viewer_url.to_s)
+    return if url.host.blank?
+
+    "#{url.scheme}://#{url.host}#{":#{url.port}" unless url.port == url.default_port}"
+  end
+
   def public_status_subdomain
     PUBLIC_STATUS_SUBDOMAIN
   end

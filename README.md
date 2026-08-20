@@ -587,8 +587,19 @@ npx playwright show-trace trace.zip
 
 To open traces in the browser instead, host the viewer on an origin outside
 `config.hostname` and set `config.trace_viewer_url` to it. Upright then links to
-`<trace_viewer_url>?trace=<signed artifact URL>` in a new tab; the viewer's
-origin needs to be allowed to fetch that URL cross-origin.
+`<trace_viewer_url>?trace=<trace URL>` in a new tab.
+
+That trace URL is served by `Upright::TracesController`, not Active Storage. The
+viewer fetches it from its own origin, so the request arrives without the admin
+session and needs `Access-Control-Allow-Origin` to be readable at all. The
+controller sends that header for the configured viewer's origin and nothing
+else, and takes a signed id in place of the session: scoped to a purpose,
+expiring after 24 hours, and resolvable only to a blob attached to an
+`Upright::ProbeResult` under a `.zip` filename. With no viewer configured the
+route 404s, so it exists only where it's used.
+
+Range requests are answered, which is how the viewer reads a ZIP's central
+directory without downloading the whole archive.
 
 ### Running Tests
 
