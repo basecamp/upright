@@ -80,6 +80,21 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "replaces a trace already present in the configured viewer URL" do
+    Upright.configuration.stubs(:trace_viewer_url).returns("https://traces.example.net/?trace=https%3A%2F%2Fold.example%2Ftrace.zip")
+    attachment = active_storage_attachments(:playwright_trace_artifact)
+
+    get upright.site_artifact_path(attachment)
+
+    assert_response :success
+    assert_select "a[target='_blank']" do |links|
+      traces = Rack::Utils.parse_query(URI(links.first[:href]).query)["trace"]
+
+      assert_kind_of String, traces
+      assert_match %r{\Ahttp://ams\.[^/]+/traces/}, traces
+    end
+  end
+
   test "does not serve the trace viewer from the admin origin" do
     get "/trace-viewer/index.html"
 

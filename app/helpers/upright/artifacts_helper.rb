@@ -8,7 +8,8 @@ module Upright::ArtifactsHelper
     return if viewer.blank?
 
     URI(viewer).tap do |url|
-      url.query = [ url.query, "trace=#{CGI.escape(trace_url_for(artifact))}" ].compact.join("&")
+      query = Rack::Utils.parse_query(url.query).except("trace")
+      url.query = query.merge("trace" => trace_url_for(artifact)).to_query
     end.to_s
   end
 
