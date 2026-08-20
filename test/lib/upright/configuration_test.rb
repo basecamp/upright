@@ -18,8 +18,22 @@ class Upright::ConfigurationTest < ActiveSupport::TestCase
     assert_equal "https://traces.example.net/index.html", @config.trace_viewer_url
   end
 
-  test "trace_viewer_url is blank by default" do
+  test "trace_viewer_url defaults to upstream's hosted viewer" do
+    assert_equal "https://trace.playwright.dev/", @config.trace_viewer_url
+    assert_equal "https://trace.playwright.dev", @config.trace_viewer_origin
+  end
+
+  test "TRACE_VIEWER_URL overrides the default" do
+    with_env("TRACE_VIEWER_URL" => "https://traces.example.net/index.html") do
+      assert_equal "https://traces.example.net/index.html", Upright::Configuration.new.trace_viewer_url
+    end
+  end
+
+  test "assigning nil leaves traces download-only" do
+    @config.trace_viewer_url = nil
+
     assert_nil @config.trace_viewer_url
+    assert_nil @config.trace_viewer_origin
   end
 
   test "trace_viewer_url rejects the configured hostname and its subdomains" do
@@ -52,9 +66,5 @@ class Upright::ConfigurationTest < ActiveSupport::TestCase
 
     @config.trace_viewer_url = "http://traces.localhost:4173/index.html"
     assert_equal "http://traces.localhost:4173", @config.trace_viewer_origin
-  end
-
-  test "trace_viewer_origin is nil with no viewer configured" do
-    assert_nil @config.trace_viewer_origin
   end
 end

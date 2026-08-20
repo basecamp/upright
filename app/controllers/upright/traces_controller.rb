@@ -1,11 +1,7 @@
-# Serves a trace to the viewer configured in config.trace_viewer_url. The viewer
-# fetches from its own origin, so the request carries no session and needs a CORS
-# header to be readable at all. The signed id is the capability in its place:
-# purpose-scoped, expiring, and only resolvable to a probe result's trace.
+# Unauthenticated by design: the configured trace viewer fetches from its own
+# origin, so a purpose-scoped signed id stands in for the admin session.
 class Upright::TracesController < Upright::ApplicationController
   include ActiveStorage::Streaming
-  # Nothing here reads or writes the session, and a Set-Cookie on a cross-origin
-  # response is noise at best.
   include ActiveStorage::DisableSession
 
   PURPOSE = :upright_trace
@@ -14,10 +10,9 @@ class Upright::TracesController < Upright::ApplicationController
   skip_before_action :authenticate_user
 
   before_action :allow_trace_viewer_origin
+  before_action :answer_preflight, if: -> { request.options? }
   before_action :set_trace
 
-  # ActiveStorage::Attachment#signed_id delegates to its blob, so the signature
-  # covers the blob and the scope check below is what ties it to a probe result.
   def self.signed_id_for(attachment)
     attachment.signed_id(purpose: PURPOSE, expires_in: EXPIRES_IN)
   end
@@ -26,33 +21,35 @@ class Upright::TracesController < Upright::ApplicationController
     if request.headers["Range"].present?
       send_blob_byte_range_data @trace, request.headers["Range"]
     else
-      # ActiveStorage::Blobs::ProxyController uses http_cache_forever here. A
-      # trace URL carries its own authorization and stops working after
-      # EXPIRES_IN, so cache it privately for that long rather than forever and
-      # publicly.
-      expires_in EXPIRES_IN, public: false
-
-      # The viewer sizes the archive from Content-Length before asking for any
-      # range, and won't ask at all without Accept-Ranges. Streaming sets
-      # neither, so both are set here, as the proxy controller does.
-      response.headers["Accept-Ranges"] = "bytes"
-      response.headers["Content-Length"] = @trace.byte_size.to_s
-
-      send_blob_stream @trace
+      send_whole_trace
     end
   end
 
   private
-    # No viewer configured, no unauthenticated trace route.
     def allow_trace_viewer_origin
       origin = Upright.configuration.trace_viewer_origin
       return head :not_found if origin.blank?
 
       response.headers["Access-Control-Allow-Origin"] = origin
-      # The viewer reads a ZIP's central directory over range requests, so it
-      # needs the ranges it got back, not just the bytes.
       response.headers["Access-Control-Expose-Headers"] = "Accept-Ranges, Content-Range"
       response.headers["Vary"] = "Origin"
+    end
+
+    def answer_preflight
+      response.headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
+      response.headers["Access-Control-Allow-Headers"] = request.headers["Access-Control-Request-Headers"].to_s
+      response.headers["Access-Control-Max-Age"] = 1.day.to_i.to_s
+      response.headers["Vary"] = "Origin, Access-Control-Request-Headers"
+
+      head :no_content
+    end
+
+    def send_whole_trace
+      expires_in EXPIRES_IN, public: false
+      response.headers["Accept-Ranges"] = "bytes"
+      response.headers["Content-Length"] = @trace.byte_size.to_s
+
+      send_blob_stream @trace
     end
 
     def set_trace

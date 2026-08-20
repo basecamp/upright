@@ -27,14 +27,27 @@ class ArtifactsControllerTest < ActionDispatch::IntegrationTest
     assert_select "source[src*='rails/active_storage/blobs']"
   end
 
-  test "offers a trace for download rather than rendering it in the admin origin" do
+  test "falls back to the local command when no viewer is configured" do
+    Upright.configuration.stubs(:trace_viewer_url).returns(nil)
     attachment = active_storage_attachments(:playwright_trace_artifact)
 
     get upright.site_artifact_path(attachment)
 
     assert_response :success
     assert_select "iframe", false
+    assert_select "a[target='_blank']", false
     assert_select "code", text: "npx playwright show-trace trace.zip"
+  end
+
+  test "shows only the viewer link when a viewer is configured" do
+    attachment = active_storage_attachments(:playwright_trace_artifact)
+
+    get upright.site_artifact_path(attachment)
+
+    assert_response :success
+    assert_select "iframe", false
+    assert_select "a[target='_blank']"
+    assert_select "code", false
   end
 
   test "links a trace to a configured viewer origin" do

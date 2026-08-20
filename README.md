@@ -579,15 +579,21 @@ the Playwright Trace Viewer. The viewer renders a trace's tags and attributes as
 HTML in its own origin, so serving it from Upright's hostname would let a trace
 run script against an admin session.
 
-Download the trace from the artifact popover and open it locally:
+A trace artifact links to `config.trace_viewer_url`, which defaults to
+upstream's hosted viewer at `https://trace.playwright.dev`. That viewer runs
+entirely in the browser, and being on its own registrable domain is what keeps a
+trace's contents off Upright's origin.
+
+Following the link hands that origin a URL it can read for 24 hours. Set
+`config.trace_viewer_url` to a viewer you host to keep traces to yourself, or
+assign `nil` to keep them download-only:
 
 ```bash
 npx playwright show-trace trace.zip
 ```
 
-To open traces in the browser instead, host the viewer on an origin outside
-`config.hostname` and set `config.trace_viewer_url` to it. Upright then links to
-`<trace_viewer_url>?trace=<trace URL>` in a new tab.
+A URL under `config.hostname` raises `Upright::ConfigurationError`, since that
+would put the trace back on the admin origin.
 
 That trace URL is served by `Upright::TracesController`, not Active Storage. The
 viewer fetches it from its own origin, so the request arrives without the admin

@@ -6,8 +6,6 @@ class TracesControllerTest < ActionDispatch::IntegrationTest
     Upright.configuration.stubs(:trace_viewer_url).returns("https://traces.example.net/index.html")
     Upright.configuration.stubs(:trace_viewer_origin).returns("https://traces.example.net")
     @trace = active_storage_attachments(:playwright_trace_artifact)
-    # The blob fixture has no bytes behind it, and streaming one that isn't
-    # there answers 404 rather than exercising anything.
     @trace.blob.upload(StringIO.new("PK\x03\x04 stand-in for a trace"))
     @trace.blob.save!
   end
@@ -47,6 +45,27 @@ class TracesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 4, response.body.bytesize
     assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
     assert_match "Content-Range", response.headers["Access-Control-Expose-Headers"]
+  end
+
+  test "answers the preflight the viewer's service worker triggers" do
+    process :options, trace_path(@trace), headers: {
+      "Origin" => "https://traces.example.net",
+      "Access-Control-Request-Method" => "GET",
+      "Access-Control-Request-Headers" => "x-pw-serviceworker"
+    }
+
+    assert_response :no_content
+    assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
+    assert_equal "GET, HEAD, OPTIONS", response.headers["Access-Control-Allow-Methods"]
+    assert_equal "x-pw-serviceworker", response.headers["Access-Control-Allow-Headers"]
+  end
+
+  test "refuses a preflight when no viewer is configured" do
+    Upright.configuration.stubs(:trace_viewer_origin).returns(nil)
+
+    process :options, trace_path(@trace), headers: { "Origin" => "https://traces.example.net" }
+
+    assert_response :not_found
   end
 
   test "404s when no viewer is configured" do

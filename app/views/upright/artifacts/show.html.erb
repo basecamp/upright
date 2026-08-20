@@ -7,8 +7,9 @@
     <div class="artifact__trace">
       <% if (viewer = trace_viewer_url_for(@artifact)) %>
         <p><%= link_to "Open in the Playwright Trace Viewer ↗", viewer, target: "_blank", rel: "noopener noreferrer" %></p>
+      <% else %>
+        <p>Download the trace above, then open it with <code>npx playwright show-trace <%= @artifact.filename %></code>.</p>
       <% end %>
-      <p>Download the trace above, then open it with <code>npx playwright show-trace <%= @artifact.filename %></code>.</p>
     </div>
   <% else %>
     <pre><%= @artifact.download %></pre>
