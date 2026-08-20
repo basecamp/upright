@@ -5,10 +5,10 @@ class Upright::TracesController < Upright::ApplicationController
   EXPIRES_IN = 24.hours
 
   skip_before_action :authenticate_user
-  skip_forgery_protection
+
+  prepend_before_action :answer_preflight, if: -> { request.options? }
 
   before_action :allow_trace_viewer_origin
-  before_action :answer_preflight, if: -> { request.options? }
   before_action :set_trace
 
   def self.signed_id_for(attachment)
@@ -39,6 +39,9 @@ class Upright::TracesController < Upright::ApplicationController
     end
 
     def answer_preflight
+      allow_trace_viewer_origin
+      return if performed?
+
       response.headers["Access-Control-Allow-Methods"] = "GET, HEAD, OPTIONS"
       response.headers["Access-Control-Allow-Headers"] = request.headers["Access-Control-Request-Headers"].to_s
       response.headers["Access-Control-Max-Age"] = 1.day.to_i.to_s

@@ -48,11 +48,13 @@ class TracesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "answers the preflight the viewer's service worker triggers" do
-    process :options, trace_path(@trace), headers: {
-      "Origin" => "https://traces.example.net",
-      "Access-Control-Request-Method" => "GET",
-      "Access-Control-Request-Headers" => "x-pw-serviceworker"
-    }
+    with_forgery_protection do
+      process :options, trace_path(@trace), headers: {
+        "Origin" => "https://traces.example.net",
+        "Access-Control-Request-Method" => "GET",
+        "Access-Control-Request-Headers" => "x-pw-serviceworker"
+      }
+    end
 
     assert_response :no_content
     assert_equal "https://traces.example.net", response.headers["Access-Control-Allow-Origin"]
@@ -63,7 +65,9 @@ class TracesControllerTest < ActionDispatch::IntegrationTest
   test "refuses a preflight when no viewer is configured" do
     Upright.configuration.stubs(:trace_viewer_origin).returns(nil)
 
-    process :options, trace_path(@trace), headers: { "Origin" => "https://traces.example.net" }
+    with_forgery_protection do
+      process :options, trace_path(@trace), headers: { "Origin" => "https://traces.example.net" }
+    end
 
     assert_response :not_found
   end
