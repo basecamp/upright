@@ -30,11 +30,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
 
   create_table "upright_incidents", force: :cascade do |t|
     t.boolean "auto_created", default: false, null: false
+    t.string "auto_service_code"
     t.datetime "created_at", null: false
     t.string "created_by"
     t.datetime "ends_at"
     t.string "impact", null: false
     t.datetime "last_seen_down_at"
+    t.datetime "recovery_started_at"
     t.datetime "resolved_at"
     t.datetime "starts_at", null: false
     t.string "status", null: false
@@ -42,6 +44,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.string "updated_by"
+    t.index ["auto_service_code"], name: "index_upright_incidents_on_auto_service_code", unique: true
     t.index ["resolved_at", "starts_at"], name: "index_upright_incidents_on_resolved_at_and_starts_at"
     t.index ["type", "starts_at"], name: "index_upright_incidents_on_type_and_starts_at"
   end

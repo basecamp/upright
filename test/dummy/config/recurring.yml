@@ -39,3 +39,7 @@ production:
   aggregate_rollups:
     class: "Upright::Rollups::DailyAggregationJob"
     schedule: every hour at minute 5
+
+  report_incidents:
+    class: "Upright::IncidentReporterJob"
+    schedule: "*/30 * * * * *"

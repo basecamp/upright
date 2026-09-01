@@ -26,7 +26,10 @@ module Upright::Incidents::Lifecycle
       next unless update.valid?
 
       self.status = update.status
-      self.resolved_at = Time.current if resolved_at.nil? && self.class::TERMINAL_STATUSES.include?(update.status)
+      if self.class::TERMINAL_STATUSES.include?(update.status)
+        self.resolved_at ||= Time.current
+        self.auto_service_code = nil if auto_created?
+      end
       next unless valid?
 
       transaction do

@@ -10,8 +10,8 @@ class Upright::Public::ServicesController < Upright::Public::BaseController
 
   def show
     @service = Upright::Service.public_facing.find_by!(code: params[:code])
-    @active = Upright::Incident.public_facing.reactive.active.for_service(@service.code)
-    set_page_and_extract_portion_from Upright::Incident.public_facing.for_service(@service.code).past.reorder(nil),
+    @active = Upright::Incident.public_facing.reactive.active.for_service(@service.code).preload(:updates)
+    set_page_and_extract_portion_from Upright::Incident.public_facing.for_service(@service.code).past.reorder(nil).preload(:updates),
       ordered_by: { starts_at: :desc }
     @past = @page.records
     expires_in 15.seconds, public: true

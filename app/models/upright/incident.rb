@@ -15,9 +15,9 @@ class Upright::Incident < Upright::PersistentRecord
   IMPACT_STATUS = { "minor" => :degraded, "major" => :partial_outage, "critical" => :major_outage }
 
   TEMPLATES = {
-    down: "%{services} is down. We are investigating.",
+    down: "%{services} %{is_or_are} down. We are investigating.",
     investigating: "We are investigating the cause and will post updates here.",
-    back_up: "%{services} is back up and operating normally."
+    back_up: "%{services} %{is_or_are} back up and operating normally."
   }
 
   def self.active_statuses
@@ -61,7 +61,14 @@ class Upright::Incident < Upright::PersistentRecord
   end
 
   def template_body(key)
-    TEMPLATES.fetch(key) % { services: services.map(&:name).to_sentence }
+    subjects = services
+    template = subjects.filter_map { |service| service.try(:incident_updates)&.fetch(key.to_s, nil) }.uniq
+    template = template.one? ? template.first : TEMPLATES.fetch(key)
+
+    template % {
+      services: subjects.any? ? subjects.map(&:name).to_sentence : "This service",
+      is_or_are: subjects.many? ? "are" : "is"
+    }
   end
 
   private

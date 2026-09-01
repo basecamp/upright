@@ -22,6 +22,14 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
     assert_equal "Example App is down. We are investigating.", incident.updates.first.body
   end
 
+  test "uses the outage lookback when the outage start is no longer visible" do
+    stub_degraded(status: :degraded)
+
+    Upright::Incident.report_downtime
+
+    assert_equal 24.hours.ago, Upright::Incident.order(:id).last.starts_at
+  end
+
   test "updates an existing incident without duplicating, escalates impact, and never downgrades" do
     stub_degraded(status: :degraded)
     Upright::Incident.report_downtime
@@ -63,6 +71,7 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
     incident = Upright::Incident.order(:id).last
 
     Upright::Service.stubs(:degraded).returns([])
+    Upright::Incident.report_downtime
     travel Upright::Incidents::AutoReporting::RESOLVE_DELAY - 1.second
     Upright::Incident.report_downtime
     assert_nil incident.reload.resolved_at
@@ -79,6 +88,7 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
     incident = Upright::Incident.order(:id).last
 
     Upright::Service.stubs(:degraded).returns([])
+    Upright::Incident.report_downtime
     travel 4.minutes
     Upright::Incident.report_downtime
 
@@ -95,6 +105,33 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
     Upright::Service.stubs(:degraded).returns([])
 
     assert_no_difference -> { Upright::Incident.count } do
+      Upright::Incident.report_downtime
+    end
+  end
+
+  test "does not resolve an incident while its service is under maintenance" do
+    stub_degraded(status: :degraded)
+    Upright::Incident.report_downtime
+    incident = Upright::Incident.order(:id).last
+
+    Upright::Service.stubs(:degraded).returns([])
+    @service.stubs(:maintenance_active?).returns(true)
+    Upright::Incident.report_downtime
+    travel Upright::Incidents::AutoReporting::RESOLVE_DELAY
+    Upright::Incident.report_downtime
+
+    assert_nil incident.reload.resolved_at
+  end
+
+  test "a manually resolved automatic incident allows a later incident for the service" do
+    stub_degraded(status: :degraded)
+    Upright::Incident.report_downtime
+    incident = Upright::Incident.order(:id).last
+
+    incident.record_update(status: "resolved", body: "Resolved manually.")
+    assert_nil incident.reload.auto_service_code
+
+    assert_difference -> { Upright::Incident.count }, 1 do
       Upright::Incident.report_downtime
     end
   end

@@ -26,12 +26,14 @@
       </div>
       <div class="field">
         <%= f.label :body, "Message", class: "field__label" %>
-        <div class="composer__templates">
-          <% @incident.class::TEMPLATES.each_key do |template| %>
-            <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
-                  data: { action: "template#fill", template_body_param: @incident.template_body(template) } %>
-          <% end %>
-        </div>
+        <% unless @incident.maintenance? %>
+          <div class="composer__templates">
+            <% @incident.class::TEMPLATES.each_key do |template| %>
+              <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
+                    data: { action: "template#fill", template_body_param: @incident.template_body(template) } %>
+            <% end %>
+          </div>
+        <% end %>
         <%= f.text_area :body, class: "field__input", placeholder: "What changed.", data: { template_target: "body" } %>
       </div>
       <div class="incident-form__actions">

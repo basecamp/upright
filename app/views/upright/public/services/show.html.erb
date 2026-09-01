@@ -8,7 +8,11 @@
   <header class="service-detail__head">
     <div class="service__row">
       <h1 class="service-detail__title"><%= @service.name %></h1>
-      <span class="service__status service__status--<%= today_status %>"><%= status_label(today_status) %></span>
+      <% if @service.maintenance_active? %>
+        <span class="service__status service__status--maintenance">Under maintenance</span>
+      <% else %>
+        <span class="service__status service__status--<%= today_status %>"><%= status_label(today_status) %></span>
+      <% end %>
     </div>
 
     <div class="uptime">

@@ -58,6 +58,22 @@ class Upright::IncidentTest < ActiveSupport::TestCase
     assert_equal "Looking into it.", incident.updates.first.body
   end
 
+  test "templates can be overridden in service configuration" do
+    incident = Upright::Incident.new
+    incident.service_codes = [ "example_app" ]
+
+    assert_equal "We are checking Example App.", incident.template_body(:investigating)
+    assert_equal "Example App is down. We are investigating.", incident.template_body(:down)
+  end
+
+  test "templates handle multiple or missing services" do
+    incident = Upright::Incident.new
+    assert_equal "This service is down. We are investigating.", incident.template_body(:down)
+
+    incident.service_codes = [ "example_app", "internal_tools" ]
+    assert_equal "Example App and Internal Tools are back up and operating normally.", incident.template_body(:back_up)
+  end
+
   test "active_statuses maps active reactive incident impact to a page status" do
     activate upright_incidents(:reactive_resolved), impact: "major"
 
