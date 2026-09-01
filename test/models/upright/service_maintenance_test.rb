@@ -15,7 +15,7 @@ class Upright::ServiceMaintenanceTest < ActiveSupport::TestCase
     stub_live_status :major_outage
     Upright::Service.any_instance.stubs(:current_outage_started_at).returns(nil)
 
-    codes = Upright::Service.degraded.map { |item| item[:service].code }
+    codes = Upright::Service.degraded.map { |outage| outage.service.code }
 
     assert_not_includes codes, "example_app"
     assert_includes codes, "internal_tools"

@@ -10,13 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_09_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
   create_table "upright_incident_affected_services", force: :cascade do |t|
     t.integer "incident_id", null: false
     t.string "service_code", null: false
     t.index ["incident_id", "service_code"], name: "idx_on_incident_id_service_code_188b04aae6", unique: true
     t.index ["incident_id"], name: "index_upright_incident_affected_services_on_incident_id"
     t.index ["service_code"], name: "index_upright_incident_affected_services_on_service_code"
+  end
+
+  create_table "upright_incident_automatic_reports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "incident_id", null: false
+    t.string "service_code", null: false
+    t.datetime "updated_at", null: false
+    t.index ["incident_id"], name: "index_upright_incident_automatic_reports_on_incident_id", unique: true
+    t.index ["service_code"], name: "index_upright_incident_automatic_reports_on_service_code", unique: true
   end
 
   create_table "upright_incident_updates", force: :cascade do |t|
@@ -29,10 +38,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_000001) do
   end
 
   create_table "upright_incidents", force: :cascade do |t|
+    t.boolean "auto_created", default: false, null: false
     t.datetime "created_at", null: false
     t.string "created_by"
     t.datetime "ends_at"
     t.string "impact", null: false
+    t.datetime "last_seen_down_at"
+    t.datetime "recovery_started_at"
     t.datetime "resolved_at"
     t.datetime "starts_at", null: false
     t.string "status", null: false
@@ -59,5 +71,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_09_000001) do
   end
 
   add_foreign_key "upright_incident_affected_services", "upright_incidents", column: "incident_id"
+  add_foreign_key "upright_incident_automatic_reports", "upright_incidents", column: "incident_id"
   add_foreign_key "upright_incident_updates", "upright_incidents", column: "incident_id"
 end

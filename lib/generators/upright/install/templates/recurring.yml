@@ -31,3 +31,7 @@ production:
   health_metrics:
     class: "Upright::HealthMetricsJob"
     schedule: every minute
+
+  report_incidents:
+    class: "Upright::IncidentReporterJob"
+    schedule: "*/30 * * * * *"

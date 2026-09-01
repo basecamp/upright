@@ -53,6 +53,9 @@ Upright::Engine.routes.draw do
     scope module: :public, as: :public do
       root "services#index", as: :services_root
       get "feed", to: "services#index", as: :services_feed, defaults: { format: :rss }
+      resources :services, only: [], param: :code do
+        resources :incidents, only: :index, controller: :service_incidents
+      end
       resources :incidents, only: :show
     end
   end

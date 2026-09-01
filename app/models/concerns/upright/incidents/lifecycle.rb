@@ -21,18 +21,27 @@ module Upright::Incidents::Lifecycle
   def upcoming? = resolved_at.nil? && starts_at > Time.current
   def past?     = resolved_at.present?
 
-  def record_update(attributes)
-    updates.build(attributes).tap do |update|
+  def record_update(attributes = nil, recorded_at: Time.current, **update_attributes)
+    attributes = attributes ? attributes.merge(update_attributes) : update_attributes
+
+    updates.build(attributes.merge(created_at: recorded_at)).tap do |update|
       next unless update.valid?
 
       self.status = update.status
-      self.resolved_at = Time.current if resolved_at.nil? && self.class::TERMINAL_STATUSES.include?(update.status)
+      if self.class::TERMINAL_STATUSES.include?(update.status)
+        self.resolved_at ||= recorded_at
+      end
       next unless valid?
 
       transaction do
         update.save
         save
+        after_recording_terminal_status if self.class::TERMINAL_STATUSES.include?(update.status)
       end
     end
   end
+
+  private
+    def after_recording_terminal_status
+    end
 end

@@ -131,9 +131,91 @@
   }
 
   .service__name {
+    color: inherit;
     font-size: var(--text-large);
     font-weight: 500;
   }
+
+  .service-detail {
+    margin: 0 auto;
+    max-width: 56rem;
+    padding: calc(var(--block-space) * 3) var(--main-padding);
+  }
+
+  .service-detail__back {
+    color: var(--color-ink-medium);
+    font-size: var(--text-small);
+  }
+
+  .service-detail__head {
+    border-bottom: var(--border);
+    margin: var(--block-space) 0 calc(var(--block-space) * 2);
+    padding-bottom: calc(var(--block-space) * 2);
+  }
+
+  .service-detail__title {
+    font-size: var(--text-x-large);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+  }
+
+  .service-history + .service-history {
+    margin-top: calc(var(--block-space) * 2);
+  }
+
+  .service-history__title {
+    font-size: var(--text-large);
+    font-weight: 600;
+    margin: 0 0 var(--block-space);
+  }
+
+  .service-history__incident {
+    border: var(--border);
+    border-left: 3px solid var(--status-none);
+    border-radius: 0.5rem;
+    color: inherit;
+    display: block;
+    padding: 0.75rem 1rem;
+    text-decoration: none;
+  }
+
+  .service-history__incident + .service-history__incident { margin-top: 0.5rem; }
+  .service-history__incident--minor { border-left-color: var(--status-degraded); }
+  .service-history__incident--major { border-left-color: var(--status-partial); }
+  .service-history__incident--critical { border-left-color: var(--status-major); }
+  .service-history__incident--maintenance { border-left-color: var(--status-maintenance); }
+
+  .service-history__incident:hover { border-color: var(--color-ink-medium); }
+
+  .service-history__incident-head {
+    align-items: baseline;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+  }
+
+  .service-history__incident-title {
+    font-size: inherit;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .service-history__incident-impact,
+  .service-history__incident-dates,
+  .service-history__empty {
+    color: var(--color-ink-medium);
+    font-size: var(--text-small);
+  }
+
+  .service-history__incident-impact {
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .service-history__incident-dates { margin: 0.35rem 0 0; }
+  .service-history__incident-update { margin: 0.5rem 0 0; }
+  .service-history__empty { margin: 0; }
 
   .service__status {
     color: var(--color-ink-medium);

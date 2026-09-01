@@ -1,5 +1,6 @@
 class Upright::Incident < Upright::PersistentRecord
   include Upright::Incidents::Lifecycle
+  include Upright::Incidents::AutoReporting
 
   attr_accessor :body
 
@@ -13,12 +14,19 @@ class Upright::Incident < Upright::PersistentRecord
 
   IMPACT_STATUS = { "minor" => :degraded, "major" => :partial_outage, "critical" => :major_outage }
 
+  TEMPLATES = {
+    down: "%{services} %{is_or_are} down. We are investigating.",
+    investigating: "We are investigating the cause and will post updates here.",
+    back_up: "%{services} %{is_or_are} back up and operating normally."
+  }
+
   def self.active_statuses
     reactive.active.map { |incident| IMPACT_STATUS.fetch(incident.impact) }
   end
 
   has_many :updates, -> { order(created_at: :desc) }, class_name: "Upright::IncidentUpdate", inverse_of: :incident, dependent: :destroy
   has_many :affected_services, class_name: "Upright::IncidentAffectedService", inverse_of: :incident, dependent: :destroy
+  has_one :automatic_report, class_name: "Upright::Incident::AutomaticReport", inverse_of: :incident, dependent: :destroy
 
   # An incident is public-facing when it affects at least one public service.
   # Everything else — internal-only or untagged — stays off the public status
@@ -51,6 +59,17 @@ class Upright::Incident < Upright::PersistentRecord
 
   def public_services
     services.select { |service| service[:public] }
+  end
+
+  def update_body_for(key)
+    subjects = services
+    template = subjects.filter_map { |service| service.incident_update_template(key) }.uniq
+    template = template.one? ? template.first : TEMPLATES.fetch(key)
+
+    template % {
+      services: subjects.any? ? subjects.map(&:name).to_sentence : "This service",
+      is_or_are: subjects.many? ? "are" : "is"
+    }
   end
 
   private

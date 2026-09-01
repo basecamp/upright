@@ -1,4 +1,10 @@
 @layer components {
+  .composer__templates {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
   :root {
     --impact-minor: oklch(78% 0.18 95);
     --impact-major: oklch(70% 0.18 50);
