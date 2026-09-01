@@ -9,6 +9,12 @@
     .leaflet-tile-pane img {
       max-width: none !important;
     }
+
+    @media (prefers-color-scheme: dark) {
+      .leaflet-tile-pane {
+        filter: brightness(0.65) invert(1) contrast(2) hue-rotate(200deg) saturate(0.3);
+      }
+    }
   }
 
   @media (max-width: 140ch) {

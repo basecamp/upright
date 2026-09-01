@@ -32,12 +32,10 @@ export default class extends Controller {
   }
 
   get tileUrl() {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 
   get attribution() {
-    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }
 }

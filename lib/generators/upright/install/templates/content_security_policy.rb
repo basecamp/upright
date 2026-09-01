@@ -22,8 +22,7 @@
 #     policy.default_src     :self
 #     policy.font_src        :self, :data
 #     policy.img_src         :self, :data, "https://unpkg.com",
-#                            "https://*.tile.openstreetmap.org",
-#                            "https://*.basemaps.cartocdn.com"
+#                            "https://*.tile.openstreetmap.org"
 #     policy.object_src      :none
 #     policy.script_src      :self, "https://cdn.jsdelivr.net"
 #     policy.style_src       :self, :unsafe_inline, "https://unpkg.com"
