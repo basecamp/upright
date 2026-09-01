@@ -2,7 +2,7 @@
 
 <section class="service">
   <div class="service__row">
-    <span class="service__name"><%= service.name %></span>
+    <%= link_to service.name, public_service_path(service.code), class: "service__name" %>
     <% if service.maintenance_active? %>
       <span class="service__status service__status--maintenance">Under maintenance</span>
     <% else %>

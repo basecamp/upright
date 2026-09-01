@@ -7,6 +7,7 @@ class Upright::Public::BaseController < ActionController::Base
 
   helper :all
   protect_from_forgery with: :exception
+  rescue_from FrozenRecord::RecordNotFound, with: -> { head :not_found }
 
   private
     def default_url_options

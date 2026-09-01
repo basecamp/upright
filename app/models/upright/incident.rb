@@ -1,4 +1,5 @@
 class Upright::Incident < Upright::PersistentRecord
+  include Upright::Incidents::AutoReporting
   include Upright::Incidents::Lifecycle
 
   attr_accessor :body
@@ -12,6 +13,12 @@ class Upright::Incident < Upright::PersistentRecord
   IMPACTS           = %w[ minor major critical ]
 
   IMPACT_STATUS = { "minor" => :degraded, "major" => :partial_outage, "critical" => :major_outage }
+
+  TEMPLATES = {
+    down: "%{services} is down. We are investigating.",
+    investigating: "We are investigating the cause and will post updates here.",
+    back_up: "%{services} is back up and operating normally."
+  }
 
   def self.active_statuses
     reactive.active.map { |incident| IMPACT_STATUS.fetch(incident.impact) }
@@ -51,6 +58,10 @@ class Upright::Incident < Upright::PersistentRecord
 
   def public_services
     services.select { |service| service[:public] }
+  end
+
+  def template_body(key)
+    TEMPLATES.fetch(key) % { services: services.map(&:name).to_sentence }
   end
 
   private

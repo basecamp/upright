@@ -18,7 +18,7 @@
 
   <section class="incident-section">
     <h2 class="incident-section__title">Post an update</h2>
-    <%= form_with url: incident_updates_path(@incident), scope: :incident_update, class: "composer" do |f| %>
+    <%= form_with url: incident_updates_path(@incident), scope: :incident_update, class: "composer", data: { controller: "template" } do |f| %>
       <div class="field">
         <%= f.label :status, "Status", class: "field__label" %>
         <%= f.select :status, @incident.class::STATUSES.map { |status| [ status.humanize, status ] },
@@ -26,7 +26,13 @@
       </div>
       <div class="field">
         <%= f.label :body, "Message", class: "field__label" %>
-        <%= f.text_area :body, class: "field__input", placeholder: "What changed." %>
+        <div class="composer__templates">
+          <% @incident.class::TEMPLATES.each_key do |template| %>
+            <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
+                  data: { action: "template#fill", template_body_param: @incident.template_body(template) } %>
+          <% end %>
+        </div>
+        <%= f.text_area :body, class: "field__input", placeholder: "What changed.", data: { template_target: "body" } %>
       </div>
       <div class="incident-form__actions">
         <%= f.submit "Post update", class: "btn" %>

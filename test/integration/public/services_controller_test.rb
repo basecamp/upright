@@ -79,6 +79,29 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(/Internal Tools/, response.body)
   end
 
+  test "show renders a public service and its public incident history" do
+    past = raise_public_incident
+    past.record_update(status: "resolved", body: "Example App is healthy again.")
+    raise_internal_incident
+
+    get upright.public_service_path("example_app")
+
+    assert_response :success
+    assert_equal "max-age=15, public", response.headers["Cache-Control"]
+    assert_select "h1", text: "Example App"
+    assert_select "a[href='#{upright.public_incident_path(past)}']", text: /Example App is on fire/
+    assert_match "Example App is healthy again.", response.body
+    assert_no_match(/Internal tools are down/, response.body)
+  end
+
+  test "show returns not found for internal and unknown services" do
+    get upright.public_service_path("internal_tools")
+    assert_response :not_found
+
+    get upright.public_service_path("missing")
+    assert_response :not_found
+  end
+
   private
     def raise_public_incident(impact: "major")
       Upright::Incident.create! title: "Example App is on fire", impact: impact,
