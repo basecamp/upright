@@ -1,6 +1,6 @@
 class Upright::Incident < Upright::PersistentRecord
-  include Upright::Incidents::AutoReporting
   include Upright::Incidents::Lifecycle
+  include Upright::Incidents::AutoReporting
 
   attr_accessor :body
 
@@ -26,6 +26,7 @@ class Upright::Incident < Upright::PersistentRecord
 
   has_many :updates, -> { order(created_at: :desc) }, class_name: "Upright::IncidentUpdate", inverse_of: :incident, dependent: :destroy
   has_many :affected_services, class_name: "Upright::IncidentAffectedService", inverse_of: :incident, dependent: :destroy
+  has_one :automatic_report, class_name: "Upright::Incident::AutomaticReport", inverse_of: :incident, dependent: :destroy
 
   # An incident is public-facing when it affects at least one public service.
   # Everything else — internal-only or untagged — stays off the public status
@@ -60,9 +61,9 @@ class Upright::Incident < Upright::PersistentRecord
     services.select { |service| service[:public] }
   end
 
-  def template_body(key)
+  def update_body_for(key)
     subjects = services
-    template = subjects.filter_map { |service| service.try(:incident_updates)&.fetch(key.to_s, nil) }.uniq
+    template = subjects.filter_map { |service| service.incident_update_template(key) }.uniq
     template = template.one? ? template.first : TEMPLATES.fetch(key)
 
     template % {

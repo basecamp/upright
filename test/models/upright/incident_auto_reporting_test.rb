@@ -129,7 +129,7 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
     incident = Upright::Incident.order(:id).last
 
     incident.record_update(status: "resolved", body: "Resolved manually.")
-    assert_nil incident.reload.auto_service_code
+    assert_nil incident.reload.automatic_report
 
     assert_difference -> { Upright::Incident.count }, 1 do
       Upright::Incident.report_downtime
@@ -138,6 +138,7 @@ class Upright::IncidentAutoReportingTest < ActiveSupport::TestCase
 
   private
     def stub_degraded(status:, started_at: nil)
-      Upright::Service.stubs(:degraded).returns([ { service: @service, status: status, started_at: started_at } ])
+      outage = Upright::Service::Outage.new(service: @service, status: status, started_at: started_at)
+      Upright::Service.stubs(:degraded).returns([ outage ])
     end
 end

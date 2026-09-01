@@ -50,8 +50,8 @@ module Upright::Public::ServicesHelper
   # Stable per-outage id so feed readers treat one ongoing outage as a single
   # item. Falls back to the service code alone when the outage predates the live
   # lookback window and has no known start time.
-  def feed_item_guid(issue)
-    [ issue[:service].code, issue[:started_at]&.to_i ].compact.join("-")
+  def feed_item_guid(outage)
+    [ outage.service.code, outage.started_at&.to_i ].compact.join("-")
   end
 
   def uptime_percentage_label(fractions)

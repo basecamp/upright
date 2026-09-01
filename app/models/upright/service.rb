@@ -21,13 +21,27 @@ class Upright::Service < FrozenRecord::Base
   end
 
   def self.degraded
-    all.filter_map do |service|
-      next if service.maintenance_active?
-      status = service.live_status
-      unless status == :operational
-        { service: service, status: status, started_at: service.current_outage_started_at }
-      end
+    all.filter_map(&:current_outage)
+  end
+
+  def current_outage
+    return if maintenance_active?
+
+    live_status.then do |status|
+      Upright::Service::Outage.new(service: self, status: status, started_at: current_outage_started_at) unless status == :operational
     end
+  end
+
+  def incidents
+    Upright::Incident.public_facing.for_service(code)
+  end
+
+  def incident_history(page: nil)
+    Upright::Service::IncidentHistory.for(self, page: page)
+  end
+
+  def incident_update_template(key)
+    self[:incident_updates]&.fetch(key.to_s, nil)
   end
 
   def probe_rollups

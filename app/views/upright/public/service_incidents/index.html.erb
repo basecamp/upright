@@ -1,14 +1,14 @@
-<% @page_title = @service.name %>
-<% history = @service.daily_status_history %>
-<% today_status = history.last.status %>
+<% @page_title = @incident_history.name %>
+<% uptime_history = @incident_history.daily_status_history %>
+<% today_status = uptime_history.last.status %>
 
 <article class="service-detail">
   <%= link_to "← Status", public_services_root_path, class: "service-detail__back" %>
 
   <header class="service-detail__head">
     <div class="service__row">
-      <h1 class="service-detail__title"><%= @service.name %></h1>
-      <% if @service.maintenance_active? %>
+      <h1 class="service-detail__title"><%= @incident_history.name %></h1>
+      <% if @incident_history.maintenance_active? %>
         <span class="service__status service__status--maintenance">Under maintenance</span>
       <% else %>
         <span class="service__status service__status--<%= today_status %>"><%= status_label(today_status) %></span>
@@ -16,12 +16,12 @@
     </div>
 
     <div class="uptime">
-      <div class="uptime__bars" role="img" aria-label="<%= history.size %>-day uptime for <%= @service.name %>">
-        <%= render partial: "uptime_bar", collection: history, as: :day %>
+      <div class="uptime__bars" role="img" aria-label="<%= uptime_history.size %>-day uptime for <%= @incident_history.name %>">
+        <%= render partial: "upright/public/services/uptime_bar", collection: uptime_history, as: :day %>
       </div>
       <div class="uptime__meta">
-        <span><%= history.size %> days ago</span>
-        <% if uptime = uptime_percentage_label(history.map(&:uptime_fraction).compact) %>
+        <span><%= uptime_history.size %> days ago</span>
+        <% if uptime = uptime_percentage_label(uptime_history.map(&:uptime_fraction).compact) %>
           <span class="uptime__meta-percent"><%= uptime %> uptime</span>
         <% else %>
           <span class="uptime__meta-percent">No data yet</span>
@@ -31,18 +31,18 @@
     </div>
   </header>
 
-  <% if @active.any? %>
+  <% if @incident_history.active_incidents.any? %>
     <section class="service-history">
       <h2 class="service-history__title">Active incidents</h2>
-      <%= render partial: "incident", collection: @active %>
+      <%= render partial: "incident", collection: @incident_history.active_incidents %>
     </section>
   <% end %>
 
   <section class="service-history">
     <h2 class="service-history__title">Incident history</h2>
-    <% if @past.any? %>
-      <%= render partial: "incident", collection: @past %>
-      <%= render "upright/probe_results/pagination", page: @page %>
+    <% if @incident_history.past_incidents.any? %>
+      <%= render partial: "incident", collection: @incident_history.past_incidents %>
+      <%= render "upright/probe_results/pagination", page: @incident_history.page %>
     <% else %>
       <p class="service-history__empty">No past incidents.</p>
     <% end %>

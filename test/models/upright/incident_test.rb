@@ -62,16 +62,16 @@ class Upright::IncidentTest < ActiveSupport::TestCase
     incident = Upright::Incident.new
     incident.service_codes = [ "example_app" ]
 
-    assert_equal "We are checking Example App.", incident.template_body(:investigating)
-    assert_equal "Example App is down. We are investigating.", incident.template_body(:down)
+    assert_equal "We are checking Example App.", incident.update_body_for(:investigating)
+    assert_equal "Example App is down. We are investigating.", incident.update_body_for(:down)
   end
 
   test "templates handle multiple or missing services" do
     incident = Upright::Incident.new
-    assert_equal "This service is down. We are investigating.", incident.template_body(:down)
+    assert_equal "This service is down. We are investigating.", incident.update_body_for(:down)
 
     incident.service_codes = [ "example_app", "internal_tools" ]
-    assert_equal "Example App and Internal Tools are back up and operating normally.", incident.template_body(:back_up)
+    assert_equal "Example App and Internal Tools are back up and operating normally.", incident.update_body_for(:back_up)
   end
 
   test "active_statuses maps active reactive incident impact to a page status" do

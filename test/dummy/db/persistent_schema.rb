@@ -19,6 +19,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
     t.index ["service_code"], name: "index_upright_incident_affected_services_on_service_code"
   end
 
+  create_table "upright_incident_automatic_reports", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "incident_id", null: false
+    t.string "service_code", null: false
+    t.datetime "updated_at", null: false
+    t.index ["incident_id"], name: "index_upright_incident_automatic_reports_on_incident_id", unique: true
+    t.index ["service_code"], name: "index_upright_incident_automatic_reports_on_service_code", unique: true
+  end
+
   create_table "upright_incident_updates", force: :cascade do |t|
     t.text "body"
     t.datetime "created_at", null: false
@@ -30,7 +39,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
 
   create_table "upright_incidents", force: :cascade do |t|
     t.boolean "auto_created", default: false, null: false
-    t.string "auto_service_code"
     t.datetime "created_at", null: false
     t.string "created_by"
     t.datetime "ends_at"
@@ -44,7 +52,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
     t.string "type"
     t.datetime "updated_at", null: false
     t.string "updated_by"
-    t.index ["auto_service_code"], name: "index_upright_incidents_on_auto_service_code", unique: true
     t.index ["resolved_at", "starts_at"], name: "index_upright_incidents_on_resolved_at_and_starts_at"
     t.index ["type", "starts_at"], name: "index_upright_incidents_on_type_and_starts_at"
   end
@@ -64,5 +71,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
   end
 
   add_foreign_key "upright_incident_affected_services", "upright_incidents", column: "incident_id"
+  add_foreign_key "upright_incident_automatic_reports", "upright_incidents", column: "incident_id"
   add_foreign_key "upright_incident_updates", "upright_incidents", column: "incident_id"
 end

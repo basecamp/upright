@@ -30,7 +30,7 @@
           <div class="composer__templates">
             <% @incident.class::TEMPLATES.each_key do |template| %>
               <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
-                    data: { action: "template#fill", template_body_param: @incident.template_body(template) } %>
+                    data: { action: "template#fill", template_body_param: @incident.update_body_for(template) } %>
             <% end %>
           </div>
         <% end %>
