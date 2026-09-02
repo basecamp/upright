@@ -7,3 +7,4 @@
 - code: "internal_tools"
   name: "Internal Tools"
   public: false
+  uptime_probe_types: [http, playwright]

@@ -44,8 +44,28 @@ class Upright::Service < FrozenRecord::Base
     self[:incident_updates]&.fetch(key.to_s, nil)
   end
 
+  DEFAULT_UPTIME_PROBE_TYPES = %w[ http ]
+
+  # Probe types whose results decide this service's live status and daily
+  # uptime: HTTP unless `uptime_probe_types` in services.yml says otherwise.
+  # Other types bound to the service are still probed, rolled up and alerted on.
+  # A type that isn't registered raises rather than matching nothing, since an
+  # empty match would report the service operational.
+  def uptime_probe_types
+    types = Array(self[:uptime_probe_types]).map(&:to_s).presence || DEFAULT_UPTIME_PROBE_TYPES
+    unknown = types - Upright.configuration.probe_types.types
+
+    if unknown.any?
+      raise Upright::ConfigurationError, "#{code}: uptime_probe_types #{unknown.join(", ")} not registered with config.probe_types"
+    end
+
+    types
+  end
+
+  # Rollups written before probe_type was recorded (July 2026) have none and
+  # keep counting, so an upgrade doesn't drop history.
   def probe_rollups
-    Upright::Rollups::ProbeRollup.where(probe_service: code)
+    Upright::Rollups::ProbeRollup.where(probe_service: code, probe_type: [ *uptime_probe_types, nil ])
   end
 
   def uptime_for(day)
