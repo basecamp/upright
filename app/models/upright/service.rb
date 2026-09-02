@@ -44,8 +44,17 @@ class Upright::Service < FrozenRecord::Base
     self[:incident_updates]&.fetch(key.to_s, nil)
   end
 
+  DEFAULT_UPTIME_PROBE_TYPES = %w[ http ]
+
+  # Probe types whose results decide this service's live status and daily
+  # uptime: HTTP unless `uptime_probe_types` in services.yml says otherwise.
+  # Other types bound to the service are still probed, rolled up and alerted on.
+  def uptime_probe_types
+    Array(self[:uptime_probe_types]).map(&:to_s).presence || DEFAULT_UPTIME_PROBE_TYPES
+  end
+
   def probe_rollups
-    Upright::Rollups::ProbeRollup.where(probe_service: code)
+    Upright::Rollups::ProbeRollup.where(probe_service: code, probe_type: uptime_probe_types)
   end
 
   def uptime_for(day)

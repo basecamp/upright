@@ -28,6 +28,20 @@ class Upright::ServiceTest < ActiveSupport::TestCase
     assert_equal 0.85, service.uptime_for(day)
   end
 
+  test "uptime_probe_types defaults to HTTP and reads extra types from services.yml" do
+    assert_equal %w[ http ], Upright::Service.find_by(code: "example_app").uptime_probe_types
+    assert_equal %w[ http playwright ], Upright::Service.find_by(code: "internal_tools").uptime_probe_types
+  end
+
+  test "daily_uptime only counts the service's uptime probe types" do
+    travel_to Date.new(2026, 5, 13) do
+      may_10 = Date.new(2026, 5, 10).beginning_of_day
+
+      assert_nil Upright::Service.find_by(code: "example_app").daily_uptime(past: 7.days)[may_10]
+      assert_equal 0.5, Upright::Service.find_by(code: "internal_tools").daily_uptime(past: 7.days)[may_10]
+    end
+  end
+
   test "daily_uptime groups by day across the lookback window" do
     travel_to Date.new(2026, 5, 13) do
       service = Upright::Service.find_by(code: "example_app")

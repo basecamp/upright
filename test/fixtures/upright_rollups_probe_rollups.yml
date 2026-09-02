@@ -19,6 +19,15 @@ example_api_may_05:
   uptime_fraction: 1.0
   status: operational
 
+example_flow_may_10:
+  probe_name: Sign-in flow
+  probe_type: playwright
+  probe_target: https://example.com/sign_in
+  probe_service: internal_tools
+  period_start: 2026-05-10 00:00:00
+  uptime_fraction: 0.5
+  status: major_outage
+
 example_web_may_11:
   probe_name: Web
   probe_type: http

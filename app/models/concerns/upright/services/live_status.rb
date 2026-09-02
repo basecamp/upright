@@ -57,7 +57,7 @@ module Upright::Services::LiveStatus
     end
 
     def live_down_query
-      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}") ]
+      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}"), %(type=~"#{uptime_probe_types.join("|")}") ]
       %(max(upright:probe_down_fraction{#{matchers.join(",")}}) or vector(0))
     end
 end
