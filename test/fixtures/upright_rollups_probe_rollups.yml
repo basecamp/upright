@@ -23,10 +23,26 @@ example_flow_may_10:
   probe_name: Sign-in flow
   probe_type: playwright
   probe_target: https://example.com/sign_in
+  probe_service: example_app
+  period_start: 2026-05-10 00:00:00
+  uptime_fraction: 0.5
+  status: major_outage
+
+internal_flow_may_10:
+  probe_name: Admin flow
+  probe_type: playwright
+  probe_target: https://example.com/admin
   probe_service: internal_tools
   period_start: 2026-05-10 00:00:00
   uptime_fraction: 0.5
   status: major_outage
+
+example_legacy_may_09:
+  probe_name: Web
+  probe_service: example_app
+  period_start: 2026-05-09 00:00:00
+  uptime_fraction: 0.7
+  status: partial_outage
 
 example_web_may_11:
   probe_name: Web

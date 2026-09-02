@@ -46,6 +46,19 @@ class Upright::ServiceLiveStatusTest < ActiveSupport::TestCase
     assert_equal :major_outage, Upright::Service.find_by(code: "internal_tools").live_status
   end
 
+  test "live_status escapes probe types for the PromQL regex and string" do
+    Upright.configuration.probe_types.register "api.v2", name: "API v2", icon: "🔌"
+    service = Upright::Service.new(code: "escaped", name: "Escaped", uptime_probe_types: [ "api.v2" ])
+
+    client = mock("prometheus")
+    client.expects(:query).with { |query:| query.include?(%(type=~"api\\\\.v2")) }.returns({ "result" => [] })
+    Upright.stubs(:prometheus_client).returns(client)
+
+    assert_equal :operational, service.live_status
+  ensure
+    Upright.configuration.probe_types.unregister "api.v2"
+  end
+
   test "current_outage_started_at reuses a cached Prometheus range within the public cache window" do
     client = mock("prometheus")
     client.expects(:query_range).once.returns({ "result" => [ { "values" => [ [ 1765000000, "0" ], [ 1765000300, "1" ] ] } ] })

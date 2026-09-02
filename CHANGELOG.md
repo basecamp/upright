@@ -60,7 +60,7 @@ upgrade does not rewrite. Existing installs should apply these by hand:
 
 ### Changed
 
-- Compute a service's live status and daily uptime from its HTTP probes only. A service that wants other types counted lists them under `uptime_probe_types` in services.yml (`[http, playwright]`). Types left out are still probed, rolled up and alerted on; this keeps a 15-minute Playwright probe from recording its whole interval as downtime on the status page
+- Compute a service's live status and daily uptime from its HTTP probes only. A service that wants other types counted lists them under `uptime_probe_types` in services.yml (`[http, playwright]`); a type not registered with `config.probe_types` raises. Types left out are still probed, rolled up and alerted on; this keeps a 15-minute Playwright probe from recording its whole interval as downtime on the status page. Rollups written before probe types were recorded keep counting
 - Roll up daily uptime from every `stores_metrics` site, preferring the best-covered instance per probe; skip and report probe-days below `config.rollup_minimum_coverage` instead of averaging a gappy window; correct rollups in place and backfill a week (#121). `upright:probe_down_fraction` now falls back to zero when no region is down, which the coverage count depends on; rules predating this need the same fallback, or `config.rollup_minimum_coverage = 0`
 - Add public status pages: live status, 90-day history, and an RSS feed (#79)
 - Export `upright_primary_site`, `upright_persistent_db_up`, and `upright_rollup_last_run_timestamp_seconds` for failover alerting; sites declare `primary: true`, and existing installs need `Upright::HealthMetricsJob` adding to `recurring.yml` (#116)

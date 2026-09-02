@@ -57,7 +57,13 @@ module Upright::Services::LiveStatus
     end
 
     def live_down_query
-      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}"), %(type=~"#{uptime_probe_types.join("|")}") ]
+      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}"), %(type=~"#{uptime_probe_types_pattern}") ]
       %(max(upright:probe_down_fraction{#{matchers.join(",")}}) or vector(0))
+    end
+
+    # Each type escaped as a regex literal, then the pattern escaped again for
+    # the PromQL string it sits in, so "api.v2" doesn't also match "apiXv2".
+    def uptime_probe_types_pattern
+      uptime_probe_types.map { |type| Regexp.escape(type) }.join("|").gsub(/["\\]/) { |char| "\\#{char}" }
     end
 end
