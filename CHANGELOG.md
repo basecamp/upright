@@ -4,6 +4,18 @@
 
 ### Security
 
+- Release from GitHub Actions instead of a laptop. `bin/release` built the gem
+  from whatever was in the working tree, pushed it with a personal RubyGems
+  OTP, and only then committed and tagged, so a tag and its gem did not have
+  to match. The gemspec globbed the filesystem, which put the ignored
+  `config/credentials/development.key` and `test.key` into the public 0.2.0 and
+  0.3.0 gems. Treat both keys as disclosed. The gemspec now takes its file list
+  from `git ls-files`, a test checks that an ignored key cannot be packaged,
+  and `.github/workflows/release.yml` builds each `v*` tag from a clean
+  checkout of that commit, checks that the tag matches `Upright::VERSION` and
+  is on `main`, publishes through RubyGems trusted publishing with a sigstore
+  attestation, and creates the GitHub Release with the gem attached. See
+  `RELEASING.md`.
 - Stop serving the Playwright Trace Viewer from Upright's origin, and stop
   vendoring it. The viewer serialised a trace's tags and attributes into
   `text/html` on the admin origin, so a crafted trace ZIP executed script there
