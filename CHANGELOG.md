@@ -49,9 +49,24 @@ upgrade does not rewrite. Existing installs should apply these by hand:
 - `config/initializers/omniauth.rb`: fail closed when `ADMIN_PASSWORD` is unset
   instead of `ENV.fetch("ADMIN_PASSWORD", "upright")`, so the well-known default
   password is removed (compare against the current install template).
-- `config/recurring.yml`: add the `sweep_playwright_videos` entry
-  (`class: "Upright::PlaywrightVideoSweepJob"`) so stranded recordings from a
-  crashed run are still cleaned up.
+- `config/recurring.yml`: existing installs need these entries, which the
+  install generator now writes for new ones. Compare against the template in
+  `lib/generators/upright/install/templates/recurring.yml`:
+  - `sweep_playwright_videos` (`Upright::PlaywrightVideoSweepJob`, hourly), so
+    stranded recordings from a crashed run are still cleaned up.
+  - `health_metrics` (`Upright::HealthMetricsJob`, every minute), which exports
+    `upright_primary_site`, `upright_persistent_db_up` and
+    `upright_rollup_last_run_timestamp_seconds`.
+  - `aggregate_rollups` (`Upright::Rollups::DailyAggregationJob`, hourly), which
+    writes the daily uptime the public status page shows.
+  - `report_incidents` (`Upright::IncidentReporterJob`, every 30 seconds), which
+    opens and resolves incidents from probe results.
+  - `advance_maintenances` (`Upright::MaintenanceAdvanceJob`, every 15 seconds),
+    which starts and completes scheduled maintenance windows on time.
+- `config/database.yml`: add a `persistent` database for rollups and incidents,
+  with `migrations_paths` pointing at the gem's `db/persistent_migrate`, and
+  include it in `db:prepare`. Status history lives there so it survives a
+  site's probe data being purged.
 - `config/initializers/content_security_policy.rb`: adopt the recommended policy
   from the install template if you don't already enforce a CSP.
 - `config/initializers/upright.rb`: trace artifacts now link to
@@ -61,10 +76,12 @@ upgrade does not rewrite. Existing installs should apply these by hand:
 ### Changed
 
 - Publish Prometheus and Alertmanager on loopback ports instead of `network_mode: host` in the generated and dummy `docker-compose.yml`, and scrape the app through `host.docker.internal`, so the development services work on macOS and Windows Docker Desktop as well as Linux (#54)
-- Convert timestamps on the public status page to the visitor's time zone. The page now loads a JavaScript entry point of its own, `upright/public`, which carries only local-time; the admin app's modules are preloaded for the `application` entry point alone
-- Compute a service's live status and daily uptime from its HTTP probes only. A service that wants other types counted lists them under `uptime_probe_types` in services.yml (`[http, playwright]`); a type not registered with `config.probe_types` raises. Types left out are still probed, rolled up and alerted on; this keeps a 15-minute Playwright probe from recording its whole interval as downtime on the status page. Rollups written before probe types were recorded keep counting
+- Open, escalate and resolve incidents automatically from probe results: a service that stops passing gets an incident with a fixed "investigating" update, its impact follows the probes, and it resolves after five minutes of continuous recovery. `Upright::IncidentReporterJob` runs from `recurring.yml`; incidents also get operator shortcuts and a public per-service history (#137)
+- Convert timestamps on the public status page to the visitor's time zone. The page now loads a JavaScript entry point of its own, `upright/public`, which carries only local-time; the admin app's modules are preloaded for the `application` entry point alone (#141)
+- Compute a service's live status and daily uptime from its HTTP probes only. A service that wants other types counted lists them under `uptime_probe_types` in services.yml (`[http, playwright]`); a type not registered with `config.probe_types` raises. Types left out are still probed, rolled up and alerted on; this keeps a 15-minute Playwright probe from recording its whole interval as downtime on the status page. Rollups written before probe types were recorded keep counting (#138)
 - Roll up daily uptime from every `stores_metrics` site, preferring the best-covered instance per probe; skip and report probe-days below `config.rollup_minimum_coverage` instead of averaging a gappy window; correct rollups in place and backfill a week (#121). `upright:probe_down_fraction` now falls back to zero when no region is down, which the coverage count depends on; rules predating this need the same fallback, or `config.rollup_minimum_coverage = 0`
 - Add public status pages: live status, 90-day history, and an RSS feed (#79)
+- Use OpenStreetMap tiles for the sites map in both colour schemes instead of CARTO's dark tiles, which need an API key; the map's dark mode is now a CSS filter over the same tiles. The install generator's CSP template no longer allows `basemaps.cartocdn.com`
 - Export `upright_primary_site`, `upright_persistent_db_up`, and `upright_rollup_last_run_timestamp_seconds` for failover alerting; sites declare `primary: true`, and existing installs need `Upright::HealthMetricsJob` adding to `recurring.yml` (#116)
 - Add incidents and scheduled maintenance, with a public timeline and impact banner (#102)
 - Record who created and updated each incident (#105)
