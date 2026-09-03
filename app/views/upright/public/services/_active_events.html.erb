@@ -1,0 +1,28 @@
+<% events = incidents.to_a + maintenances.to_a %>
+<% if events.any? %>
+  <section class="events">
+    <% events.each do |event| %>
+      <%= link_to public_incident_path(event), class: "event event--#{event.maintenance? ? "maintenance" : event.impact}" do %>
+        <div class="event__head">
+          <span class="event__title"><%= event.title %></span>
+          <span class="event__status"><%= status_label(event.status) %></span>
+        </div>
+
+        <% if event.maintenance? %>
+          <p class="event__meta"><%= local_maintenance_window(event) %></p>
+        <% end %>
+
+        <% if event.public_services.any? %>
+          <p class="event__services"><%= event.public_services.map(&:name).to_sentence %></p>
+        <% end %>
+
+        <% if update = event.updates.first %>
+          <p class="event__update">
+            <%= update.body %>
+            <%= local_time update.created_at, format: :month_day_at_zone, class: "event__time" %>
+          </p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </section>
+<% end %>

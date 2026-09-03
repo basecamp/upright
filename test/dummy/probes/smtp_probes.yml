@@ -1,3 +1,4 @@
 - name: "Gmail"
   host: "smtp.gmail.com"
   port: 25
+  service: "internal_tools"

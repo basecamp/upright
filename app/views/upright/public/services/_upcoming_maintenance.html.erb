@@ -1,0 +1,21 @@
+<% if maintenances.any? %>
+  <section class="upcoming">
+    <h2 class="upcoming__title">Scheduled maintenance</h2>
+    <% maintenances.each do |maintenance| %>
+      <%= link_to public_incident_path(maintenance), class: "upcoming__item" do %>
+        <div class="event__head">
+          <span class="event__title"><%= maintenance.title %></span>
+          <span class="upcoming__when"><%= local_maintenance_window(maintenance) %></span>
+        </div>
+
+        <% if maintenance.public_services.any? %>
+          <p class="event__services"><%= maintenance.public_services.map(&:name).to_sentence %></p>
+        <% end %>
+
+        <% if (update = maintenance.updates.first) && update.body.present? %>
+          <p class="event__update"><%= update.body %></p>
+        <% end %>
+      <% end %>
+    <% end %>
+  </section>
+<% end %>

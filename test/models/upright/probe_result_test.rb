@@ -1,6 +1,7 @@
 require "test_helper"
 
 class Upright::ProbeResultTest < ActiveSupport::TestCase
+  include ActiveJob::TestHelper
   test ".to_chart returns expected structure" do
     result = upright_probe_results(:http_probe_result)
     chart_data = result.to_chart
@@ -39,6 +40,23 @@ class Upright::ProbeResultTest < ActiveSupport::TestCase
     assert Upright::ProbeResult.exists?(fresh_success_id)
     assert_not Upright::ProbeResult.exists?(stale_failure_id)
     assert Upright::ProbeResult.exists?(recent_failure_id)
+  end
+
+  test ".cleanup_stale purges attachments and blobs for stale records without enqueuing jobs" do
+    stale = upright_probe_results(:stale_success)
+    stale_attachment_id = stale.artifacts.first.id
+    stale_blob_id = stale.artifacts.first.blob.id
+
+    fresh = upright_probe_results(:http_probe_result)
+    fresh_blob_id = fresh.artifacts.first.blob.id
+
+    assert_no_enqueued_jobs do
+      Upright::ProbeResult.cleanup_stale
+    end
+
+    assert_not ActiveStorage::Attachment.exists?(stale_attachment_id)
+    assert_not ActiveStorage::Blob.exists?(stale_blob_id)
+    assert ActiveStorage::Blob.exists?(fresh_blob_id)
   end
 
   test ".cleanup_stale caps failures at retention limit" do

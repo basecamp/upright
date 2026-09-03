@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_01_14_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_29_000001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -41,7 +41,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_01_14_000001) do
 
   create_table "upright_probe_results", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.decimal "duration"
+    t.decimal "duration", precision: 10, scale: 6
     t.string "probe_name"
     t.string "probe_service"
     t.string "probe_target"

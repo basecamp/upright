@@ -25,6 +25,18 @@ class Upright::Probes::StatusTest < ActiveSupport::TestCase
     assert_equal [], Upright::Probes::Status.for_type(:http)
   end
 
+  test ".for_type scopes the query to the deployment environment" do
+    with_rails_env("staging") do
+      stub_prometheus_query_range([])
+
+      Upright::Probes::Status.for_type(:http)
+
+      assert_requested :get, /localhost:9090.*query_range/ do |request|
+        request.uri.query_values["query"].include?(%(environment="staging"))
+      end
+    end
+  end
+
   test "probe exposes site statuses with up/down state" do
     stub_prometheus_query_range([
       { "metric" => { "name" => "example.com", "type" => "http", "probe_target" => "https://example.com", "site_code" => "iad" },

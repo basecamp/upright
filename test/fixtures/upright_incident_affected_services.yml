@@ -1,0 +1,10 @@
+_fixture:
+  model_class: Upright::IncidentAffectedService
+
+reactive_with_service_app:
+  incident: reactive_with_service
+  service_code: example_app
+
+reactive_resolved_app:
+  incident: reactive_resolved
+  service_code: example_app

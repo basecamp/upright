@@ -6,7 +6,8 @@ class Upright::Artifact
     "html" => "download",
     "xml"  => "download",
     "txt"  => "download",
-    "bin"  => "download"
+    "bin"  => "download",
+    "zip"  => "download"
   }.freeze
 
   attr_reader :filename, :content

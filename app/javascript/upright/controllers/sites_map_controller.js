@@ -14,20 +14,28 @@ export default class extends Controller {
 
       L.marker([site.lat, site.lon])
         .addTo(map)
-        .bindPopup(`<strong>${site.hostname}</strong><br>${site.city}`)
+        .bindPopup(this.popupContent(site))
         .on("mouseover", function() { this.openPopup() })
         .on("mouseout", function() { this.closePopup() })
         .on("click", () => window.location.href = site.url)
     }
   }
 
+  // Build the popup as DOM nodes so hostname and city render as text,
+  // never as HTML.
+  popupContent(site) {
+    const content = document.createElement("div")
+    const hostname = document.createElement("strong")
+    hostname.textContent = site.hostname
+    content.append(hostname, document.createElement("br"), site.city ?? "")
+    return content
+  }
+
   get tileUrl() {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-      : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    return "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   }
 
   get attribution() {
-    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+    return '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
   }
 }

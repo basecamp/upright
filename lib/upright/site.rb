@@ -2,17 +2,35 @@ module Upright
   class Site
     attr_reader :code, :city, :country, :geohash, :stagger_index
 
-    def initialize(code:, city: nil, country: nil, geohash: nil, provider: nil, stagger_index: 0)
+    def initialize(code:, city: nil, country: nil, geohash: nil, provider: nil, stores_metrics: false, primary: false, stagger_index: 0)
       @code = code.to_sym
       @city = city
       @country = country
       @geohash = geohash
       @provider = provider
+      @stores_metrics = stores_metrics
+      @primary = primary
       @stagger_index = stagger_index
+    end
+
+    def stores_metrics?
+      @stores_metrics
+    end
+
+    def primary?
+      @primary
     end
 
     def host
       URI.parse(url).host
+    end
+
+    def current?
+      code == Upright.current_site&.code
+    end
+
+    def prometheus_client
+      current? ? Upright.prometheus_client : peer_prometheus_client
     end
 
     def provider
@@ -40,6 +58,18 @@ module Upright
     end
 
     private
+      def peer_prometheus_client
+        Prometheus::ApiClient.client(url: prometheus_proxy_url, headers: proxy_authorization, options: { timeout: 30 })
+      end
+
+      def prometheus_proxy_url
+        "#{url.chomp("/")}/prometheus"
+      end
+
+      def proxy_authorization
+        { "Authorization" => "Bearer #{Upright.configuration.proxy_token}" }
+      end
+
       def coordinates
         @coordinates ||= Upright::Geohash.decode(geohash).first
       end

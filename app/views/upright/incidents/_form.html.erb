@@ -1,0 +1,93 @@
+<% url = @incident.new_record? ? incidents_path : incident_path(@incident) %>
+<%= form_with model: @incident, scope: :incident, url: url,
+      class: class_names("incident-form",
+        "incident-form--maintenance" => @incident.persisted? && @incident.maintenance?,
+        "incident-form--incident" => @incident.persisted? && !@incident.maintenance?) do |f| %>
+  <span class="incident-form__spine" aria-hidden="true"></span>
+
+  <div class="incident-form__body">
+    <header class="incident-form__head">
+      <p class="incident-form__eyebrow"><%= @incident.new_record? ? "New event" : (@incident.maintenance? ? "Maintenance" : "Incident") %></p>
+      <% unless @incident.new_record? %>
+        <h1 class="incident-form__title"><%= @incident.title %></h1>
+      <% end %>
+    </header>
+
+    <% if @incident.errors.any? %>
+      <ul class="incident-errors">
+        <% @incident.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <% if @incident.new_record? %>
+      <div class="field">
+        <span class="field__label">Type</span>
+        <div class="segmented" role="radiogroup" aria-label="Type">
+          <input type="radio" name="maintenance" id="kind_incident" value="false" <%= "checked" unless @incident.maintenance? %>>
+          <label for="kind_incident">Incident</label>
+          <input type="radio" name="maintenance" id="kind_maintenance" value="true" <%= "checked" if @incident.maintenance? %>>
+          <label for="kind_maintenance">Maintenance</label>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="field">
+      <%= f.label :title, "Title", class: "field__label" %>
+      <%= f.text_field :title, class: "field__input",
+            placeholder: "Short summary customers will see", autofocus: @incident.new_record? %>
+    </div>
+
+    <div class="field field--incident">
+      <span class="field__label">Impact</span>
+      <div class="impact-picker" role="radiogroup" aria-label="Impact">
+        <% Upright::Incident::IMPACTS.each do |level| %>
+          <label class="impact impact--<%= level %>">
+            <%= f.radio_button :impact, level, id: "impact_#{level}" %>
+            <span class="impact__dot" aria-hidden="true"></span>
+            <span class="impact__name"><%= level.humanize %></span>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="field">
+      <%= f.label :starts_at, "Starts", class: "field__label" %>
+      <%= f.datetime_field :starts_at, class: "field__input" %>
+    </div>
+
+    <div class="field field--maintenance">
+      <%= f.label :ends_at, "Ends", class: "field__label" %>
+      <%= f.datetime_field :ends_at, class: "field__input" %>
+      <span class="field__hint">Affected services read as “Under maintenance” for this window and stay out of the outage alarm.</span>
+    </div>
+
+    <div class="field">
+      <span class="field__label">Affected services</span>
+      <div class="chips">
+        <input type="hidden" name="incident[service_codes][]" value="">
+        <% Upright::Service.all.each do |service| %>
+          <label class="chip">
+            <%= check_box_tag "incident[service_codes][]", service.code,
+                  @incident.service_codes.include?(service.code), id: "service_#{service.code}" %>
+            <%= service.name %>
+          </label>
+        <% end %>
+      </div>
+    </div>
+
+    <% if @incident.new_record? %>
+      <div class="field">
+        <%= label_tag "incident_body", "First update", class: "field__label" %>
+        <%= text_area_tag "incident[body]", nil, id: "incident_body", class: "field__input",
+              placeholder: "What’s happening, and what you’re doing about it." %>
+      </div>
+    <% end %>
+
+    <div class="incident-form__actions">
+      <%= link_to "Cancel", incidents_path, class: "incident-form__cancel" %>
+      <%= f.submit(@incident.new_record? ? "Create" : "Save changes", class: "btn") %>
+    </div>
+  </div>
+<% end %>

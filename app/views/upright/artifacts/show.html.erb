@@ -3,6 +3,14 @@
     <video controls width="960" preload="none" autoplay muted>
       <source src="<%= main_app.rails_blob_path(@artifact, disposition: :inline) %>" type="video/webm">
     </video>
+  <% elsif trace?(@artifact) %>
+    <div class="artifact__trace">
+      <% if (viewer = trace_viewer_url_for(@artifact)) %>
+        <p><%= link_to "Open in the Playwright Trace Viewer ↗", viewer, target: "_blank", rel: "noopener noreferrer" %></p>
+      <% else %>
+        <p>Download the trace above, then open it with <code>npx playwright show-trace <%= @artifact.filename %></code>.</p>
+      <% end %>
+    </div>
   <% else %>
     <pre><%= @artifact.download %></pre>
   <% end %>

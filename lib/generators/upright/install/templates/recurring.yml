@@ -23,3 +23,15 @@ production:
   cleanup_stale_probe_results:
     command: "Upright::ProbeResult.cleanup_stale"
     schedule: every hour at minute 30
+
+  sweep_playwright_videos:
+    class: "Upright::PlaywrightVideoSweepJob"
+    schedule: every hour at minute 45
+
+  health_metrics:
+    class: "Upright::HealthMetricsJob"
+    schedule: every minute
+
+  report_incidents:
+    class: "Upright::IncidentReporterJob"
+    schedule: "*/30 * * * * *"

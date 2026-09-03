@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
 set -eu
-cd "$(dirname "${BASH_SOURCE[0]}")/../test/dummy"
+
+GEM_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+echo "== Installing npm dependencies =="
+cd "$GEM_ROOT"
+npm install
+
+echo ""
+echo "== Installing Playwright browsers =="
+npx playwright install chromium
+
+echo ""
+cd "$GEM_ROOT/test/dummy"
 exec bin/setup "$@"

@@ -5,7 +5,7 @@ class Upright::Probes::Uptime
     end
 
     def for_type(probe_type)
-      results = prometheus_client.query_range(
+      results = Upright.prometheus_client.query_range(
         query: query(probe_type),
         start: 30.days.ago.iso8601,
         end:   Time.current.iso8601,
@@ -21,16 +21,9 @@ class Upright::Probes::Uptime
       end
 
       def label_selector(probe_type)
-        matchers = [ "alert_severity!=\"\"" ]
+        matchers = [ "alert_severity!=\"\"", "environment=\"#{Rails.env}\"" ]
         matchers << "type=\"#{probe_type}\"" if probe_type.present?
         "{#{matchers.join(",")}}"
-      end
-
-      def prometheus_client
-        Prometheus::ApiClient.client(
-          url: ENV.fetch("PROMETHEUS_URL", "http://localhost:9090"),
-          options: { timeout: 30.seconds }
-        )
       end
   end
 end

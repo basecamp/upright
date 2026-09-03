@@ -1,0 +1,14 @@
+<% if degraded.any? %>
+  <ul class="status-degraded">
+    <% degraded.each do |outage| %>
+      <li class="status-degraded__item">
+        <span class="status-degraded__dot status-degraded__dot--<%= outage.status %>" aria-hidden="true"></span>
+        <span class="status-degraded__name"><%= outage.service.name %></span>
+        <span class="status-degraded__detail">
+          <%= status_label(outage.status).downcase %>
+          <% if outage.started_at %>· <%= local_time_ago outage.started_at %><% end %>
+        </span>
+      </li>
+    <% end %>
+  </ul>
+<% end %>

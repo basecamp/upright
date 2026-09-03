@@ -17,6 +17,11 @@ module Upright
       def copy_initializers
         template "upright.rb", "config/initializers/upright.rb"
         template "omniauth.rb", "config/initializers/omniauth.rb"
+        # Never force: an app may already run an enforced CSP, and silently
+        # replacing it with this commented template would disable it. On a
+        # collision Thor prompts instead of overwriting; the recommended policy is
+        # documented for the operator to merge.
+        template "content_security_policy.rb", "config/initializers/content_security_policy.rb"
       end
 
       def copy_sites_config
@@ -46,6 +51,7 @@ module Upright
 
       def copy_deploy_config
         template "deploy.yml", "config/deploy.yml"
+        template "Dockerfile", "Dockerfile"
       end
 
       def copy_puma_config
@@ -105,7 +111,7 @@ module Upright
         say "  2. Configure your servers in config/deploy.yml"
         say "  3. Configure sites in config/sites.yml"
         say "  4. Add probes in probes/*.yml"
-        say "  5. Set ADMIN_PASSWORD env var (default: upright)"
+        say "  5. Set the ADMIN_PASSWORD env var — required, there is no default password"
         say ""
         say "For production, review config/initializers/upright.rb and update:"
         say "  config.hostname = \"example.com\""

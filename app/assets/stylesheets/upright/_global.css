@@ -35,6 +35,7 @@
 
   --lch-green-dark: 55% 0.162 147;
   --lch-red-dark: 59% 0.19 38;
+  --lch-orange-dark: 70% 0.17 65;
 
   /* Colors: Semantic */
   --color-black: oklch(var(--lch-black));
@@ -52,6 +53,7 @@
   --color-link: oklch(var(--lch-blue-dark));
   --color-positive: oklch(var(--lch-green-dark));
   --color-negative: oklch(var(--lch-red-dark));
+  --color-warning: oklch(var(--lch-orange-dark));
   --color-selected: oklch(var(--lch-blue-lighter));
 
   /* Borders & Shadows */

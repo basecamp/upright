@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Upright</title>
+    <%= page_title_tag %>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
@@ -16,6 +16,9 @@
     <% if signed_in? %>
       <%= render "layouts/upright/header" %>
       <main class="main">
+        <% flash.each do |type, message| %>
+          <p class="flash flash--<%= type %>"><%= message %></p>
+        <% end %>
         <%= yield %>
       </main>
     <% else %>

@@ -2,8 +2,6 @@
 ENV["RAILS_ENV"] = "test"
 
 require_relative "../test/dummy/config/environment"
-ActiveRecord::Migrator.migrations_paths = [ File.expand_path("../test/dummy/db/migrate", __dir__) ]
-ActiveRecord::Migrator.migrations_paths << File.expand_path("../db/migrate", __dir__)
 require "rails/test_help"
 require "mocha/minitest"
 require "webmock/minitest"
@@ -28,10 +26,11 @@ module ActiveSupport
     # multiple Playwright containers for browser-based probes.
     parallelize(workers: 1)
 
+    include CurrentUserHelper
     include IpApiHelper
     include MtrHelper
+    include RailsEnvHelper
     include SiteHelper
-    include PlaywrightHelper
     include YabedaTestHelper
 
     def with_env(env_vars)
@@ -40,6 +39,16 @@ module ActiveSupport
       yield
     ensure
       original_values.each { |k, v| ENV[k] = v }
+    end
+
+    # The test environment turns forgery protection off, so anything asserting how
+    # a controller verifies a request has to switch it back on for the duration.
+    def with_forgery_protection
+      original = ActionController::Base.allow_forgery_protection
+      ActionController::Base.allow_forgery_protection = true
+      yield
+    ensure
+      ActionController::Base.allow_forgery_protection = original
     end
 
     def stub_ip_api_batch(response_body = "[]")

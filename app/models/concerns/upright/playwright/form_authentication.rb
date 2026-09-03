@@ -3,6 +3,7 @@ module Upright::Playwright::FormAuthentication
 
   included do
     class_attribute :authentication_service
+    set_callback :page_ready, :after, :ensure_authenticated
   end
 
   class_methods do
@@ -12,9 +13,9 @@ module Upright::Playwright::FormAuthentication
   end
 
   private
-    def authenticated_context(browser, context_options = {})
+    def ensure_authenticated
       if authentication_service
-        authenticator_for(authentication_service).new(browser, context_options).authenticated_context
+        authenticator_for(authentication_service).new.ensure_authenticated(context, page)
       end
     end
 

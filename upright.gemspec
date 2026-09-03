@@ -15,7 +15,7 @@ Gem::Specification.new do |spec|
   spec.metadata["changelog_uri"]   = "https://github.com/basecamp/upright/blob/main/CHANGELOG.md"
 
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir["{app,config,db,lib}/**/*", "LICENSE.md", "Rakefile", "README.md"]
+    Dir["{app,config,db,lib,public}/**/*", "LICENSE.md", "Rakefile", "README.md"]
   end
 
   spec.required_ruby_version = ">= 3.4"
@@ -30,13 +30,20 @@ Gem::Specification.new do |spec|
   spec.add_dependency "solid_queue"
   spec.add_dependency "mission_control-jobs"
   spec.add_dependency "geared_pagination"
+  spec.add_dependency "local_time"
 
   # Probe infrastructure
   spec.add_dependency "frozen_record"
   spec.add_dependency "typhoeus"
 
+  # HTTP client for the metrics proxies. Floor at 2.14.3: earlier releases let a
+  # protocol-relative path (`//host`) override the upstream authority via
+  # URI#merge, an SSRF through the proxies (CVE-2026-25765 / -33637 / -54297).
+  spec.add_dependency "faraday", ">= 2.14.3"
+
   # Playwright (browser automation)
-  spec.add_dependency "playwright-ruby-client", "~> 1.56"
+  # Keep in sync with Upright::PLAYWRIGHT_VERSION in lib/upright/version.rb
+  spec.add_dependency "playwright-ruby-client", "~> 1.59.0"
 
   # Observability
   spec.add_dependency "prometheus-api-client"

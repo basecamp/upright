@@ -1,0 +1,7 @@
+_fixture:
+  model_class: Upright::IncidentUpdate
+
+reactive_resolved_initial:
+  incident: reactive_resolved
+  status: investigating
+  body: "We are investigating."

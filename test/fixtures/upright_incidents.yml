@@ -1,0 +1,59 @@
+_fixture:
+  model_class: Upright::Incident
+
+upcoming:
+  type: Upright::Maintenance
+  title: "Scheduled upgrade"
+  impact: maintenance
+  status: scheduled
+  starts_at: 2026-06-15 13:00:00
+  ends_at: 2026-06-15 14:00:00
+
+in_progress:
+  type: Upright::Maintenance
+  title: "Rolling restart"
+  impact: maintenance
+  status: in_progress
+  starts_at: 2026-06-15 11:00:00
+  ends_at: 2026-06-15 13:00:00
+
+started_scheduled:
+  type: Upright::Maintenance
+  title: "Window open, not yet advanced"
+  impact: maintenance
+  status: scheduled
+  starts_at: 2026-06-15 11:00:00
+  ends_at: 2026-06-15 13:00:00
+
+elapsed_scheduled:
+  type: Upright::Maintenance
+  title: "Window fully elapsed"
+  impact: maintenance
+  status: scheduled
+  starts_at: 2026-06-15 10:00:00
+  ends_at: 2026-06-15 11:00:00
+
+reactive_resolved:
+  type: Upright::Incident
+  title: "Resolved outage"
+  impact: minor
+  status: resolved
+  starts_at: 2026-06-15 10:00:00
+  resolved_at: 2026-06-15 11:00:00
+  created_by: "Lewis Buckley"
+
+reactive_other:
+  type: Upright::Incident
+  title: "Another resolved outage"
+  impact: major
+  status: resolved
+  starts_at: 2026-06-15 09:00:00
+  resolved_at: 2026-06-15 10:00:00
+
+reactive_with_service:
+  type: Upright::Incident
+  title: "Service-scoped resolved incident"
+  impact: minor
+  status: resolved
+  starts_at: 2026-06-15 10:00:00
+  resolved_at: 2026-06-15 11:00:00

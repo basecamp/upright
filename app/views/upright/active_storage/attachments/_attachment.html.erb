@@ -10,7 +10,7 @@
           <% end %>
           <div class="artifact__probe-time" title="<%= probe_result.created_at.to_fs(:db) %>"><%= time_ago_in_words(probe_result.created_at) %> ago</div>
         <% end %>
-        <h3 class="artifact__title"><%= artifact_icon(attachment) %> <%= attachment.filename %></h3>
+        <h3 class="artifact__title"><%= link_to "#{artifact_icon(attachment)} #{attachment.filename} ↓", main_app.rails_blob_path(attachment, disposition: :attachment), download: attachment.filename %></h3>
       </div>
       <button type="button" class="artifact__close" data-action="popover#close" aria-label="Close">×</button>
     </header>

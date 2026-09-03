@@ -55,6 +55,31 @@ module Upright::Metrics
               comment: "HTTP response status code",
               aggregation: :max,
               tags: %i[name probe_target probe_service]
+
+            gauge :service_under_maintenance,
+              comment: "Whether a service is under active maintenance (1 = yes, 0 = no)",
+              aggregation: :most_recent,
+              tags: %i[probe_service]
+
+            gauge :primary_site,
+              comment: "Whether this site is the primary (1 = yes, 0 = no)",
+              aggregation: :most_recent,
+              tags: []
+
+            gauge :persistent_db_up,
+              comment: "Whether the persistent database answers (1 = yes, 0 = no)",
+              aggregation: :most_recent,
+              tags: []
+
+            gauge :rollup_skipped_probes,
+              comment: "Probes the last rollup run left unwritten for insufficient Prometheus coverage",
+              aggregation: :most_recent,
+              tags: []
+
+            gauge :rollup_last_run_timestamp_seconds,
+              comment: "Unix time of the most recently written daily rollup",
+              aggregation: :max,
+              tags: []
           end
         end
       end

@@ -1,8 +1,9 @@
 class Upright::PrometheusProxyController < Upright::ApplicationController
-  skip_forgery_protection
+  include Upright::ProxyAuthentication
 
   skip_before_action :authenticate_user, only: :otlp
-  before_action :authenticate_otlp_token, only: :otlp
+  skip_before_action :block_cross_site_session_requests, only: :otlp
+  before_action :authenticate_proxy_token, only: :otlp
 
   UNSUPPORTED_PATHS = %w[/api/v1/notifications]
 
@@ -10,12 +11,16 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   def proxy
-    path = request.fullpath.sub(%r{^/prometheus}, "")
+    url = upstream_url(Upright.configuration.prometheus_url, request.fullpath.delete_prefix("/prometheus"))
 
-    if path.start_with?(*UNSUPPORTED_PATHS)
+    if url.nil?
+      head :bad_request
+    elsif url.path.start_with?(*UNSUPPORTED_PATHS)
       head :not_found
+    elsif token_forbidden_path?(url.path)
+      head :forbidden
     else
-      proxy_to_prometheus(path)
+      proxy_to_prometheus(url)
     end
   end
 
@@ -29,10 +34,10 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   end
 
   private
-    def proxy_to_prometheus(path, method: request.method, body: nil)
+    def proxy_to_prometheus(url, method: request.method, body: nil)
       response = prometheus_connection.run_request(
         method.downcase.to_sym,
-        path,
+        url.to_s,
         body,
         { "Content-Type" => request.content_type }
       )
@@ -45,18 +50,8 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
     end
 
     def prometheus_connection
-      @prometheus_connection ||= Faraday.new(url: prometheus_url) do |f|
+      @prometheus_connection ||= Faraday.new(url: Upright.configuration.prometheus_url) do |f|
         f.options.timeout = 30
-      end
-    end
-
-    def prometheus_url
-      ENV.fetch("PROMETHEUS_URL", "http://localhost:9090")
-    end
-
-    def authenticate_otlp_token
-      authenticate_or_request_with_http_token do |token|
-        ActiveSupport::SecurityUtils.secure_compare(token, ENV.fetch("PROMETHEUS_OTLP_TOKEN", ""))
       end
     end
 end

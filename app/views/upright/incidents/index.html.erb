@@ -1,0 +1,53 @@
+<% @page_title = "Incidents and maintenance" %>
+
+<div class="incidents-index">
+  <header class="incidents-header">
+    <h1 class="incidents-header__title">Incidents &amp; maintenance</h1>
+    <div class="incidents-actions">
+      <%= link_to "New incident", new_incident_path, class: "btn" %>
+      <%= link_to "New maintenance", new_incident_path(maintenance: true), class: "btn btn--ghost" %>
+    </div>
+  </header>
+
+  <% if @current.none? && @upcoming.none? && @past.none? %>
+    <div class="incidents-empty">
+      <p class="incidents-empty__headline">All clear</p>
+      <p class="incidents-empty__body">Nothing to report. Incidents and maintenance you declare here appear on the public status page.</p>
+    </div>
+  <% end %>
+
+  <% if @current.any? %>
+    <section class="incident-section">
+      <h2 class="incident-section__title">Active</h2>
+      <div class="incident-list">
+        <% @current.each do |incident| %>
+          <%= render "row", incident: incident,
+                when_label: incident.maintenance? ? maintenance_window_description(incident) : "Started #{incident.starts_at.to_fs(:month_day_at_zone)}" %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @upcoming.any? %>
+    <section class="incident-section">
+      <h2 class="incident-section__title">Upcoming maintenance</h2>
+      <div class="incident-list">
+        <% @upcoming.each do |incident| %>
+          <%= render "row", incident: incident, when_label: maintenance_window_description(incident) %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <% if @past.any? %>
+    <section class="incident-section">
+      <h2 class="incident-section__title">Past</h2>
+      <div class="incident-list">
+        <% @past.each do |incident| %>
+          <%= render "row", incident: incident,
+                when_label: "Resolved #{incident.resolved_at&.to_fs(:month_day_at_zone)}" %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

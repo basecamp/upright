@@ -22,17 +22,11 @@
 
   .artifact__content {
     background: var(--color-ink-lightest);
-    border-radius: 0.25rem;
-    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    height: 80vh;
-    left: 50%;
+    inset: 0;
     overflow: hidden;
     position: fixed;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 80vw;
     z-index: 1000;
   }
 
@@ -123,26 +117,14 @@
     }
   }
 
+  .artifact__trace {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+  }
+
   td .artifact + .artifact {
     margin-left: calc(var(--inline-space) / 2);
   }
 
-  @media (max-width: 140ch) {
-    .artifact__content {
-      width: calc(100vw - var(--block-space) * 2);
-      height: calc(100vh - var(--block-space) * 2);
-      left: 50%;
-      top: 50%;
-    }
-  }
-
-  @media (max-width: 55ch) {
-    .artifact__content {
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      transform: none;
-      border-radius: 0;
-    }
-  }
 }

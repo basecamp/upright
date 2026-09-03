@@ -45,7 +45,6 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
   end
 
   test "running a Playwright probe" do
-    skip_unless_playwright_running
     with_env("SITE_SUBDOMAIN" => "ams") do
       probe = TestPlaywrightProbe.new
 
@@ -67,7 +66,6 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
   end
 
   test "failing Playwright probe captures video artifact" do
-    skip_unless_playwright_running
     with_env("SITE_SUBDOMAIN" => "ams") do
       probe = FailingPlaywrightProbe.new
       probe.check_and_record
@@ -84,7 +82,6 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
   end
 
   test "Playwright probe captures log artifact with HTTP responses" do
-    skip_unless_playwright_running
     with_env("SITE_SUBDOMAIN" => "ams") do
       probe = TestPlaywrightProbe.new
       probe.check_and_record

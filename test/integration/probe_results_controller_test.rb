@@ -11,6 +11,32 @@ class ProbeResultsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "nav links Prometheus and Alertmanager at a site that stores metrics" do
+    get upright.site_root_path
+
+    assert_select "nav a[href=?]", upright.prometheus_url(subdomain: "ams"), text: "Prometheus"
+    assert_select "nav a[href=?]", upright.alertmanager_url(subdomain: "ams"), text: "Alertmanager"
+  end
+
+  test "nav greys out Prometheus and Alertmanager at a probe-only site" do
+    on_subdomain "nyc"
+
+    get upright.site_root_path
+
+    assert_select "nav a", text: "Prometheus", count: 0
+    assert_select "nav span.unavailable[title=?]", "Available on Amsterdam", text: "Prometheus"
+    assert_select "nav span.unavailable[title=?]", "Available on Amsterdam", text: "Alertmanager"
+  end
+
+  test "nav falls back to the global subdomain when no site claims metrics" do
+    probe_only_sites = Upright.sites.map { |site| Upright::Site.new(code: site.code, city: site.city) }
+    Upright.stubs(:sites).returns(probe_only_sites)
+
+    get upright.site_root_path
+
+    assert_select "nav a[href=?]", upright.prometheus_url(subdomain: "app"), text: "Prometheus"
+  end
+
   test "renders filter links for all registered probe types" do
     get upright.site_root_path
     assert_response :success

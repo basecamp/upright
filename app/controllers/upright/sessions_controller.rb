@@ -1,17 +1,24 @@
 class Upright::SessionsController < Upright::ApplicationController
   skip_before_action :authenticate_user, only: [ :new, :create ]
+  # External identity providers (OpenID Connect, including
+  # `response_mode=form_post`) return to the callback without a Rails authenticity
+  # token and are validated by the provider's own state nonce, so Rails' automatic
+  # token check is skipped here. The static_credentials callback is same-origin and
+  # MUST present a token — enforced explicitly in verify_credential_callback.
   skip_forgery_protection only: :create
 
   before_action :ensure_not_signed_in, only: [ :new, :create ]
+  before_action :verify_credential_callback, only: :create
 
   def new
   end
 
   def create
+    return_to = safe_return_to(session[:return_to])
     reset_session
     user = Upright::User.from_omniauth(request.env["omniauth.auth"])
     session[:user_info] = { email: user.email, name: user.name }
-    redirect_to upright.root_path
+    redirect_to return_to || upright.root_path, allow_other_host: true
   end
 
   def destroy
@@ -22,6 +29,34 @@ class Upright::SessionsController < Upright::ApplicationController
   private
     def ensure_not_signed_in
       redirect_to upright.site_root_path if session[:user_info].present?
+    end
+
+    # The static_credentials callback must arrive as a POST carrying a valid
+    # authenticity token: any other verb (a Lax-cookie GET, or a HEAD that CSRF
+    # skips) or a missing/foreign token could otherwise plant an attacker-chosen
+    # session (CVE-2026-67993). External providers are validated by their own
+    # state nonce (see skip_forgery_protection above) and are exempt.
+    def verify_credential_callback
+      return unless params[:provider].to_s == "static_credentials"
+
+      if !request.post?
+        head :not_found
+      elsif !verified_request?
+        raise ActionController::InvalidAuthenticityToken
+      end
+    end
+
+    # `allow_other_host: true` is needed to return across our own subdomains
+    # (app → a site), so bound it: only honour a stored return_to whose host is
+    # this deployment's hostname or a subdomain of it, never a foreign host (F-15).
+    def safe_return_to(url)
+      return nil if url.blank?
+
+      host = URI.parse(url).host
+      hostname = Upright.configuration.hostname
+      url if host && hostname.present? && (host == hostname || host.end_with?(".#{hostname}"))
+    rescue URI::InvalidURIError
+      nil
     end
 
     def upright

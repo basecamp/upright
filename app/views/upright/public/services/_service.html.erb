@@ -1,0 +1,34 @@
+<% today_status = history.last.status %>
+
+<section class="service">
+  <div class="service__row">
+    <%= link_to service.name, public_service_incidents_path(service.code), class: "service__name" %>
+    <% if service.maintenance_active? %>
+      <span class="service__status service__status--maintenance">Under maintenance</span>
+    <% else %>
+      <span class="service__status service__status--<%= today_status %>">
+        <%= status_label(today_status) %>
+      </span>
+    <% end %>
+  </div>
+
+  <% if description = service.try(:description).presence %>
+    <p class="service__description"><%= description %></p>
+  <% end %>
+
+  <div class="uptime">
+    <div class="uptime__bars" role="img" aria-label="<%= history.size %>-day uptime for <%= service.name %>">
+      <%= render partial: "uptime_bar", collection: history, as: :day %>
+    </div>
+
+    <div class="uptime__meta">
+      <span><%= history.size %> days ago</span>
+      <% if uptime = uptime_percentage_label(history.map(&:uptime_fraction).compact) %>
+        <span class="uptime__meta-percent"><%= uptime %> uptime</span>
+      <% else %>
+        <span class="uptime__meta-percent">No data yet</span>
+      <% end %>
+      <span>Today</span>
+    </div>
+  </div>
+</section>

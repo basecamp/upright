@@ -11,9 +11,39 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: "Alertmanager UI")
 
     sign_in
-    get "/alertmanager"
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
+  end
+
+  test "proxies at a site that stores metrics" do
+    stub_request(:get, "http://localhost:9093/api/v2/status").to_return(status: 200, body: "{}")
+    sign_in
+    on_subdomain :ams
+
+    get "/alertmanager/api/v2/status", headers: { "Sec-Fetch-Site" => "same-origin" }
+
+    assert_response :success
+  end
+
+  test "token stands in for a session" do
+    stub_request(:get, "http://localhost:9093/api/v2/status").to_return(status: 200, body: "{}")
+    on_subdomain :ams
+
+    with_env("PROMETHEUS_OTLP_TOKEN" => "test-token") do
+      get "/alertmanager/api/v2/status", headers: { "Authorization" => "Bearer test-token" }
+    end
+
+    assert_response :success
+  end
+
+  test "not routable at a probe-only site" do
+    sign_in
+    on_subdomain :nyc
+
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-origin" }
+
+    assert_response :not_found
   end
 
   test "proxies POST body to alertmanager" do
@@ -24,7 +54,8 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
       .to_return(status: 200, body: '{"silenceID":"abc-123"}', headers: { "Content-Type" => "application/json" })
 
     sign_in
-    post "/alertmanager/api/v2/silences", params: silence_json, headers: { "Content-Type" => "application/json" }
+    post "/alertmanager/api/v2/silences", params: silence_json,
+      headers: { "Content-Type" => "application/json", "Sec-Fetch-Site" => "same-origin" }
 
     assert_response :success
     assert_requested stub

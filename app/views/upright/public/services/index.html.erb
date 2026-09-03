@@ -1,0 +1,13 @@
+<div class="status-page">
+  <h1 class="status-page__title">Status</h1>
+
+  <%= render "overall_banner", status: @status_page.overall_status %>
+  <%= render "degraded_list", degraded: @status_page.outages %>
+
+  <%= render "active_events", incidents: @status_page.active_incidents, maintenances: @status_page.active_maintenances %>
+  <%= render "upcoming_maintenance", maintenances: @status_page.upcoming_maintenances %>
+
+  <% @status_page.service_histories.each do |service, history| %>
+    <%= render "service", service: service, history: history %>
+  <% end %>
+</div>

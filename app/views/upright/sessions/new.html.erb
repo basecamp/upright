@@ -1,6 +1,19 @@
 <div class="sign-in-container">
   <div class="sign-in-box">
     <h1>Upright</h1>
-    <%= button_to "Sign in", "/auth/#{Upright.configuration.auth_provider}", method: :post, data: { turbo: false }, class: "btn" %>
+    <% if Upright.configuration.auth_provider.to_sym == :static_credentials %>
+      <%# Post credentials straight to the OmniAuth callback, but as a same-origin
+          form carrying a Rails authenticity token so a cross-site request can't
+          forge a sign-in (CVE-2026-67993). %>
+      <%= form_with url: "/auth/static_credentials/callback", method: :post, data: { turbo: false } do |form| %>
+        <%= form.label :username, "Username" %>
+        <%= form.text_field :username, autocomplete: "username" %>
+        <%= form.label :password, "Password" %>
+        <%= form.password_field :password, autocomplete: "current-password" %>
+        <%= form.submit "Sign in", class: "btn" %>
+      <% end %>
+    <% else %>
+      <%= button_to "Sign in", "/auth/#{Upright.configuration.auth_provider}", method: :post, data: { turbo: false }, class: "btn" %>
+    <% end %>
   </div>
 </div>

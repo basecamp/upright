@@ -1,0 +1,64 @@
+<% @page_title = @incident.title %>
+
+<div class="incident-editor incident-editor--<%= @incident.maintenance? ? "maintenance" : @incident.impact %>">
+  <%= link_to "← All incidents", incidents_path, class: "incident-editor__back" %>
+
+  <%= render "form" %>
+
+  <section class="incident-section">
+    <h2 class="incident-section__title">Lifecycle</h2>
+    <ol class="lifecycle">
+      <% statuses = @incident.class::STATUSES %>
+      <% current = statuses.index(@incident.status) %>
+      <% statuses.each_with_index do |status, index| %>
+        <li class="lifecycle__step <%= "lifecycle__step--done" if current && index < current %> <%= "lifecycle__step--current" if index == current %>"><%= status.humanize %></li>
+      <% end %>
+    </ol>
+  </section>
+
+  <section class="incident-section">
+    <h2 class="incident-section__title">Post an update</h2>
+    <%= form_with url: incident_updates_path(@incident), scope: :incident_update, class: "composer", data: { controller: "template" } do |f| %>
+      <div class="field">
+        <%= f.label :status, "Status", class: "field__label" %>
+        <%= f.select :status, @incident.class::STATUSES.map { |status| [ status.humanize, status ] },
+              { selected: @incident.status }, class: "input--select" %>
+      </div>
+      <div class="field">
+        <%= f.label :body, "Message", class: "field__label" %>
+        <% unless @incident.maintenance? %>
+          <div class="composer__templates">
+            <% @incident.class::TEMPLATES.each_key do |template| %>
+              <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
+                    data: { action: "template#fill", template_body_param: @incident.update_body_for(template) } %>
+            <% end %>
+          </div>
+        <% end %>
+        <%= f.text_area :body, class: "field__input", placeholder: "What changed.", data: { template_target: "body" } %>
+      </div>
+      <div class="incident-form__actions">
+        <%= f.submit "Post update", class: "btn" %>
+      </div>
+    <% end %>
+  </section>
+
+  <section class="incident-section">
+    <h2 class="incident-section__title">Timeline</h2>
+    <ol class="timeline">
+      <% @incident.updates.each do |update| %>
+        <li class="timeline__item">
+          <span class="timeline__status"><%= update.status.humanize %></span>
+          <time class="timeline__time" datetime="<%= update.created_at.iso8601 %>"><%= update.created_at.strftime("%b %-d, %H:%M %Z") %></time>
+          <span class="timeline__author">by <%= update.created_by %></span>
+          <% if update.body.present? %><p class="timeline__body"><%= update.body %></p><% end %>
+        </li>
+      <% end %>
+    </ol>
+  </section>
+
+  <section class="incident-section">
+    <%= button_to "Delete #{@incident.maintenance? ? "maintenance" : "incident"}",
+          incident_path(@incident), method: :delete, class: "btn",
+          form: { data: { turbo_confirm: "Delete this #{@incident.maintenance? ? "maintenance" : "incident"}?" } } %>
+  </section>
+</div>

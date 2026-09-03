@@ -1,0 +1,19 @@
+@layer components {
+  .flash {
+    border-radius: 0.5rem;
+    color: var(--color-ink);
+    font-size: var(--text-small);
+    margin-block-end: var(--block-space);
+    padding: 0.75rem 1rem;
+  }
+
+  .flash--notice {
+    background: color-mix(in oklab, var(--color-positive) 12%, var(--color-canvas));
+    border: 1px solid color-mix(in oklab, var(--color-positive) 40%, var(--color-canvas));
+  }
+
+  .flash--alert {
+    background: color-mix(in oklab, var(--color-negative) 12%, var(--color-canvas));
+    border: 1px solid color-mix(in oklab, var(--color-negative) 40%, var(--color-canvas));
+  }
+}

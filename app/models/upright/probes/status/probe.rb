@@ -10,6 +10,14 @@ class Upright::Probes::Status::Probe
     @site_statuses = site_statuses
   end
 
+  def self.key_for(name:, type:, probe_target:, **)
+    [ name, type, probe_target ]
+  end
+
+  def key
+    self.class.key_for(name:, type:, probe_target:)
+  end
+
   def status_for_site(code)
     site_statuses.find { |s| s.site_code == code.to_s }
   end

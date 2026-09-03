@@ -1,0 +1,15 @@
+<%= link_to edit_incident_path(incident), class: "incident-row incident-row--#{incident.maintenance? ? "maintenance" : incident.impact}" do %>
+  <span class="incident-row__spine" aria-hidden="true"></span>
+  <div class="incident-row__main">
+    <div class="incident-row__top">
+      <span class="incident-row__kind"><%= incident.maintenance? ? "Maintenance" : "Incident" %></span>
+      <span class="incident-row__status"><%= incident.status.humanize %></span>
+    </div>
+    <span class="incident-row__title"><%= incident.title %></span>
+    <p class="incident-row__meta">
+      <% if incident.services.any? %><%= incident.services.map(&:name).to_sentence %> · <% end %>
+      <time datetime="<%= incident.starts_at.iso8601 %>"><%= when_label %></time>
+      <% if incident.created_by.present? %> · Declared by <%= incident.created_by %><% end %>
+    </p>
+  </div>
+<% end %>

@@ -1,0 +1,29 @@
+<% @page_title = @incident.title %>
+
+<article class="incident-detail incident-detail--<%= @incident.maintenance? ? "maintenance" : @incident.impact %>">
+  <%= link_to "← Status", "/", class: "incident-detail__back" %>
+
+  <header class="incident-detail__head">
+    <p class="incident-detail__eyebrow"><%= @incident.maintenance? ? "Scheduled maintenance" : "Incident" %></p>
+    <h1 class="incident-detail__title"><%= @incident.title %></h1>
+    <div class="incident-detail__meta">
+      <span class="incident-detail__status"><%= status_label(@incident.status) %></span>
+      <% if @incident.maintenance? %>
+        <span><%= local_maintenance_window(@incident) %></span>
+      <% end %>
+      <% if @incident.public_services.any? %>
+        <span><%= @incident.public_services.map(&:name).to_sentence %></span>
+      <% end %>
+    </div>
+  </header>
+
+  <ol class="incident-detail__timeline">
+    <% @incident.updates.each do |update| %>
+      <li class="incident-detail__update">
+        <span class="incident-detail__update-status"><%= status_label(update.status) %></span>
+        <%= local_time update.created_at, format: "%b %-d, %Y · %H:%M %Z", class: "incident-detail__update-time" %>
+        <% if update.body.present? %><p class="incident-detail__update-body"><%= update.body %></p><% end %>
+      </li>
+    <% end %>
+  </ol>
+</article>

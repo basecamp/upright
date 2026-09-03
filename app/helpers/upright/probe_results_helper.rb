@@ -19,6 +19,7 @@ module Upright::ProbeResultsHelper
     when /^request\.log$/ then "📤"
     when /^response\./    then "📥"
     when /^smtp\.log$/    then "📧"
+    when /\.zip$/         then "🎭"
     else "📎"
     end
   end

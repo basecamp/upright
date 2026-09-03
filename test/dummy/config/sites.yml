@@ -5,6 +5,8 @@ shared:
       country: NL
       geohash: u17982
       provider: digitalocean
+      stores_metrics: true
+      primary: true
 
     - code: nyc
       city: New York City

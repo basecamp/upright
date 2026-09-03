@@ -1,0 +1,14 @@
+<%= link_to public_incident_path(incident), class: "service-history__incident service-history__incident--#{incident.impact}" do %>
+  <div class="service-history__incident-head">
+    <h3 class="service-history__incident-title"><%= incident.title %></h3>
+    <span class="service-history__incident-impact"><%= incident.impact.humanize %></span>
+  </div>
+  <p class="service-history__incident-dates">
+    <%= local_time incident.starts_at, format: "%b %-d, %Y · %H:%M %Z" %>
+    —
+    <%= incident.resolved_at? ? local_time(incident.resolved_at, format: "%b %-d, %Y · %H:%M %Z") : "Ongoing" %>
+  </p>
+  <% if incident.updates.first&.body.present? %>
+    <p class="service-history__incident-update"><%= incident.updates.first.body %></p>
+  <% end %>
+<% end %>

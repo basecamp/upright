@@ -5,4 +5,5 @@ AllCops:
   Exclude:
     - test/dummy/db/schema.rb
     - test/dummy/db/queue_schema.rb
+    - test/dummy/db/persistent_schema.rb
     - test/dummy/db/migrate/**/*

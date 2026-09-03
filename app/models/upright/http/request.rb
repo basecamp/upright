@@ -1,4 +1,9 @@
 class Upright::HTTP::Request
+  # Verbose curl output echoes request/response headers and credential lines.
+  # Redact their values before the log is attached as a viewable artifact.
+  SENSITIVE_HEADER = /^(\s*(?:authorization|proxy-authorization|cookie|set-cookie)\s*:\s*)[^\r\n]+/i
+  SENSITIVE_CREDENTIAL = /^(\s*[^\r\n:=]*(?:userpwd|password|credential)[^\r\n:=]*\s*[:=]\s*)[^\r\n]+/i
+
   attr_reader :url, :options
 
   def initialize(url, **options)
@@ -50,10 +55,14 @@ class Upright::HTTP::Request
     def build_log(response)
       StringIO.new.tap do |log|
         if response.debug_info
-          response.debug_info.text.each { |msg| log.puts "* #{msg.chomp}" }
-          response.debug_info.header_out.each { |msg| log.puts "> #{msg.chomp}" }
-          response.debug_info.header_in.each { |msg| log.puts "< #{msg.chomp}" }
+          response.debug_info.text.each { |msg| log.puts "* #{redact(msg.chomp)}" }
+          response.debug_info.header_out.each { |msg| log.puts "> #{redact(msg.chomp)}" }
+          response.debug_info.header_in.each { |msg| log.puts "< #{redact(msg.chomp)}" }
         end
       end
+    end
+
+    def redact(message)
+      message.scrub.gsub(SENSITIVE_HEADER, '\1[REDACTED]').gsub(SENSITIVE_CREDENTIAL, '\1[REDACTED]')
     end
 end

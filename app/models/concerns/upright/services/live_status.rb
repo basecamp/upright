@@ -1,0 +1,69 @@
+module Upright::Services::LiveStatus
+  extend ActiveSupport::Concern
+
+  OUTAGE_LOOKBACK = 24.hours
+
+  # Matches the public status page's `expires_in`, so a burst of anonymous
+  # hits costs at most one Prometheus round trip per service per window
+  # instead of amplifying every request into live queries.
+  CACHE_TTL = 15.seconds
+
+  def live_status
+    Upright::Status.for(live_up_fraction)
+  end
+
+  # Earliest moment of the current outage, or nil if the service is currently
+  # clear OR the outage predates OUTAGE_LOOKBACK. Callers should treat nil on a
+  # non-operational service as "longer than the live window."
+  def current_outage_started_at(now: Time.current)
+    history = live_down_history(now: now)
+    last_clear = history.rindex { |_ts, value| value.to_f == 0 }
+
+    if last_clear && last_clear < history.length - 1
+      Time.zone.at(history[last_clear + 1].first.to_f)
+    end
+  end
+
+  private
+    def live_up_fraction
+      1 - live_down_fraction
+    end
+
+    def live_down_fraction
+      cached :live_down_fraction do
+        response = Upright.prometheus_client.query(
+          query: live_down_query
+        ).deep_symbolize_keys
+        response.dig(:result, 0, :value, 1).to_f
+      end
+    end
+
+    # Cached without regard to `now:` — a window up to CACHE_TTL stale is
+    # within the freshness the status page already advertises.
+    def live_down_history(now:)
+      cached :live_down_history do
+        response = Upright.prometheus_client.query_range(
+          query: live_down_query,
+          start: (now - OUTAGE_LOOKBACK).iso8601,
+          end:   now.iso8601,
+          step:  "300s"
+        ).deep_symbolize_keys
+        response.dig(:result, 0, :values) || []
+      end
+    end
+
+    def cached(name, &block)
+      Rails.cache.fetch([ "upright", name, code ], expires_in: CACHE_TTL, &block)
+    end
+
+    def live_down_query
+      matchers = [ %(probe_service="#{code}"), %(environment="#{Rails.env}"), %(type=~"#{uptime_probe_types_pattern}") ]
+      %(max(upright:probe_down_fraction{#{matchers.join(",")}}) or vector(0))
+    end
+
+    # Each type escaped as a regex literal, then the pattern escaped again for
+    # the PromQL string it sits in, so "api.v2" doesn't also match "apiXv2".
+    def uptime_probe_types_pattern
+      uptime_probe_types.map { |type| Regexp.escape(type) }.join("|").gsub(/["\\]/) { |char| "\\#{char}" }
+    end
+end

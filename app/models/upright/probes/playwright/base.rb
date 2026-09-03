@@ -11,6 +11,7 @@ class Upright::Probes::Playwright::Base
   include Upright::Playwright::Logging
   include Upright::Playwright::OtelTracing
   include Upright::Playwright::VideoRecording
+  include Upright::Playwright::TraceRecording
   include Upright::Playwright::Helpers
 
   set_callback :perform_check, :after, :wait_for_network_idle
@@ -39,6 +40,7 @@ class Upright::Probes::Playwright::Base
 
   def on_check_recorded(probe_result)
     attach_video(probe_result)
+    attach_trace(probe_result)
     attach_log(probe_result)
   end
 

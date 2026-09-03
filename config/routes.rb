@@ -1,6 +1,11 @@
 Upright::Engine.routes.draw do
-  global_subdomain = ->(req) { Upright.configuration.global_subdomain == req.subdomain }
-  site_subdomain   = ->(req) { Upright.configuration.site_subdomains.include?(req.subdomain) }
+  global_subdomain  = ->(req) { Upright.configuration.global_subdomain == req.subdomain }
+  site_subdomain    = ->(req) { Upright.configuration.site_subdomains.include?(req.subdomain) }
+  metrics_subdomain = ->(req) { global_subdomain.call(req) || Upright.find_site(req.subdomain)&.stores_metrics? }
+  public_status     = ->(req) {
+    Upright.configuration.public_status_enabled &&
+      req.subdomain == Upright.configuration.public_status_subdomain
+  }
 
   constraints global_subdomain do
     root "sites#index", as: :admin_root
@@ -13,6 +18,12 @@ Upright::Engine.routes.draw do
       resource :probe_status, only: :show
     end
 
+    resources :incidents do
+      resources :updates, only: :create, controller: "incidents/updates"
+    end
+  end
+
+  constraints metrics_subdomain do
     scope :framed do
       resource :prometheus,   only: :show, controller: :prometheus_proxy
       resource :alertmanager, only: :show, controller: :alertmanager_proxy
@@ -29,11 +40,24 @@ Upright::Engine.routes.draw do
 
     resources :artifacts, only: :show, as: :site_artifacts
 
+    match "traces/:signed_id", to: "traces#show", as: :site_trace, via: [ :get, :options ]
+
     scope :framed do
       resource :jobs, only: :show
     end
 
     mount MissionControl::Jobs::Engine, at: "/jobs"
+  end
+
+  constraints public_status do
+    scope module: :public, as: :public do
+      root "services#index", as: :services_root
+      get "feed", to: "services#index", as: :services_feed, defaults: { format: :rss }
+      resources :services, only: [], param: :code do
+        resources :incidents, only: :index, controller: :service_incidents
+      end
+      resources :incidents, only: :show
+    end
   end
 
   # Base routes (no subdomain constraint)

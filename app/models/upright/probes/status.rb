@@ -1,7 +1,7 @@
 class Upright::Probes::Status
   class << self
     def for_type(probe_type)
-      results = prometheus_client.query_range(
+      results = Upright.prometheus_client.query_range(
         query: query(probe_type),
         start: 30.minutes.ago.iso8601,
         end:   Time.current.iso8601,
@@ -17,21 +17,13 @@ class Upright::Probes::Status
       end
 
       def label_selector(probe_type)
-        matchers = [ "alert_severity!=\"\"" ]
+        matchers = [ "alert_severity!=\"\"", "environment=\"#{Rails.env}\"" ]
         matchers << "type=\"#{probe_type}\"" if probe_type.present?
         "{#{matchers.join(",")}}"
       end
 
-      def prometheus_client
-        Prometheus::ApiClient.client(
-          url: ENV.fetch("PROMETHEUS_URL", "http://localhost:9090"),
-          options: { timeout: 30.seconds }
-        )
-      end
-
       def build_probes(results)
-        # Group results by probe identity (name + type + probe_target)
-        grouped = results.group_by { |r| [ r[:metric][:name], r[:metric][:type], r[:metric][:probe_target] ] }
+        grouped = results.group_by { |r| Probe.key_for(**r[:metric]) }
 
         grouped.map do |(_name, _type, _target), series|
           site_statuses = series.map do |s|

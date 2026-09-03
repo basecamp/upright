@@ -27,16 +27,18 @@ class Upright::SiteTest < ActiveSupport::TestCase
   end
 
   test "url builds subdomain url from code" do
-    assert_equal "http://ams.upright.localhost:3000/", @site.url
+    expected_port = ENV.fetch("PORT", 3000)
+    assert_equal "http://ams.upright.localhost:#{expected_port}/", @site.url
   end
 
   test "to_leaflet returns map marker data" do
+    expected_port = ENV.fetch("PORT", 3000)
     result = @site.to_leaflet
 
     assert_equal "ams.upright.localhost", result[:hostname]
     assert_equal "Amsterdam", result[:city]
     assert_in_delta 52.37, result[:lat], 0.01
     assert_in_delta 4.89, result[:lon], 0.01
-    assert_equal "http://ams.upright.localhost:3000/", result[:url]
+    assert_equal "http://ams.upright.localhost:#{expected_port}/", result[:url]
   end
 end

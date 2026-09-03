@@ -4,17 +4,27 @@
     <% if Upright::Current.site.present? %>
       <span class="header__site"><%= site_name(Upright::Current.site) %></span>
     <% end %>
+    <% unless Rails.env.production? %>
+      <span class="header__env"><%= Rails.env %></span>
+    <% end %>
   </div>
 
   <nav class="header__nav">
     <%= link_to "Probes", upright.site_root_url(subdomain: current_or_default_site.code), class: "header__link" %>
     <%= link_to "Uptime", upright.dashboards_uptime_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
     <%= link_to "Status", upright.dashboards_probe_status_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
+    <%= link_to "Incidents", upright.incidents_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
     <span class="header__divider"></span>
     <%= link_to "Jobs", upright.jobs_url(subdomain: current_or_default_site.code), class: "header__link" %>
     <span class="header__divider"></span>
-    <%= link_to "Prometheus", upright.prometheus_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
-    <%= link_to "Alertmanager", upright.alertmanager_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
+    <% if metrics_subdomain %>
+      <%= link_to "Prometheus", upright.prometheus_url(subdomain: metrics_subdomain), class: "header__link" %>
+      <%= link_to "Alertmanager", upright.alertmanager_url(subdomain: metrics_subdomain), class: "header__link" %>
+    <% else %>
+      <% available_on = "Available on #{metrics_sites_sentence}" %>
+      <%= tag.span "Prometheus", class: "header__link unavailable", title: available_on %>
+      <%= tag.span "Alertmanager", class: "header__link unavailable", title: available_on %>
+    <% end %>
   </nav>
 
   <div class="header__user">

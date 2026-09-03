@@ -55,7 +55,8 @@ echo ""
 echo "=> Creating new Rails app: $APP_NAME"
 # Drop a .ruby-version so mise activates the same Ruby used by the Upright project
 ruby -e "puts RUBY_VERSION" > "$WORK_DIR/.ruby-version"
-(cd "$WORK_DIR" && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u RUBYOPT -u RUBYLIB rails new "$APP_NAME" --database=sqlite3 --skip-test --skip-git --skip-docker --skip-bootsnap --quiet)
+RAILS_BIN="$(ruby -e "puts Gem.bin_path('railties', 'rails')")"
+(cd "$WORK_DIR" && env -u BUNDLE_GEMFILE -u BUNDLE_BIN_PATH -u RUBYOPT -u RUBYLIB ruby "$RAILS_BIN" new "$APP_NAME" --database=sqlite3 --skip-test --skip-git --skip-docker --skip-bootsnap --quiet)
 echo "   OK"
 
 cd "$APP_DIR"
@@ -285,6 +286,47 @@ echo "=> Stopping Solid Queue worker"
 kill "$JOBS_PID" 2>/dev/null || true
 wait "$JOBS_PID" 2>/dev/null || true
 JOBS_PID=""
+
+# -------------------------------------------------------------------
+# Step 10: Verify the trace viewer is not served from this origin
+# -------------------------------------------------------------------
+echo "=> Checking the trace viewer is not served from the app origin"
+status=$(curl -s -o /dev/null -w "%{http_code}" $RESOLVE "$APP_URL/trace-viewer/index.html" 2>/dev/null || true)
+
+if [[ "$status" == "404" ]]; then
+  echo "   OK (HTTP $status)"
+else
+  echo "   FAIL: the app origin serves the trace viewer (HTTP $status)"
+  exit 1
+fi
+
+# -------------------------------------------------------------------
+# Step 11: Verify Playwright probe generates trace artifact
+# -------------------------------------------------------------------
+echo "=> Running Playwright probe and checking for trace artifact"
+trace_check=$(PLAYWRIGHT_CLI_PATH="$UPRIGHT_ROOT/node_modules/.bin/playwright" bin/rails runner '
+probe_class = Class.new(Upright::Probes::Playwright::Base) {
+  define_method(:probe_name) { "smoke_trace_test" }
+  define_method(:record_video?) { false }
+  define_method(:check) {
+    page.goto("https://example.com")
+    wait_for_network_idle
+    true
+  }
+}
+probe_class.new.check_and_record
+result = Upright::ProbeResult.last
+trace = result.artifacts.find { |a| a.filename.to_s.end_with?(".zip") }
+puts trace ? "ok" : "missing"
+' 2>&1) || true
+
+if echo "$trace_check" | grep -q "^ok$"; then
+  echo "   OK (trace artifact attached)"
+else
+  echo "   FAIL: no trace artifact found"
+  echo "   Output: $trace_check"
+  exit 1
+fi
 
 # -------------------------------------------------------------------
 # Done
