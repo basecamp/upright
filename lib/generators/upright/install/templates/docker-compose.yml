@@ -2,7 +2,14 @@ services:
   prometheus:
     image: prom/prometheus:v3.4.1
     container_name: <%= app_name %>-prometheus
-    network_mode: host
+    # Published on loopback only, so the dev server is not reachable from other
+    # machines. host.docker.internal lets Prometheus scrape the app running on
+    # the host, on Linux as well as on macOS and Windows Docker Desktop, where
+    # network_mode: host does not reach the host's localhost.
+    ports:
+      - "127.0.0.1:9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./config/prometheus/development/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./config/prometheus/rules:/etc/prometheus/rules:ro
@@ -10,12 +17,9 @@ services:
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
-      # Host networking would otherwise listen on all interfaces; keep the
-      # dev server loopback-only. --web.enable-lifecycle is deliberately
-      # omitted — its unauthenticated reload/quit endpoints aren't needed
-      # (restart the container to reload config); if you add it back, pair
-      # it with --web.config.file authentication.
-      - '--web.listen-address=127.0.0.1:9090'
+      # --web.enable-lifecycle is omitted: its unauthenticated reload and quit
+      # endpoints are not needed (restart the container to reload config). If
+      # you add it back, pair it with --web.config.file authentication.
       - '--web.enable-remote-write-receiver'
 
   alertmanager:
