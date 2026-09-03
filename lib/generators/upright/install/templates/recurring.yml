@@ -32,6 +32,14 @@ production:
     class: "Upright::HealthMetricsJob"
     schedule: every minute
 
+  aggregate_rollups:
+    class: "Upright::Rollups::DailyAggregationJob"
+    schedule: every hour at minute 5
+
+  advance_maintenances:
+    class: "Upright::MaintenanceAdvanceJob"
+    schedule: "*/15 * * * * *"
+
   report_incidents:
     class: "Upright::IncidentReporterJob"
     schedule: "*/30 * * * * *"

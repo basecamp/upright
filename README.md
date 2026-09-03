@@ -59,7 +59,7 @@ rails new my-upright --database=sqlite3 --skip-test
 cd my-upright
 bundle add upright
 bin/rails generate upright:install
-bin/rails db:migrate
+bin/rails db:prepare
 ```
 
 Start the server:
@@ -76,6 +76,8 @@ Visit http://app.my-upright.localhost:3000 to see your Upright instance.
 
 The `upright:install` generator creates:
 
+- `config/database.yml` - Development and test split into `primary` (probe results), `persistent` (rollups and incidents, migrated from the gem) and `queue` (Solid Queue) databases
+- `config/recurring.yml` - Probe schedules and the engine's housekeeping, health, rollup, incident and maintenance jobs
 - `config/initializers/upright.rb` - Engine configuration
 - `config/initializers/content_security_policy.rb` - Ready-to-enable CSP covering the engine's CDN dependencies
 - `config/sites.yml` - Site definitions for each VPS you host Upright on
