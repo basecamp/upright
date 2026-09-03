@@ -6,6 +6,7 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
     <%= upright_stylesheet_link_tag "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags "upright/public" %>
   </head>
   <body class="public">
     <%= render "upright/public/branding" %>

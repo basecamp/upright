@@ -15,6 +15,16 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "max-age=15, public", response.headers["Cache-Control"]
   end
 
+  test "index loads only the public JavaScript entry point" do
+    get upright.public_services_root_path
+
+    assert_response :success
+    assert_match %(import "upright/public"), response.body
+    assert_match %r{<link rel="modulepreload" href="[^"]*local-time}, response.body
+    assert_no_match(/import "application"/, response.body)
+    assert_no_match(%r{<link rel="modulepreload" href="[^"]*(turbo|stimulus|leaflet|frappe)}, response.body)
+  end
+
   test "feed renders an RSS document" do
     get upright.public_services_feed_path
 
