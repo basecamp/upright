@@ -57,16 +57,19 @@ upgrade does not rewrite. Existing installs should apply these by hand:
   - `health_metrics` (`Upright::HealthMetricsJob`, every minute), which exports
     `upright_primary_site`, `upright_persistent_db_up` and
     `upright_rollup_last_run_timestamp_seconds`.
-  - `aggregate_rollups` (`Upright::Rollups::DailyAggregationJob`, hourly), which
-    writes the daily uptime the public status page shows.
-  - `report_incidents` (`Upright::IncidentReporterJob`, every 30 seconds), which
-    opens and resolves incidents from probe results.
-  - `advance_maintenances` (`Upright::MaintenanceAdvanceJob`, every 15 seconds),
-    which starts and completes scheduled maintenance windows on time.
-- `config/database.yml`: add a `persistent` database for rollups and incidents,
-  with `migrations_paths` pointing at the gem's `db/persistent_migrate`, and
-  include it in `db:prepare`. Status history lives there so it survives a
-  site's probe data being purged.
+  - Only with the public status page enabled: `aggregate_rollups`
+    (`Upright::Rollups::DailyAggregationJob`, hourly), which writes the daily
+    uptime the page shows; `report_incidents` (`Upright::IncidentReporterJob`,
+    every 30 seconds), which opens and resolves incidents from probe results;
+    and `advance_maintenances` (`Upright::MaintenanceAdvanceJob`, every 15
+    seconds), which starts and completes scheduled maintenance windows on time.
+- `config/database.yml`: add a `persistent` database for rollups, incidents and
+  maintenance windows, with `migrations_paths` pointing at the gem's
+  `db/persistent_migrate`; the install generator now writes it for new apps.
+  Status history lives there so it survives a site's probe data being purged.
+
+`UPGRADING.md` walks through every step from 0.3 to 0.4 with the config to
+copy.
 - `config/initializers/content_security_policy.rb`: adopt the recommended policy
   from the install template if you don't already enforce a CSP.
 - `config/initializers/upright.rb`: trace artifacts now link to

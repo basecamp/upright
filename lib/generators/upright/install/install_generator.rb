@@ -1,3 +1,5 @@
+require_relative "database_config"
+
 module Upright
   module Generators
     class InstallGenerator < Rails::Generators::Base
@@ -62,14 +64,14 @@ module Upright
         rails_command "solid_queue:install"
       end
 
-      def add_queue_database
-        gsub_file "config/database.yml",
-          "development:\n  <<: *default\n  database: storage/development.sqlite3",
-          "development:\n  primary:\n    <<: *default\n    database: storage/development.sqlite3\n  queue:\n    <<: *default\n    database: storage/development_queue.sqlite3\n    migrations_paths: db/queue_migrate"
-
-        gsub_file "config/database.yml",
-          "test:\n  <<: *default\n  database: storage/test.sqlite3",
-          "test:\n  primary:\n    <<: *default\n    database: storage/test.sqlite3\n  queue:\n    <<: *default\n    database: storage/test_queue.sqlite3\n    migrations_paths: db/queue_migrate"
+      # Splits the development and test databases into primary, persistent and
+      # queue. The persistent database holds rollups, incidents and maintenance
+      # windows, and its migrations come from the gem, so database.yml points
+      # migrations_paths at the installed gem's db/persistent_migrate.
+      def add_persistent_and_queue_databases
+        gsub_file "config/database.yml", /\A.*\z/m do |yaml|
+          DatabaseConfig.rewrite(yaml)
+        end
       end
 
       def copy_recurring_config
@@ -107,7 +109,7 @@ module Upright
         say "Upright has been installed!", :green
         say ""
         say "Next steps:"
-        say "  1. Prepare the database: bin/rails db:prepare"
+        say "  1. Prepare the databases (primary, persistent and queue): bin/rails db:prepare"
         say "  2. Configure your servers in config/deploy.yml"
         say "  3. Configure sites in config/sites.yml"
         say "  4. Add probes in probes/*.yml"
