@@ -33,3 +33,9 @@ bin/rails test
 ```
 
 Playwright integration tests require Docker. Start the Playwright server with `bin/services` before running the full suite.
+
+## Releasing
+
+Releases are built and published by GitHub Actions from a tag on `main`, not
+from a laptop. `RELEASING.md` describes the workflow, the version bump and tag
+steps, verification, recovery, and the one-time repository setup.

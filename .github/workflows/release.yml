@@ -1,0 +1,74 @@
+name: Release
+
+# Pushing a v* tag builds the gem from that commit and publishes it. This is
+# the workflow shape RubyGems recommends: one job, in a reviewer-gated
+# environment, using rubygems/release-gem, which runs `rake release` with
+# short-lived OIDC credentials from RubyGems trusted publishing and uploads a
+# sigstore attestation. Because the tag already exists, `rake release` skips
+# tagging and pushing git and only builds and pushes the gem.
+#
+# RELEASING.md covers cutting a release, verifying it, recovery, and the
+# one-time GitHub and RubyGems setup.
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions: {}
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Publish to RubyGems and create the GitHub Release
+    runs-on: ubuntu-latest
+    environment: release-rubygems
+    permissions:
+      contents: write # gh release create
+      id-token: write # RubyGems trusted publishing and sigstore signing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check that the tag names the version and is on main
+        id: version
+        env:
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          version="$(ruby -Ilib -rupright/version -e 'puts Upright::VERSION')"
+          if [ "v${version}" != "$REF_NAME" ]; then
+            echo "::error::Tag ${REF_NAME} does not match Upright::VERSION ${version}"
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit ${GITHUB_SHA} is not on origin/main"
+            exit 1
+          fi
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$(ruby -e 'puts Gem::Version.new(ARGV[0]).prerelease?' "$version")" >> "$GITHUB_OUTPUT"
+
+      # No bundler cache in the job that builds and publishes: a restored cache
+      # would be loaded by the process that builds the gem.
+      - uses: ruby/setup-ruby@95ef2b042f9d7a56d8268cba8559e2842e2ad01b # v1.321.0
+        with:
+          ruby-version: "4.0"
+          bundler-cache: false
+
+      - run: bundle install
+
+      - name: Build, publish and attest the gem
+        uses: rubygems/release-gem@7f9650160c1a4e7989fdc9855807bdbd421d8b6b # v1.4.1
+
+      - name: Create the GitHub Release with the gem attached
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REF_NAME: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          flags=(--verify-tag --generate-notes)
+          if [ "$PRERELEASE" = "true" ]; then flags+=(--prerelease); fi
+          gh release create "$REF_NAME" "pkg/upright-${VERSION}.gem" "${flags[@]}"

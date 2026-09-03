@@ -14,9 +14,13 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://github.com/basecamp/upright"
   spec.metadata["changelog_uri"]   = "https://github.com/basecamp/upright/blob/main/CHANGELOG.md"
 
-  spec.files = Dir.chdir(File.expand_path(__dir__)) do
-    Dir["{app,config,db,lib,public}/**/*", "LICENSE.md", "Rakefile", "README.md"]
-  end
+  # The manifest is the git index, not a filesystem glob. A glob packages whatever
+  # is present in the working tree, which is how the ignored
+  # config/credentials/*.key files reached the public 0.2.0 and 0.3.0 gems.
+  # test/packaging_test.rb checks this.
+  spec.files = IO.popen(%w[git ls-files -z], chdir: __dir__, err: IO::NULL) do |ls|
+    ls.readlines("\x0", chomp: true)
+  end.grep(%r{\A(?:app|config|db|lib|public)/|\A(?:LICENSE\.md|Rakefile|README\.md)\z})
 
   spec.required_ruby_version = ">= 3.4"
 
