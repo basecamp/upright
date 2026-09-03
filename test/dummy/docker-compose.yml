@@ -3,7 +3,7 @@ services:
     image: prom/prometheus:v3.4.1
     container_name: upright-prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -21,7 +21,7 @@ services:
     image: prom/alertmanager:v0.28.1
     container_name: upright-alertmanager
     ports:
-      - "9093:9093"
+      - "127.0.0.1:9093:9093"
     volumes:
       - ./config/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
       - alertmanager_data:/alertmanager
