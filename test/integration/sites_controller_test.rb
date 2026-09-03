@@ -18,4 +18,16 @@ class SitesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_equal "sites", @controller.controller_name
   end
+
+  test "admin pages load the application entry point with its modules preloaded" do
+    on_subdomain "app"
+    sign_in
+
+    get upright.root_path
+
+    assert_response :success
+    assert_match %(import "application"), response.body
+    assert_match %r{<link rel="modulepreload" href="[^"]*turbo}, response.body
+    assert_match %r{<link rel="modulepreload" href="[^"]*local-time}, response.body
+  end
 end
