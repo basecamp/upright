@@ -19,8 +19,12 @@ module Upright::ProxyAuthentication
   # embedded same-origin UI can still use them on the session path.
   TOKEN_DENIED_PREFIXES = %w[ /-/ ]
 
+  # The `show` action is the admin page that frames the upstream UI. It forwards
+  # nothing, so it stays on the ordinary session path: the gate below would
+  # otherwise refuse it whenever the browser arrives from another subdomain,
+  # which is what the header's Prometheus link does from the app subdomain.
   included do
-    prepend_before_action :block_cross_site_session_requests
+    prepend_before_action :block_cross_site_session_requests, except: :show
   end
 
   private
