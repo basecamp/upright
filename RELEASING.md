@@ -52,7 +52,7 @@ one.
 
 | State | What to do |
 |---|---|
-| The run failed before `gem push` | Fix on `main`, delete the tag, tag again. Deleting is allowed only because nothing was published. |
+| The run failed before `gem push` | Fix on `main` and ship the next patch version. The tag ruleset blocks deletion, so the failed tag stays; nothing was published under it. |
 | The gem was pushed, then creating the GitHub Release failed | Do not re-run: `gem push` refuses an existing version. Create the release by hand: `gem fetch upright -v X.Y.Z` then `gh release create vX.Y.Z upright-X.Y.Z.gem --verify-tag --generate-notes`. |
 | A published release is bad | Do not move or delete the tag. Publish a new patch version. Yank only for a security problem in the published gem. |
 
@@ -88,15 +88,20 @@ releases.
    ```
 
 3. **Tag rulesets.** Two rulesets on `refs/tags/v*` with enforcement
-   `active`: one restricts creation, with the releaser as the only bypass
-   actor; the other blocks update and deletion with no bypass actors.
+   `active`: one restricts creation, with the repository admin role as the
+   bypass actor (rulesets cannot name a single user); the other blocks update
+   and deletion with no bypass actors. Because nothing can delete a `v*` tag,
+   a release that fails before the gem push is finished by shipping the next
+   patch version rather than by re-tagging.
 
-4. **RubyGems trusted publisher.** On rubygems.org, in the `upright` gem's
-   trusted publishing settings, add a GitHub Actions publisher with repository
-   `basecamp/upright`, workflow `release.yml` and environment
-   `release-rubygems`. Then remove any long-lived API keys from the owner
-   accounts and confirm every owner has MFA enabled, so the workflow is the
-   only way to push.
+4. **RubyGems trusted publisher.** The `upright` gem is owned by the
+   `basecamp` organization on rubygems.org, and only an organization admin or
+   owner can manage its trusted publishers. A member with the maintainer role
+   gets a Forbidden response. Have an admin add a GitHub Actions publisher with
+   repository `basecamp/upright`, workflow `release.yml` and environment
+   `release-rubygems`, or raise your role first. Then remove any long-lived API
+   keys from the owner accounts and confirm every member has MFA enabled, so the
+   workflow is the only way to push.
 
 5. **Pinned actions.** After this workflow is merged, enable "Require actions
    to be pinned to a full-length commit SHA" in the repository's Actions
