@@ -3,13 +3,19 @@ module Upright::Services::LiveStatus
 
   OUTAGE_LOOKBACK = 24.hours
 
+  # A service is down when more than this fraction of sites report its uptime
+  # probes down. The same majority rule defines downtime in the
+  # upright:probe_uptime_daily recording rule and fires the *ProbeDown alerts,
+  # so an automatic incident opens under the same conditions as an alert.
+  OUTAGE_THRESHOLD = 0.5
+
   # Matches the public status page's `expires_in`, so a burst of anonymous
   # hits costs at most one Prometheus round trip per service per window
   # instead of amplifying every request into live queries.
   CACHE_TTL = 15.seconds
 
   def live_status
-    Upright::Status.for(live_up_fraction)
+    live_down_fraction > OUTAGE_THRESHOLD ? :major_outage : :operational
   end
 
   # Earliest moment of the current outage, or nil if the service is currently
@@ -17,7 +23,7 @@ module Upright::Services::LiveStatus
   # non-operational service as "longer than the live window."
   def current_outage_started_at(now: Time.current)
     history = live_down_history(now: now)
-    last_clear = history.rindex { |_ts, value| value.to_f == 0 }
+    last_clear = history.rindex { |_ts, value| value.to_f <= OUTAGE_THRESHOLD }
 
     if last_clear && last_clear < history.length - 1
       Time.zone.at(history[last_clear + 1].first.to_f)
@@ -25,10 +31,6 @@ module Upright::Services::LiveStatus
   end
 
   private
-    def live_up_fraction
-      1 - live_down_fraction
-    end
-
     def live_down_fraction
       cached :live_down_fraction do
         response = Upright.prometheus_client.query(

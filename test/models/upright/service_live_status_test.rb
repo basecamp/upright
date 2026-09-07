@@ -21,6 +21,22 @@ class Upright::ServiceLiveStatusTest < ActiveSupport::TestCase
     assert_equal :major_outage, service.live_status
   end
 
+  test "live_status stays operational while only a minority of sites report down" do
+    client = mock("prometheus")
+    client.expects(:query).returns({ "result" => [ { "value" => [ 1765000000, "0.5" ] } ] })
+    Upright.stubs(:prometheus_client).returns(client)
+
+    assert_equal :operational, Upright::Service.find_by(code: "example_app").live_status
+  end
+
+  test "live_status reports a major outage once a majority of sites report down" do
+    client = mock("prometheus")
+    client.expects(:query).returns({ "result" => [ { "value" => [ 1765000000, "0.6" ] } ] })
+    Upright.stubs(:prometheus_client).returns(client)
+
+    assert_equal :major_outage, Upright::Service.find_by(code: "example_app").live_status
+  end
+
   test "live_status is cached per service" do
     client = mock("prometheus")
     client.expects(:query).twice.returns({ "result" => [ { "value" => [ 1765000000, "0" ] } ] })
@@ -57,6 +73,14 @@ class Upright::ServiceLiveStatusTest < ActiveSupport::TestCase
     assert_equal :operational, service.live_status
   ensure
     Upright.configuration.probe_types.unregister "api.v2"
+  end
+
+  test "current_outage_started_at starts the outage where a majority of sites first reported down" do
+    client = mock("prometheus")
+    client.expects(:query_range).returns({ "result" => [ { "values" => [ [ 1765000000, "0.4" ], [ 1765000300, "0.5" ], [ 1765000600, "0.8" ], [ 1765000900, "1" ] ] } ] })
+    Upright.stubs(:prometheus_client).returns(client)
+
+    assert_equal Time.zone.at(1765000600), Upright::Service.find_by(code: "example_app").current_outage_started_at
   end
 
   test "current_outage_started_at reuses a cached Prometheus range within the public cache window" do

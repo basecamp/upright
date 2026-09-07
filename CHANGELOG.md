@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Report a service down on the status page, and open an automatic incident,
+  only when more than half of the sites report its uptime probes down. Live
+  status previously ran the site down fraction through the daily-uptime
+  thresholds, so one site failing one check out of six showed a partial
+  outage and opened a public incident that resolved five minutes later. The
+  majority rule is the one `upright:probe_uptime_daily` and the `*ProbeDown`
+  alerts already use.
+
 ## v0.4.0
 
 ### Security
