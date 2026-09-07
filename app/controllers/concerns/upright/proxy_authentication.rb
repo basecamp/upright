@@ -25,6 +25,13 @@ module Upright::ProxyAuthentication
   # which is what the header's Prometheus link does from the app subdomain.
   included do
     prepend_before_action :block_cross_site_session_requests, except: :show
+
+    # Rails refuses a JavaScript response to a GET that isn't an XHR, so a
+    # cross-site page can't read protected script through a <script src> tag.
+    # The upstream UI loads its bundle through exactly such a tag, and the proxy
+    # answered 422 to it. #block_cross_site_session_requests already refuses a
+    # cross-site GET before the action runs, so the check adds nothing here.
+    skip_after_action :verify_same_origin_request, only: :proxy
   end
 
   private
