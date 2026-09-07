@@ -41,6 +41,33 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
     assert_not_requested stub
   end
 
+  test "serves the upstream UI's script bundle to a same-origin script tag" do
+    # A <script src> request is a GET that is not an XHR. Rails' forgery
+    # protection refuses JavaScript to those unless the action opts out.
+    stub_request(:get, "http://localhost:9090/assets/index.js")
+      .to_return(status: 200, body: "console.log(1)", headers: { "Content-Type" => "text/javascript; charset=utf-8" })
+    sign_in
+
+    with_forgery_protection do
+      get "/prometheus/assets/index.js", headers: { "Sec-Fetch-Site" => "same-origin", "Sec-Fetch-Mode" => "cors", "Sec-Fetch-Dest" => "script" }
+    end
+
+    assert_response :success
+    assert_equal "console.log(1)", response.body
+  end
+
+  test "a cross-site script tag is still refused" do
+    stub = stub_request(:get, "http://localhost:9090/assets/index.js")
+    sign_in
+
+    with_forgery_protection do
+      get "/prometheus/assets/index.js", headers: { "Sec-Fetch-Site" => "cross-site", "Sec-Fetch-Mode" => "no-cors", "Sec-Fetch-Dest" => "script" }
+    end
+
+    assert_response :forbidden
+    assert_not_requested stub
+  end
+
   test "proxies requests when authenticated" do
     stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
     sign_in

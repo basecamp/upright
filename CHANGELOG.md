@@ -31,6 +31,12 @@
 
 ### Fixed
 
+- Serve the Prometheus and Alertmanager UI script bundles through the proxies.
+  Rails' forgery protection refuses a JavaScript response to a GET that is not
+  an XHR, and the upstream UIs load their bundles with a `<script src>` tag, so
+  the proxied page rendered without script and nothing in it worked. The proxy
+  action skips that check; the Fetch-Metadata gate already refuses a cross-site
+  GET before the action runs, which is what the check guards against.
 - Serve the Prometheus and Alertmanager pages of the admin UI to a browser
   arriving from another subdomain. The pages share a controller with the
   proxies, so the proxy's Fetch-Metadata gate refused them as same-site,
