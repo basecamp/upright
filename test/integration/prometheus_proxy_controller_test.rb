@@ -4,7 +4,8 @@ require "webmock/minitest"
 class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
   setup do
     on_subdomain :app
-    ENV["PROMETHEUS_OTLP_TOKEN"] = "test-token"
+    ENV["PROMETHEUS_OTLP_TOKEN"] = "otlp-token"
+    ENV["METRICS_READ_TOKEN"] = "read-token"
   end
 
   test "proxies requests when authenticated" do
@@ -16,11 +17,11 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "OTLP endpoint accepts valid token" do
+  test "OTLP endpoint accepts the OTLP token" do
     stub_request(:post, "http://localhost:9090/api/v1/otlp/v1/metrics").to_return(status: 200)
 
     post "/prometheus/api/v1/otlp/v1/metrics",
-      headers: { "Authorization" => "Bearer test-token", "Content-Type" => "application/x-protobuf" }
+      headers: { "Authorization" => "Bearer otlp-token", "Content-Type" => "application/x-protobuf" }
 
     assert_response :success
   end
@@ -40,18 +41,51 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
     on_subdomain :ams
 
     post "/prometheus/api/v1/otlp/v1/metrics",
-      headers: { "Authorization" => "Bearer test-token", "Content-Type" => "application/x-protobuf" }
+      headers: { "Authorization" => "Bearer otlp-token", "Content-Type" => "application/x-protobuf" }
 
     assert_response :success
   end
 
-  test "token stands in for a session, so a peer site can be read" do
+  test "the read token stands in for a session, so a peer site can be read" do
     stub_request(:get, "http://localhost:9090/api/v1/query?query=up").to_return(status: 200, body: "{}")
     on_subdomain :ams
 
-    get "/prometheus/api/v1/query?query=up", headers: { "Authorization" => "Bearer test-token" }
+    get "/prometheus/api/v1/query?query=up", headers: { "Authorization" => "Bearer read-token" }
 
     assert_response :success
+  end
+
+  test "the OTLP token cannot read" do
+    stub = stub_request(:get, "http://localhost:9090/api/v1/query?query=up")
+    on_subdomain :ams
+
+    get "/prometheus/api/v1/query?query=up", headers: { "Authorization" => "Bearer otlp-token" }
+
+    assert_response :unauthorized
+    assert_not_requested stub
+  end
+
+  test "the read token cannot write metrics" do
+    stub = stub_request(:post, "http://localhost:9090/api/v1/otlp/v1/metrics")
+    on_subdomain :ams
+
+    post "/prometheus/api/v1/otlp/v1/metrics",
+      headers: { "Authorization" => "Bearer read-token", "Content-Type" => "application/x-protobuf" }
+
+    assert_response :unauthorized
+    assert_not_requested stub
+  end
+
+  test "a blank configured token matches nothing" do
+    stub = stub_request(:get, "http://localhost:9090/api/v1/query?query=up")
+    on_subdomain :ams
+
+    with_env("METRICS_READ_TOKEN" => nil) do
+      get "/prometheus/api/v1/query?query=up", headers: { "Authorization" => "Bearer read-token" }
+    end
+
+    assert_response :unauthorized
+    assert_not_requested stub
   end
 
   test "rejects a bad token instead of redirecting to the login" do

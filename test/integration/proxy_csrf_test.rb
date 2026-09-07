@@ -9,7 +9,8 @@ require "webmock/minitest"
 class ProxyCsrfTest < ActionDispatch::IntegrationTest
   setup do
     on_subdomain :ams
-    ENV["PROMETHEUS_OTLP_TOKEN"] = "test-token"
+    ENV["PROMETHEUS_OTLP_TOKEN"] = "otlp-token"
+    ENV["METRICS_READ_TOKEN"] = "read-token"
   end
 
   # --- The forged cross-site vectors are refused, POST and the Lax-cookie GET ---
@@ -104,7 +105,7 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
 
     with_forgery_protection do
       post "/prometheus/api/v1/otlp/v1/metrics",
-        headers: { "Authorization" => "Bearer test-token", "Content-Type" => "application/x-protobuf" }
+        headers: { "Authorization" => "Bearer otlp-token", "Content-Type" => "application/x-protobuf" }
     end
 
     assert_response :success
@@ -152,7 +153,7 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
     stub_request(:get, "http://localhost:9090/api/v1/query?query=up").to_return(status: 200, body: "{}")
 
     get "/prometheus/api/v1/query?query=up",
-      headers: { "Authorization" => "Bearer test-token", "Sec-Fetch-Site" => "cross-site" }
+      headers: { "Authorization" => "Bearer read-token", "Sec-Fetch-Site" => "cross-site" }
 
     assert_response :success
   end
@@ -211,7 +212,7 @@ class ProxyCsrfTest < ActionDispatch::IntegrationTest
   test "a token cannot drive a destructive upstream endpoint" do
     reload = stub_request(:get, "http://localhost:9090/-/reload")
 
-    get "/prometheus/-/reload", headers: { "Authorization" => "Bearer test-token" }
+    get "/prometheus/-/reload", headers: { "Authorization" => "Bearer read-token" }
 
     assert_response :forbidden
     assert_not_requested reload

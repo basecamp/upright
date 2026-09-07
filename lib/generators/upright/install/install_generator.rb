@@ -56,6 +56,21 @@ module Upright
         template "Dockerfile", "Dockerfile"
       end
 
+      # The machine tokens come from Kamal secrets. Kamal resolves a missing one
+      # to "" and deploys it, and the app then fails its health check; the hook
+      # refuses the deploy before any container is replaced and says why.
+      def copy_kamal_secrets
+        secrets = File.join(destination_root, ".kamal/secrets")
+
+        if File.exist?(secrets)
+          append_to_file ".kamal/secrets", "\n" + File.read(find_in_source_paths("kamal_secrets"))
+        else
+          copy_file "kamal_secrets", ".kamal/secrets"
+        end
+
+        copy_file "pre-deploy", ".kamal/hooks/pre-deploy", mode: :preserve
+      end
+
       def copy_puma_config
         template "puma.rb", "config/puma.rb"
       end
@@ -114,6 +129,8 @@ module Upright
         say "  3. Configure sites in config/sites.yml"
         say "  4. Add probes in probes/*.yml"
         say "  5. Set the ADMIN_PASSWORD env var — required, there is no default password"
+        say "  6. Generate the two machine tokens with bin/rails secret and export them as"
+        say "     PROMETHEUS_OTLP_TOKEN and METRICS_READ_TOKEN — deploying fails without them"
         say ""
         say "For production, review config/initializers/upright.rb and update:"
         say "  config.hostname = \"example.com\""

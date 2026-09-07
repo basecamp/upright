@@ -60,6 +60,46 @@ class Upright::ConfigurationTest < ActiveSupport::TestCase
     end
   end
 
+  test "the machine tokens read from the environment by default" do
+    with_env("PROMETHEUS_OTLP_TOKEN" => "otlp-token", "METRICS_READ_TOKEN" => "read-token") do
+      assert_equal "otlp-token", @config.otlp_token
+      assert_equal "read-token", @config.metrics_read_token
+    end
+  end
+
+  test "verify_machine_tokens names every missing token" do
+    with_env("PROMETHEUS_OTLP_TOKEN" => nil, "METRICS_READ_TOKEN" => nil) do
+      error = assert_raises(Upright::ConfigurationError) { @config.verify_machine_tokens }
+      assert_match "PROMETHEUS_OTLP_TOKEN and METRICS_READ_TOKEN must be set", error.message
+
+      @config.otlp_token = "otlp-token"
+      error = assert_raises(Upright::ConfigurationError) { @config.verify_machine_tokens }
+      assert_match(/\AMETRICS_READ_TOKEN must be set/, error.message)
+    end
+  end
+
+  test "verify_machine_tokens refuses one value for both jobs" do
+    @config.otlp_token = "same"
+    @config.metrics_read_token = "same"
+
+    error = assert_raises(Upright::ConfigurationError) { @config.verify_machine_tokens }
+    assert_match "must differ", error.message
+  end
+
+  test "verify_machine_tokens passes two distinct tokens" do
+    @config.otlp_token = "otlp-token"
+    @config.metrics_read_token = "read-token"
+
+    assert_nothing_raised { @config.verify_machine_tokens }
+  end
+
+  test "proxy_token is refused with directions to its replacements" do
+    error = assert_raises(Upright::ConfigurationError) { @config.proxy_token = "token" }
+
+    assert_match "config.otlp_token", error.message
+    assert_match "config.metrics_read_token", error.message
+  end
+
   test "trace_viewer_origin drops a default port and keeps an explicit one" do
     @config.trace_viewer_url = "https://traces.example.net/index.html"
     assert_equal "https://traces.example.net", @config.trace_viewer_origin

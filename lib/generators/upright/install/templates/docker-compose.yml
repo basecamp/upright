@@ -1,6 +1,6 @@
 services:
   prometheus:
-    image: prom/prometheus:v3.4.1
+    image: prom/prometheus:v3.5.5
     container_name: <%= app_name %>-prometheus
     # Published on loopback only, so the dev server is not reachable from other
     # machines. host.docker.internal lets Prometheus scrape the app running on

@@ -1,5 +1,83 @@
 # Upgrading Upright
 
+## From 0.4 to 0.5
+
+0.5 removes the machine token the 0.4 installer wrote into
+`config/initializers/upright.rb`, splits it into a write token and a read token,
+and upgrades Prometheus past CVE-2026-40179. Every step applies to every
+install.
+
+### 1. Update the gem
+
+```sh
+bundle update upright
+```
+
+### 2. Replace `config.proxy_token` with two Kamal secrets
+
+The 0.4 template set `config.proxy_token = ENV.fetch("PROMETHEUS_OTLP_TOKEN",
+"<random>")`, so the generated app committed a production-capable token. 0.5
+raises `Upright::ConfigurationError` at boot if `config.proxy_token` is set.
+
+Remove that line from `config/initializers/upright.rb`. Then:
+
+- Keep `PROMETHEUS_OTLP_TOKEN` as the collector's token. It now authorizes only
+  `POST /prometheus/api/v1/otlp/v1/metrics`.
+- Generate `METRICS_READ_TOKEN` with `bin/rails secret`. Peer sites read
+  `/prometheus` with it when computing rollups, and it authorizes only `GET`
+  and `HEAD` on the proxies.
+- Add `METRICS_READ_TOKEN` under `env.secret` in `config/deploy.yml` and to
+  `.kamal/secrets`, following the generator's `kamal_secrets` template.
+- If the committed 0.4 literal was ever the value in use, rotate
+  `PROMETHEUS_OTLP_TOKEN` too: it is in your repository's history.
+
+The tokens must differ. Outside development and test the app refuses to boot
+when either is missing or both are the same.
+
+During a rolling deploy, peer reads fail in both directions: a 0.4 site
+presents the OTLP token, which a 0.5 site refuses, and a 0.5 site presents the
+read token, which a 0.4 site refuses. Only the primary site reads peers, for the
+hourly rollup, which retries on its next run. Finish the deploy within the hour
+or expect one skipped run.
+
+### 3. Refuse to deploy without the tokens
+
+Copy `.kamal/hooks/pre-deploy` from the gem's
+`lib/generators/upright/install/templates/pre-deploy` and make it executable.
+Kamal deploys an empty secret without complaint; the hook checks the resolved
+secrets Kamal hands it and stops the deploy before any container is replaced,
+with the reason.
+
+### 4. Upgrade Prometheus
+
+Prometheus 3.0 to 3.5.1 and 3.6 to 3.11.1 have a stored XSS in the web UI
+through metric names and label values (CVE-2026-40179), which the OTLP receiver
+can ingest. In `config/deploy.yml`, pin the accessory by digest at 3.5.5 or a
+later 3.5.x LTS release:
+
+```yaml
+  prometheus:
+    image: prom/prometheus:v3.5.5@sha256:332c2f43e7e389d74d3893b55bb02fbbd684208e681eeb604641d5d769c0fe2a
+```
+
+and in `docker-compose.yml`, `prom/prometheus:v3.5.5`. Deploy the accessory:
+
+```sh
+bin/kamal accessory reboot prometheus
+```
+
+### 5. Check the result
+
+```sh
+curl -sS -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $METRICS_READ_TOKEN" \
+  https://ams.<hostname>/prometheus/api/v1/query?query=up      # 200
+curl -sS -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $PROMETHEUS_OTLP_TOKEN" \
+  https://ams.<hostname>/prometheus/api/v1/query?query=up      # 401
+```
+
+Confirm the collector still writes: a query for `up` returns fresh samples from
+every site.
+
 ## From 0.3 to 0.4
 
 0.4 adds an optional public status page with incidents and scheduled

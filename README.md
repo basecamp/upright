@@ -84,6 +84,8 @@ The `upright:install` generator creates:
 - `config/prometheus/prometheus.yml` - Prometheus configuration
 - `config/alertmanager/alertmanager.yml` - AlertManager configuration
 - `config/otel_collector.yml` - OpenTelemetry Collector configuration
+- `config/deploy.yml` and `Dockerfile` - Kamal deployment, with Prometheus and Alertmanager pinned by image digest
+- `.kamal/secrets` entries and `.kamal/hooks/pre-deploy` - The machine tokens and admin password as Kamal secrets, and a hook that refuses to deploy while a token is missing (see [Machine tokens](#machine-tokens))
 - `probes/` - Directory for all HTTP, SMTP, Traceroute YAML config as well as Playwright probe classes
 
 It also mounts the engine at `/` in your routes.
@@ -138,6 +140,25 @@ shared:
 Each site node identifies itself via the `SITE_SUBDOMAIN` environment variable, configured in your Kamal deploy.yml.
 
 Two optional flags give a site a role beyond running probes: `primary` serves the app and status hostnames and runs the jobs writing the shared database, and `stores_metrics` runs a local Prometheus and Alertmanager. See [Sites and their roles](https://github.com/basecamp/upright/blob/main/docs/sites.md) for what each one changes, the health metrics every site exports, and how daily rollups read across them.
+
+### Machine tokens
+
+Two bearer tokens authenticate machine callers on the `/prometheus` and `/alertmanager` proxies. Each does one job:
+
+| Env var | Config | Who presents it | What it allows |
+|---------|--------|-----------------|----------------|
+| `PROMETHEUS_OTLP_TOKEN` | `config.otlp_token` | The OpenTelemetry collector on every site | `POST /prometheus/api/v1/otlp/v1/metrics`, and nothing else |
+| `METRICS_READ_TOKEN` | `config.metrics_read_token` | Peer sites computing rollups, and tooling | `GET` and `HEAD` on `/prometheus` and `/alertmanager`, except the `/-/` lifecycle endpoints |
+
+Generate each with `bin/rails secret`. Set them as Kamal secrets, the same two values on every site, and nowhere in git. Outside development and test the app refuses to boot when either is missing or when both hold the same value, and `.kamal/hooks/pre-deploy` refuses to deploy for the same reasons before any container is replaced.
+
+```sh
+export PROMETHEUS_OTLP_TOKEN=$(bin/rails secret)
+export METRICS_READ_TOKEN=$(bin/rails secret)
+bin/kamal deploy
+```
+
+A token cannot reach any other route. The admin UI uses a session cookie instead.
 
 ### Authentication
 
@@ -438,6 +459,8 @@ proxy:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - PROMETHEUS_OTLP_TOKEN
+    - METRICS_READ_TOKEN
     - ADMIN_PASSWORD
   tags:
     amsterdam:
@@ -455,7 +478,9 @@ accessories:
       - jobs
 
   prometheus:
-    image: prom/prometheus:v3.2.1
+    # Pinned by digest; CVE-2026-40179 (stored XSS in the web UI) affects 3.0 to 3.5.1
+    # and 3.6 to 3.11.1, fixed in 3.5.2 (LTS) and 3.11.2
+    image: prom/prometheus:v3.5.5@sha256:332c2f43e7e389d74d3893b55bb02fbbd684208e681eeb604641d5d769c0fe2a
     hosts:
       - ams.upright.example.com
     cmd: >-
@@ -468,13 +493,17 @@ accessories:
       - config/prometheus/rules/upright.rules.yml:/etc/prometheus/rules/upright.rules.yml
 
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.28.1@sha256:27c475db5fb156cab31d5c18a4251ac7ed567746a2483ff264516437a39b15ba
     hosts:
       - ams.upright.example.com
     cmd: --config.file=/etc/alertmanager/alertmanager.yml
     files:
       - config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
 ```
+
+### Secrets
+
+`config/deploy.yml` reads `RAILS_MASTER_KEY`, `PROMETHEUS_OTLP_TOKEN`, `METRICS_READ_TOKEN` and `ADMIN_PASSWORD` from `.kamal/secrets`, which the generator points at environment variables of the same names. Kamal passes an empty value through when a variable is unset, so `.kamal/hooks/pre-deploy` checks the resolved secrets Kamal hands it and stops the deploy when either token is empty or both are the same. The app applies the same checks at boot. See [Machine tokens](#machine-tokens).
 
 ## Observability
 
