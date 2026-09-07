@@ -39,10 +39,23 @@ module Upright::ProxyAuthentication
       ActionController::HttpAuthentication::Token.token_and_options(request).present?
     end
 
+    # Peers and tooling read the proxies with config.metrics_read_token.
     def authenticate_proxy_token
-      authenticate_or_request_with_http_token do |token|
-        ActiveSupport::SecurityUtils.secure_compare(token, Upright.configuration.proxy_token.to_s)
+      authenticate_or_request_with_http_token do |token, _options|
+        valid_token?(token, Upright.configuration.metrics_read_token)
       end
+    end
+
+    # Collectors write metrics with config.otlp_token, and can do nothing else.
+    def authenticate_otlp_token
+      authenticate_or_request_with_http_token do |token, _options|
+        valid_token?(token, Upright.configuration.otlp_token)
+      end
+    end
+
+    # A blank configured token matches nothing, rather than an empty bearer.
+    def valid_token?(presented, expected)
+      expected.present? && ActiveSupport::SecurityUtils.secure_compare(presented, expected)
     end
 
     # The proxies can't demand an authenticity token: the embedded Prometheus and

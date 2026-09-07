@@ -47,7 +47,11 @@ env:
     ALERTMANAGER_URL: http://<%= app_name %>-alertmanager:9093
   secret:
     - RAILS_MASTER_KEY
+    # Machine tokens: collectors write metrics with PROMETHEUS_OTLP_TOKEN, peer
+    # sites read the proxies with METRICS_READ_TOKEN. Both required, and
+    # .kamal/hooks/pre-deploy refuses to deploy while either is missing.
     - PROMETHEUS_OTLP_TOKEN
+    - METRICS_READ_TOKEN
     - ADMIN_PASSWORD
   tags:
     london:
@@ -82,7 +86,11 @@ accessories:
       - jobs
 
   prometheus:
-    image: prom/prometheus:v3.2.1
+    # Pinned by digest so deploys are immutable; the tag is documentation only.
+    # 3.0 to 3.5.1 and 3.6 to 3.11.1 have CVE-2026-40179, stored XSS through
+    # metric names in the web UI, which the OTLP receiver below can ingest.
+    # Fixed in 3.5.2 (LTS) and 3.11.2.
+    image: prom/prometheus:v3.5.5@sha256:332c2f43e7e389d74d3893b55bb02fbbd684208e681eeb604641d5d769c0fe2a
     hosts:
       - <%= app_domain %>
     # No published port: Prometheus is only reachable over the private Docker
@@ -102,7 +110,7 @@ accessories:
       - prometheus_data:/prometheus
 
   alertmanager:
-    image: prom/alertmanager:v0.28.1
+    image: prom/alertmanager:v0.28.1@sha256:27c475db5fb156cab31d5c18a4251ac7ed567746a2483ff264516437a39b15ba
     hosts:
       - <%= app_domain %>
     cmd: --config.file=/etc/alertmanager/alertmanager.yml

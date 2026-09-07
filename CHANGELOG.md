@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+### Security
+
+- Stop writing a machine token into the generated app. The 0.4 install
+  template set `config.proxy_token = ENV.fetch("PROMETHEUS_OTLP_TOKEN",
+  "<random>")` in `config/initializers/upright.rb`, so every generated app
+  committed a credential that production accepted, and the docs told operators
+  to copy it to each site. The template now reads both tokens from the
+  environment with no fallback, and `config.proxy_token=` raises with directions.
+- Split the token. `PROMETHEUS_OTLP_TOKEN` (`config.otlp_token`) authorizes only
+  the OTLP write route; `METRICS_READ_TOKEN` (`config.metrics_read_token`)
+  authorizes only `GET` and `HEAD` on the proxies. Outside development and test
+  the app refuses to boot when either is missing or both are the same value.
+  `Upright::Site#prometheus_client` reads peers with the read token.
+- Pin the generated Prometheus accessory to 3.5.5 by image digest, and
+  Alertmanager to 0.28.1 by digest. Prometheus 3.0 to 3.5.1 and 3.6 to 3.11.1
+  have a stored XSS through metric names and label values (CVE-2026-40179),
+  fixed in 3.5.2 and 3.11.2, which the OTLP
+  receiver ingests and which executes in the same-origin frame on the admin
+  origin with the admin's session. The development compose file moves to
+  3.5.5 as well.
+- Refuse to deploy without the tokens. The generator adds `PROMETHEUS_OTLP_TOKEN`,
+  `METRICS_READ_TOKEN` and `ADMIN_PASSWORD` to `.kamal/secrets` and installs
+  `.kamal/hooks/pre-deploy`, which checks the resolved secrets Kamal hands it
+  and stops `kamal deploy` before any container is replaced when either token
+  is empty or both are the same. Kamal otherwise deploys an empty secret and the
+  failure surfaces only at the health check.
+
 ### Fixed
 
 - Report a service down on the status page, and open an automatic incident,

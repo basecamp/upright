@@ -8,13 +8,21 @@ Upright.configure do |config|
   # Playwright CLI path (defaults to "npx playwright", override with PLAYWRIGHT_CLI_PATH env var)
   # config.playwright_cli_path = "npx playwright"
 
-  # Token authenticating machine callers: collectors writing metrics and jobs
-  # reading a peer site's /prometheus and /alertmanager proxies. Randomly
-  # generated at install time — every site must share the same value, so treat
-  # it like any other secret when adding sites. Set the PROMETHEUS_OTLP_TOKEN
-  # env var (already wired as a Kamal secret in config/deploy.yml) to rotate it
-  # without editing this file.
-  config.proxy_token = ENV.fetch("PROMETHEUS_OTLP_TOKEN", "<%= SecureRandom.hex(32) %>")
+  # Machine credentials, read from the environment. Both are required outside
+  # development and test, they must differ, and the app refuses to boot without
+  # them.
+  #
+  #   PROMETHEUS_OTLP_TOKEN  Presented by collectors writing metrics through
+  #                          /prometheus/api/v1/otlp/v1/metrics. Authorizes
+  #                          nothing else.
+  #   METRICS_READ_TOKEN     Presented by peer sites and tooling reading the
+  #                          /prometheus and /alertmanager proxies. Cannot write.
+  #
+  # Generate each with `bin/rails secret`, store them as Kamal secrets (listed in
+  # config/deploy.yml and .kamal/secrets) and give every site the same two
+  # values. They do not belong in this file or anywhere else in git.
+  # config.otlp_token         = ENV["PROMETHEUS_OTLP_TOKEN"]
+  # config.metrics_read_token = ENV["METRICS_READ_TOKEN"]
 
   # Viewer that trace artifacts link to, https://trace.playwright.dev by
   # default. Upright doesn't serve one: the viewer renders a trace's contents as

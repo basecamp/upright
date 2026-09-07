@@ -67,7 +67,7 @@ module Upright
       end
 
       def proxy_authorization
-        { "Authorization" => "Bearer #{Upright.configuration.proxy_token}" }
+        { "Authorization" => "Bearer #{Upright.configuration.metrics_read_token}" }
       end
 
       def coordinates

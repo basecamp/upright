@@ -40,7 +40,10 @@ class Upright::Configuration
   attr_accessor :prometheus_url
   attr_accessor :alert_webhook_url
 
-  attr_writer :proxy_token
+  # Machine credentials. Both come from the environment by default and both are
+  # required outside development and test; see #verify_machine_tokens.
+  attr_writer :otlp_token
+  attr_writer :metrics_read_token
 
   attr_writer :rollup_minimum_coverage
   attr_writer :rollup_evaluation_interval
@@ -140,8 +143,35 @@ class Upright::Configuration
     @prometheus_url || ENV.fetch("PROMETHEUS_URL", "http://localhost:9090")
   end
 
-  def proxy_token
-    @proxy_token || ENV["PROMETHEUS_OTLP_TOKEN"]
+  # Presented by collectors writing metrics through the OTLP route. It authorizes
+  # nothing else.
+  def otlp_token
+    @otlp_token || ENV["PROMETHEUS_OTLP_TOKEN"]
+  end
+
+  # Presented by peer sites and tooling reading the /prometheus and /alertmanager
+  # proxies with GET or HEAD. It cannot write metrics.
+  def metrics_read_token
+    @metrics_read_token || ENV["METRICS_READ_TOKEN"]
+  end
+
+  # 0.4 had one token for both. Refuse it rather than pick a side.
+  def proxy_token=(_value)
+    raise Upright::ConfigurationError, "config.proxy_token was split into config.otlp_token (PROMETHEUS_OTLP_TOKEN) and config.metrics_read_token (METRICS_READ_TOKEN); see UPGRADING.md"
+  end
+
+  # A blank token would compare every bearer value against "", so a deployed
+  # environment must have both, and they must differ or the split is undone.
+  def verify_machine_tokens
+    missing = { "PROMETHEUS_OTLP_TOKEN" => otlp_token, "METRICS_READ_TOKEN" => metrics_read_token }.select { |_, token| token.blank? }.keys
+
+    if missing.any?
+      raise Upright::ConfigurationError, "#{missing.join(" and ")} must be set outside development and test (config.otlp_token and config.metrics_read_token)"
+    end
+
+    if ActiveSupport::SecurityUtils.secure_compare(otlp_token.to_s, metrics_read_token.to_s)
+      raise Upright::ConfigurationError, "PROMETHEUS_OTLP_TOKEN and METRICS_READ_TOKEN must differ: the same value would let a collector read metrics and a reader write them"
+    end
   end
 
   def rollup_minimum_coverage

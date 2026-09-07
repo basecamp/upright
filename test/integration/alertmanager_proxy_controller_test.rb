@@ -26,15 +26,27 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "token stands in for a session" do
+  test "the read token stands in for a session" do
     stub_request(:get, "http://localhost:9093/api/v2/status").to_return(status: 200, body: "{}")
     on_subdomain :ams
 
-    with_env("PROMETHEUS_OTLP_TOKEN" => "test-token") do
-      get "/alertmanager/api/v2/status", headers: { "Authorization" => "Bearer test-token" }
+    with_env("METRICS_READ_TOKEN" => "read-token") do
+      get "/alertmanager/api/v2/status", headers: { "Authorization" => "Bearer read-token" }
     end
 
     assert_response :success
+  end
+
+  test "the OTLP token cannot read" do
+    stub = stub_request(:get, "http://localhost:9093/api/v2/status")
+    on_subdomain :ams
+
+    with_env("PROMETHEUS_OTLP_TOKEN" => "otlp-token", "METRICS_READ_TOKEN" => "read-token") do
+      get "/alertmanager/api/v2/status", headers: { "Authorization" => "Bearer otlp-token" }
+    end
+
+    assert_response :unauthorized
+    assert_not_requested stub
   end
 
   test "not routable at a probe-only site" do

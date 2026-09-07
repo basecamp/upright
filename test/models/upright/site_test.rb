@@ -14,6 +14,12 @@ class Upright::SiteTest < ActiveSupport::TestCase
     assert_equal "ams.upright.localhost", @site.host
   end
 
+  test "a peer is read with the metrics read token" do
+    with_env("METRICS_READ_TOKEN" => "read-token") do
+      assert_equal({ "Authorization" => "Bearer read-token" }, @site.send(:proxy_authorization))
+    end
+  end
+
   test "default_timeout returns configuration value" do
     assert_equal Upright.configuration.default_timeout, @site.default_timeout
   end

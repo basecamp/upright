@@ -1,0 +1,20 @@
+#!/bin/sh
+# Refuse to deploy without the Upright machine tokens.
+#
+# Kamal resolves a missing or empty secret to "" and deploys it. The app then
+# refuses to boot (Upright::Configuration#verify_machine_tokens) and the deploy
+# fails at the health check. Kamal passes the resolved secrets to this hook in
+# its environment, so the check runs after the image is built and before any
+# container is replaced, and says why. Generate each token with `bin/rails secret`.
+#
+# See the Upright README, "Machine tokens".
+
+if [ -z "$PROMETHEUS_OTLP_TOKEN" ] || [ -z "$METRICS_READ_TOKEN" ]; then
+  echo "PROMETHEUS_OTLP_TOKEN and METRICS_READ_TOKEN must both resolve to a value in the Kamal secrets." >&2
+  exit 1
+fi
+
+if [ "$PROMETHEUS_OTLP_TOKEN" = "$METRICS_READ_TOKEN" ]; then
+  echo "PROMETHEUS_OTLP_TOKEN and METRICS_READ_TOKEN must differ." >&2
+  exit 1
+fi
