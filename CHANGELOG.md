@@ -31,6 +31,13 @@
 
 ### Fixed
 
+- Serve the Prometheus and Alertmanager pages of the admin UI to a browser
+  arriving from another subdomain. The pages share a controller with the
+  proxies, so the proxy's Fetch-Metadata gate refused them as same-site,
+  which is how the browser reports a navigation from the app subdomain to a
+  site subdomain. The header links there from every app page, so the
+  Prometheus and Alertmanager pages answered 403. The gate now applies to the
+  `proxy` action only; the pages forward nothing and stay on the session path.
 - Report a service down on the status page, and open an automatic incident,
   only when more than half of the sites report its uptime probes down. Live
   status previously ran the site down fraction through the daily-uptime

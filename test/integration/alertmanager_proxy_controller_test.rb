@@ -6,6 +6,39 @@ class AlertmanagerProxyControllerTest < ActionDispatch::IntegrationTest
     on_subdomain :app
   end
 
+  test "the framed page is served to a session arriving from another subdomain" do
+    # The header links here from the app subdomain, which the browser reports
+    # as same-site. The page only frames the UI, so the proxy gate does not
+    # apply to it.
+    sign_in
+    on_subdomain :ams
+
+    get "/framed/alertmanager", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
+
+    assert_response :success
+    assert_select "iframe.service-frame"
+  end
+
+  test "the framed page still requires a session" do
+    on_subdomain :ams
+
+    get "/framed/alertmanager", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
+
+    assert_response :redirect
+    assert response.location.end_with?("/session/new")
+  end
+
+  test "the proxy itself is still refused for a same-site request" do
+    stub = stub_request(:get, "http://localhost:9093/")
+    sign_in
+    on_subdomain :ams
+
+    get "/alertmanager", headers: { "Sec-Fetch-Site" => "same-site", "Sec-Fetch-Mode" => "navigate" }
+
+    assert_response :forbidden
+    assert_not_requested stub
+  end
+
   test "proxies requests when authenticated" do
     stub_request(:get, "http://localhost:9093/")
       .to_return(status: 200, body: "Alertmanager UI")
