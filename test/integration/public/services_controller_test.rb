@@ -25,6 +25,15 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_no_match(%r{<link rel="modulepreload" href="[^"]*(turbo|stimulus|leaflet|frappe)}, response.body)
   end
 
+  test "index loads only the public stylesheets" do
+    get upright.public_services_root_path
+
+    assert_response :success
+    tags = response.body.scan(/<link[^>]*rel="stylesheet"[^>]*>/)
+    names = tags.map { |tag| File.basename(tag[/href="([^"]+)"/, 1]).sub(/(-[0-9a-f]+)?\.css\z/, "") }
+    assert_equal %w[ _global base layout pagination public_status reset typography ], names
+  end
+
   test "feed renders an RSS document" do
     get upright.public_services_feed_path
 

@@ -6,6 +6,10 @@
     width: 100%;
   }
 
+  .main {
+    padding: calc(var(--block-space) * 2);
+  }
+
   .main:has(.service-frame) {
     overflow: hidden;
     padding: 0;

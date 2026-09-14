@@ -90,10 +90,6 @@
     gap: var(--inline-space);
   }
 
-  .main {
-    padding: calc(var(--block-space) * 2);
-  }
-
   @media (max-width: 85ch) {
     .header {
       flex-direction: column;
@@ -129,10 +125,6 @@
 
     .header__link {
       font-size: calc(var(--text-x-small) * 0.9);
-    }
-
-    .main {
-      padding: var(--block-space);
     }
   }
 }
