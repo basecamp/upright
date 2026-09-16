@@ -114,7 +114,7 @@ GEM
     ast (2.4.3)
     attr_required (1.0.2)
     base64 (0.3.0)
-    bigdecimal (4.1.2)
+    bigdecimal (4.1.3)
     bindata (2.5.1)
     brakeman (8.0.6)
       racc
@@ -267,13 +267,18 @@ GEM
       logger
     opentelemetry-common (0.25.1)
       opentelemetry-api (~> 1.0)
-    opentelemetry-exporter-otlp (0.34.1)
+    opentelemetry-exporter-otlp (0.36.0)
       google-protobuf (>= 3.18)
       googleapis-common-protos-types (~> 1.3)
       opentelemetry-api (~> 1.1)
       opentelemetry-common (~> 0.20)
+      opentelemetry-exporter-otlp-common
       opentelemetry-sdk (~> 1.10)
       opentelemetry-semantic_conventions
+    opentelemetry-exporter-otlp-common (0.2.0)
+      google-protobuf (>= 3.18)
+      googleapis-common-protos-types (~> 1.3)
+      opentelemetry-api (~> 1.1)
     opentelemetry-helpers-mysql (0.6.0)
       opentelemetry-api (~> 1.7)
       opentelemetry-common (~> 0.21)
@@ -654,7 +659,7 @@ CHECKSUMS
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   attr_required (1.0.2) sha256=f0ebfc56b35e874f4d0ae799066dbc1f81efefe2364ca3803dc9ea6a4de6cb99
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
-  bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
+  bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
   bindata (2.5.1) sha256=53186a1ec2da943d4cb413583d680644eb810aacbf8902497aac8f191fad9e58
   brakeman (8.0.6) sha256=759cc69341115e6c2dcd47b6fd8649a0b9bd540e3585ac8a0a94e31c66fee386
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
@@ -718,7 +723,8 @@ CHECKSUMS
   openid_connect (2.3.1) sha256=5d808380cff80d78e3d3d54cfaebe2d6461d835c674faa29e2314a402c1b2182
   opentelemetry-api (1.11.0) sha256=218c840170fa473974756668b32b6989570de07c7d3864627960209f189247e2
   opentelemetry-common (0.25.1) sha256=38fe87c751e4e13fcd47a8290b4ad67bbedf76c4ed89aeced5ea5c620e66bfb1
-  opentelemetry-exporter-otlp (0.34.1) sha256=4697d81e03aff80ea6fbcc741b1c3c700d3624eddea14b453602ee23275450ca
+  opentelemetry-exporter-otlp (0.36.0) sha256=6d3d61244a5f14d29cd13f9229f2394f509f3ceaa30a9f3d60f9c556291f6448
+  opentelemetry-exporter-otlp-common (0.2.0) sha256=969cd9429865f565dc791a0606f97433c1ed14d691c8e3de78722e64903c2b38
   opentelemetry-helpers-mysql (0.6.0) sha256=7eeb5e6950c434775a8cf28b5fde4defc12e8b865c86479ce3119fcf593d9337
   opentelemetry-helpers-sql (0.4.0) sha256=b10e8c3a2cca28a98af951bbb3e4efdc59e68b25ba0825e055574af543420afb
   opentelemetry-helpers-sql-processor (0.5.0) sha256=b199241bc9451fcbd9f00b2f454830af19d4ca27c2219ea379c9b0d53cd0e0f1
