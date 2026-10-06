@@ -36,9 +36,22 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
     end
   end
 
+  # Serves a fixed page from inside the browser instead of loading a real site,
+  # so the test doesn't depend on what an external site returns.
+  module FixedPage
+    URL = "https://upright.test/"
+
+    def open_fixed_page
+      page.route("#{URL}**", ->(route, _request) { route.fulfill(status: 200, contentType: "text/html", body: "<h1>Example Domain</h1>") })
+      page.goto(URL)
+    end
+  end
+
   class TestPlaywrightProbe < Upright::Probes::Playwright::Base
+    include FixedPage
+
     def check
-      page.goto("https://example.com")
+      open_fixed_page
       wait_for_network_idle
       page.get_by_text("Example Domain").visible?
     end
@@ -58,8 +71,10 @@ class Upright::Probes::PlaywrightProbeTest < ActiveSupport::TestCase
     def probe_name = "failing_probe"
     def record_video? = true
 
+    include FixedPage
+
     def check
-      page.goto("https://example.com")
+      open_fixed_page
       page.locator("text=This element does not exist").wait_for(timeout: 1000)
       true
     end
