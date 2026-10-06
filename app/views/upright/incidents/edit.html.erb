@@ -52,6 +52,23 @@
     </ol>
   </section>
 
+  <% unless @incident.maintenance? %>
+    <section class="incident-section">
+      <h2 class="incident-section__title">Post-incident report</h2>
+      <%= form_with model: @incident, scope: :incident, url: incident_path(@incident), method: :patch, class: "composer" do |f| %>
+        <div class="field">
+          <%= f.label :report, "Report", class: "field__label" %>
+          <span class="field__hint">Shown on the public incident page above the timeline once it’s saved. Leave it blank until it’s ready to publish.</span>
+          <%= f.text_area :report, class: "field__input", rows: 10,
+                placeholder: "What happened, what caused it, and what we’re changing so it doesn’t happen again." %>
+        </div>
+        <div class="incident-form__actions">
+          <%= f.submit "Save report", class: "btn" %>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+
   <section class="incident-section">
     <%= button_to "Delete #{@incident.maintenance? ? "maintenance" : "incident"}",
           incident_path(@incident), method: :delete, class: "btn",

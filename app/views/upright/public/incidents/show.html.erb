@@ -17,6 +17,13 @@
     </div>
   </header>
 
+  <% if @incident.report.present? %>
+    <section class="incident-detail__report">
+      <h2 class="incident-detail__report-title">Post-incident report</h2>
+      <%= simple_format @incident.report, class: "incident-detail__report-body" %>
+    </section>
+  <% end %>
+
   <ol class="incident-detail__timeline">
     <% @incident.updates.each do |update| %>
       <li class="incident-detail__update">
