@@ -26,7 +26,7 @@ class Upright::IncidentsController < Upright::ApplicationController
 
   def update
     if @incident.update(incident_params)
-      redirect_to incidents_path, notice: "Saved."
+      redirect_to edit_incident_path(@incident), notice: "Saved."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -48,6 +48,6 @@ class Upright::IncidentsController < Upright::ApplicationController
     end
 
     def incident_params
-      params.expect(incident: [ :title, :impact, :starts_at, :ends_at, :body, service_codes: [] ])
+      params.expect(incident: [ :title, :impact, :starts_at, :ends_at, :body, :report, service_codes: [] ])
     end
 end

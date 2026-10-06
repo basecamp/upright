@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_06_000001) do
   create_table "upright_incident_affected_services", force: :cascade do |t|
     t.integer "incident_id", null: false
     t.string "service_code", null: false
@@ -45,6 +45,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_000001) do
     t.string "impact", null: false
     t.datetime "last_seen_down_at"
     t.datetime "recovery_started_at"
+    t.text "report"
     t.datetime "resolved_at"
     t.datetime "starts_at", null: false
     t.string "status", null: false
