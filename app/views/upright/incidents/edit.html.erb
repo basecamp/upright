@@ -47,12 +47,7 @@
     <h2 class="incident-section__title">Timeline</h2>
     <ol class="timeline">
       <% @incident.updates.each do |update| %>
-        <li class="timeline__item">
-          <span class="timeline__status"><%= update.status.humanize %></span>
-          <time class="timeline__time" datetime="<%= update.created_at.iso8601 %>"><%= update.created_at.strftime("%b %-d, %H:%M %Z") %></time>
-          <span class="timeline__author">by <%= update.created_by %></span>
-          <% if update.body.present? %><p class="timeline__body"><%= update.body %></p><% end %>
-        </li>
+        <li class="timeline__item"><%= render "upright/incidents/updates/update", incident: @incident, update: update %></li>
       <% end %>
     </ol>
   </section>

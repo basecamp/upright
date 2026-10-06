@@ -1,0 +1,13 @@
+<% @page_title = "Edit update" %>
+
+<%= turbo_frame_tag @update do %>
+  <%= render "upright/incidents/updates/heading", update: @update %>
+  <%= form_with model: @update, scope: :incident_update, url: incident_update_path(@incident, @update), method: :patch, class: "timeline__editor" do |f| %>
+    <%= f.label :body, "Message", class: "field__label" %>
+    <%= f.text_area :body, class: "field__input", rows: 3, autofocus: true %>
+    <div class="timeline__editor-actions">
+      <%= link_to "Cancel", edit_incident_path(@incident), class: "incident-form__cancel" %>
+      <%= f.submit "Save", class: "btn btn--small" %>
+    </div>
+  <% end %>
+<% end %>

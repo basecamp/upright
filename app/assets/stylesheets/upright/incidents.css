@@ -448,6 +448,26 @@
     margin: 0.3rem 0 0;
   }
 
+  .timeline__edit {
+    color: var(--color-ink-medium);
+    font-size: var(--text-x-small);
+    margin-left: 0.5rem;
+  }
+
+  .timeline__editor {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .timeline__editor-actions {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+  }
+
   .incidents-index {
     margin: 0 auto;
     max-width: 48rem;

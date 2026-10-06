@@ -19,7 +19,7 @@ Upright::Engine.routes.draw do
     end
 
     resources :incidents do
-      resources :updates, only: :create, controller: "incidents/updates"
+      resources :updates, only: %i[ create edit update ], controller: "incidents/updates"
     end
   end
 

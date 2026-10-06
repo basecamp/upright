@@ -1,0 +1,3 @@
+<span class="timeline__status"><%= update.status.humanize %></span>
+<time class="timeline__time" datetime="<%= update.created_at.iso8601 %>"><%= update.created_at.strftime("%b %-d, %H:%M %Z") %></time>
+<span class="timeline__author">by <%= update.created_by %></span>
