@@ -28,4 +28,13 @@ class Upright::ApplicationHelperTest < ActionView::TestCase
     assert hrefs.any? { |h| h.include?("/upright/base") }, "engine stylesheets still present"
     assert_match %r{/upright/theme}, hrefs.last, "host override loads last"
   end
+
+  test "upright_public_stylesheet_link_tag renders the public stylesheets, then the configured extras" do
+    Upright.configuration.stubs(:public_stylesheets).returns([ "upright/theme" ])
+
+    hrefs = upright_public_stylesheet_link_tag.scan(/href="([^"]+)"/).flatten
+    names = hrefs.map { |h| File.basename(h).sub(/(-[0-9a-f]+)?\.css\z/, "") }
+
+    assert_equal %w[ _global base layout pagination public_status reset typography theme ], names
+  end
 end

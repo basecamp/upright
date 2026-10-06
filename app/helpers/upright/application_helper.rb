@@ -23,6 +23,16 @@ module Upright::ApplicationHelper
     tag.title [ @page_title, app_name ].compact.join(" · ")
   end
 
+  # The engine stylesheets the public status pages use, in the order the glob
+  # below loads them so the cascade matches. _global goes first: it declares
+  # the @layer order. The other eleven sheets style the signed-in UI only.
+  PUBLIC_STYLESHEETS = %w[ _global base layout pagination public_status reset typography ].freeze
+
+  def upright_public_stylesheet_link_tag(**options)
+    public_stylesheets = PUBLIC_STYLESHEETS.map { |name| "upright/#{name}" }
+    stylesheet_link_tag(*public_stylesheets, *Upright.configuration.public_stylesheets, **options)
+  end
+
   def upright_stylesheet_link_tag(**options)
     engine_stylesheets = Upright::Engine.root.join("app/assets/stylesheets/upright").glob("*.css")
       .map { |f| "upright/#{f.basename('.css')}" }.sort

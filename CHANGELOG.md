@@ -31,6 +31,15 @@
 
 ### Fixed
 
+- Load only the stylesheets the public status pages use. The public layout
+  called the same `upright_stylesheet_link_tag` as the signed-in UI, which
+  globs every engine stylesheet, so a public page fetched all 18 when it uses
+  7 of them plus the host's theme; the other eleven (incidents, dashboard,
+  forms, tables, ...) matched nothing on the page. The
+  layout now calls `upright_public_stylesheet_link_tag`, an explicit list
+  followed by `config.public_stylesheets`, and the `.main` padding rule moved
+  from `header.css` to `layout.css` so the page keeps its spacing. The admin
+  layout is unchanged.
 - Serve the Prometheus and Alertmanager UI script bundles through the proxies.
   Rails' forgery protection refuses a JavaScript response to a GET that is not
   an XHR, and the upstream UIs load their bundles with a `<script src>` tag, so
