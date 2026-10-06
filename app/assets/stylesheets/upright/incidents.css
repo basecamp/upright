@@ -23,6 +23,7 @@
   .incident-editor--major { --accent: var(--impact-major); }
   .incident-editor--critical { --accent: var(--impact-critical); }
   .incident-editor--maintenance { --accent: var(--impact-maintenance); }
+  .incident-editor--resolved { --accent: var(--color-positive); }
 
   .incident-editor__back {
     color: var(--color-ink-medium);
@@ -43,11 +44,12 @@
     position: relative;
   }
 
-  .incident-form:has(#impact_minor:checked) { --accent: var(--impact-minor); }
-  .incident-form:has(#impact_major:checked) { --accent: var(--impact-major); }
-  .incident-form:has(#impact_critical:checked) { --accent: var(--impact-critical); }
+  .incident-form:not(.incident-form--resolved):has(#impact_minor:checked) { --accent: var(--impact-minor); }
+  .incident-form:not(.incident-form--resolved):has(#impact_major:checked) { --accent: var(--impact-major); }
+  .incident-form:not(.incident-form--resolved):has(#impact_critical:checked) { --accent: var(--impact-critical); }
   .incident-form:has(#kind_maintenance:checked),
   .incident-form--maintenance { --accent: var(--impact-maintenance); }
+  .incident-form--resolved { --accent: var(--color-positive); }
 
   .incident-form__spine {
     background: var(--accent);

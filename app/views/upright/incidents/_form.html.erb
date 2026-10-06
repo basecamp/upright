@@ -2,12 +2,13 @@
 <%= form_with model: @incident, scope: :incident, url: url,
       class: class_names("incident-form",
         "incident-form--maintenance" => @incident.persisted? && @incident.maintenance?,
-        "incident-form--incident" => @incident.persisted? && !@incident.maintenance?) do |f| %>
+        "incident-form--incident" => @incident.persisted? && !@incident.maintenance?,
+        "incident-form--resolved" => @incident.persisted? && @incident.past?) do |f| %>
   <span class="incident-form__spine" aria-hidden="true"></span>
 
   <div class="incident-form__body">
     <header class="incident-form__head">
-      <p class="incident-form__eyebrow"><%= @incident.new_record? ? "New event" : (@incident.maintenance? ? "Maintenance" : "Incident") %></p>
+      <p class="incident-form__eyebrow"><%= @incident.new_record? ? "New event" : "#{@incident.maintenance? ? "Maintenance" : "Incident"} · #{@incident.status.humanize}" %></p>
       <% unless @incident.new_record? %>
         <h1 class="incident-form__title"><%= @incident.title %></h1>
       <% end %>

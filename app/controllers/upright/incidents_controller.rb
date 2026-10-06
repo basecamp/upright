@@ -15,7 +15,7 @@ class Upright::IncidentsController < Upright::ApplicationController
     @incident = incident_class.new(incident_params)
 
     if @incident.save
-      redirect_to incidents_path, notice: "#{@incident.model_name.human} created."
+      redirect_to edit_incident_path(@incident), notice: "#{@incident.model_name.human} created."
     else
       render :new, status: :unprocessable_entity
     end

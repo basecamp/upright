@@ -36,6 +36,7 @@ class Upright::Incident < Upright::PersistentRecord
   validates :title, :starts_at, presence: true
   validates :status, inclusion: { in: ->(incident) { incident.class::STATUSES } }
   validates :impact, inclusion: { in: ->(incident) { incident.class::IMPACTS } }
+  validates :affected_services, presence: { message: "must include at least one service" }
 
   before_validation :set_default_status, on: :create
   before_create { self.created_by ||= Upright::Current.user&.name }
