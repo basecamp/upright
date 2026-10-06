@@ -1,0 +1,5 @@
+<%= turbo_frame_tag update do %>
+  <%= render "upright/incidents/updates/heading", update: update %>
+  <%= link_to "Edit", edit_incident_update_path(incident, update), class: "timeline__edit" %>
+  <% if update.body.present? %><p class="timeline__body"><%= update.body %></p><% end %>
+<% end %>
