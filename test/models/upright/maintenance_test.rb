@@ -5,7 +5,7 @@ class Upright::MaintenanceTest < ActiveSupport::TestCase
 
   test "is an Incident via STI and forces the maintenance impact" do
     maintenance = Upright::Maintenance.create!(title: "Upgrade", status: "scheduled", impact: "major",
-      starts_at: 1.hour.from_now, ends_at: 2.hours.from_now)
+      starts_at: 1.hour.from_now, ends_at: 2.hours.from_now, service_codes: [ "example_app" ])
 
     assert maintenance.maintenance?
     assert_kind_of Upright::Incident, maintenance
@@ -30,6 +30,7 @@ class Upright::MaintenanceTest < ActiveSupport::TestCase
 
   test "auto_advance_status starts an in-window maintenance without completing it" do
     maintenance = upright_incidents(:started_scheduled)
+    maintenance.service_codes = [ "example_app" ]
 
     maintenance.auto_advance_status
 
@@ -39,6 +40,7 @@ class Upright::MaintenanceTest < ActiveSupport::TestCase
 
   test "auto_advance_status catches up a fully-elapsed window through to completed" do
     maintenance = upright_incidents(:elapsed_scheduled)
+    maintenance.service_codes = [ "example_app" ]
 
     maintenance.auto_advance_status
 

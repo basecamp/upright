@@ -22,7 +22,8 @@ class Upright::Public::IncidentsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "returns 404 for an incident not tagged with any service" do
-    incident = declare_incident title: "Untagged incident"
+    incident = Upright::Incident.new(title: "Untagged incident", impact: "critical", status: "investigating", starts_at: 1.hour.ago)
+    incident.save!(validate: false)
 
     get upright.public_incident_path(incident)
 

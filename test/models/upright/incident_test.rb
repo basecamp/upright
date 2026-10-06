@@ -10,6 +10,14 @@ class Upright::IncidentTest < ActiveSupport::TestCase
     assert_not incident.maintenance?
   end
 
+  test "requires at least one affected service" do
+    incident = upright_incidents(:reactive_resolved)
+    incident.service_codes = []
+
+    assert_not incident.valid?
+    assert_equal [ "must include at least one service" ], incident.errors[:affected_services]
+  end
+
   test "rejects a status outside the reactive lifecycle" do
     incident = upright_incidents(:reactive_resolved)
     incident.status = "scheduled"
@@ -51,7 +59,7 @@ class Upright::IncidentTest < ActiveSupport::TestCase
   end
 
   test "creating an incident seeds an initial update from the default status" do
-    incident = Upright::Incident.create!(title: "x", impact: "minor", starts_at: Time.current, body: "Looking into it.")
+    incident = Upright::Incident.create!(title: "x", impact: "minor", starts_at: Time.current, service_codes: [ "example_app" ], body: "Looking into it.")
 
     assert_equal "investigating", incident.status
     assert_equal 1, incident.updates.count
@@ -92,7 +100,7 @@ class Upright::IncidentTest < ActiveSupport::TestCase
   end
 
   test "active, upcoming, and past scopes key off timestamps and resolved_at" do
-    active = activate(upright_incidents(:reactive_other))
+    active = activate(upright_incidents(:reactive_other), service_codes: [ "example_app" ])
     resolved = upright_incidents(:reactive_resolved)
 
     assert_includes Upright::Incident.active, active
@@ -115,7 +123,7 @@ class Upright::IncidentTest < ActiveSupport::TestCase
   test "declaring an incident stamps created_by on the incident and its initial update" do
     acting_as "Eron Nicholson"
 
-    incident = Upright::Incident.create!(title: "New outage", impact: "minor", starts_at: Time.current)
+    incident = Upright::Incident.create!(title: "New outage", impact: "minor", starts_at: Time.current, service_codes: [ "example_app" ])
 
     assert_equal "Eron Nicholson", incident.created_by
     assert_equal "Eron Nicholson", incident.updates.first.created_by
@@ -145,6 +153,7 @@ class Upright::IncidentTest < ActiveSupport::TestCase
 
   test "updates posted without a current user are authored by System" do
     maintenance = upright_incidents(:started_scheduled)
+    maintenance.service_codes = [ "example_app" ]
 
     maintenance.auto_advance_status
 

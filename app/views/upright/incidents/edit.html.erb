@@ -1,6 +1,6 @@
 <% @page_title = @incident.title %>
 
-<div class="incident-editor incident-editor--<%= @incident.maintenance? ? "maintenance" : @incident.impact %>">
+<div class="incident-editor incident-editor--<%= @incident.past? ? "resolved" : (@incident.maintenance? ? "maintenance" : @incident.impact) %>">
   <%= link_to "← All incidents", incidents_path, class: "incident-editor__back" %>
 
   <%= render "form" %>
@@ -27,6 +27,7 @@
       <div class="field">
         <%= f.label :body, "Message", class: "field__label" %>
         <% unless @incident.maintenance? %>
+          <span class="field__hint">Each button fills in the message with suggested text. It doesn’t change the status.</span>
           <div class="composer__templates">
             <% @incident.class::TEMPLATES.each_key do |template| %>
               <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
