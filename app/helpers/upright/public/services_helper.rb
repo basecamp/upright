@@ -13,6 +13,10 @@ module Upright::Public::ServicesHelper
     OVERALL_STATUS_LABELS.fetch(status)
   end
 
+  def public_status_base_url
+    Upright.configuration.public_status_url.presence&.chomp("/") || request.base_url
+  end
+
   def maintenance_window_description(maintenance)
     start, finish = maintenance.starts_at, maintenance.ends_at
     same_day = finish && start.to_date == finish.to_date

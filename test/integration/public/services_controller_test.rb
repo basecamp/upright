@@ -44,6 +44,25 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_match "<channel>", response.body
   end
 
+  test "feed links use the request's host by default" do
+    incident = raise_public_incident
+
+    get upright.public_services_feed_path
+
+    assert_select "channel > link", text: "http://status.upright.localhost"
+    assert_select "item > link", text: "http://status.upright.localhost#{upright.public_incident_path(incident)}"
+  end
+
+  test "feed links use the configured public status URL" do
+    Upright.configuration.stubs(:public_status_url).returns("https://status.example.com/")
+    incident = raise_public_incident
+
+    get upright.public_services_feed_path
+
+    assert_select "channel > link", text: "https://status.example.com"
+    assert_select "item > link", text: "https://status.example.com#{upright.public_incident_path(incident)}"
+  end
+
   test "index shows incidents affecting public services and hides internal-only or untagged ones" do
     raise_public_incident
     raise_internal_incident

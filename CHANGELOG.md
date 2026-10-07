@@ -29,6 +29,14 @@
   is empty or both are the same. Kamal otherwise deploys an empty secret and the
   failure surfaces only at the health check.
 
+### Added
+
+- `config.public_status_url` sets the address visitors use for the public
+  status pages, such as `"https://status.example.com"`. The RSS feed's channel
+  and incident links use it instead of the request's host, which is wrong when a
+  CDN in front of the app sends a different Host header. Unset, the feed uses
+  the request's host as before.
+
 ### Fixed
 
 - Load only the stylesheets the public status pages use. The public layout
