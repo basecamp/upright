@@ -58,6 +58,12 @@ class Upright::Configuration
 
   # Public status pages
   attr_accessor :public_status_enabled
+
+  # The address visitors use for the public status pages, such as
+  # "https://status.example.com", when it differs from the host the app sees
+  # (for example behind a CDN that rewrites the Host header). Absolute links,
+  # such as those in the RSS feed, use it. Unset, they use the request's host.
+  attr_accessor :public_status_url
   attr_reader :public_status_custom_domains
 
   # Extra stylesheets host apps layer on top of the engine's for the public

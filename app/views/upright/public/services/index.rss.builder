@@ -2,7 +2,7 @@ xml.instruct! :xml, version: "1.0", encoding: "UTF-8"
 xml.rss(version: "2.0") do
   xml.channel do
     xml.title "Upright Status"
-    xml.link request.base_url
+    xml.link public_status_base_url
     xml.description "Currently degraded services"
     xml.lastBuildDate Time.current.rfc822
 
@@ -20,7 +20,7 @@ xml.rss(version: "2.0") do
       xml.item do
         xml.title "#{event.title} — #{status_label(event.status)}"
         xml.description update&.body.to_s
-        xml.link public_incident_url(event)
+        xml.link public_status_base_url + public_incident_path(event)
         xml.pubDate (update&.created_at || event.starts_at).rfc822
         xml.guid "incident-#{event.id}-#{update&.id}", isPermaLink: "false"
       end
