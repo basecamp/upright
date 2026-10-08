@@ -68,6 +68,10 @@ class Upright::Configuration
   # The name of the public status page, used in its <title> and as the RSS
   # feed's channel title, such as "Example Status".
   attr_accessor :public_status_title
+
+  # Serves the public status page as read-only v2 status JSON at /api/v2/*.json,
+  # for status widgets, aggregators and chat integrations.
+  attr_accessor :public_status_json_enabled
   attr_reader :public_status_custom_domains
 
   # Extra stylesheets host apps layer on top of the engine's for the public
@@ -106,6 +110,7 @@ class Upright::Configuration
 
     @public_status_enabled = false
     @public_status_title = "Status"
+    @public_status_json_enabled = false
     @public_status_custom_domains = []
     @public_stylesheets = nil
   end
