@@ -69,6 +69,8 @@ class Upright::Traceroute::IpMetadataLookup
         else
           {}
         end
+      rescue Timeout::Error, SocketError, SystemCallError, IOError, OpenSSL::SSL::SSLError
+        {}
       end
 
       def api_uri
