@@ -13,6 +13,12 @@ class Upright::Public::Api::StatusesControllerTest < ActionDispatch::Integration
     assert_equal Upright.configuration.public_status_title, json.dig("page", "name")
   end
 
+  test "show can be read by pages on other origins" do
+    get "/api/v2/status.json", headers: { "Origin" => "https://widget.example.com" }
+
+    assert_equal "*", response.headers["Access-Control-Allow-Origin"]
+  end
+
   test "show reflects an active incident" do
     declare_incident title: "Example App is down", impact: "critical"
 

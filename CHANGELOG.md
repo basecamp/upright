@@ -38,7 +38,8 @@
   `scheduled-maintenances.json`, `scheduled-maintenances/upcoming.json` and
   `scheduled-maintenances/active.json`. Public services are the components,
   and only incidents and maintenances that affect a public service are
-  listed. Responses carry the same 15-second public cache as the pages. Off
+  listed. Responses carry the same 15-second public cache as the pages and
+  `Access-Control-Allow-Origin: *`, so pages on other origins can read them. Off
   by default.
 - `config.public_status_title` names the public status page, such as
   `"Example Status"`. It is the page's `<title>` (after the incident or service
