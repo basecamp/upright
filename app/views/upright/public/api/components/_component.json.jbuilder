@@ -1,0 +1,13 @@
+json.id service.code
+json.name service.name
+json.status component_status(service)
+json.description service.try(:description).presence
+json.position position
+json.showcase true
+json.only_show_if_degraded false
+json.group false
+json.group_id nil
+json.page_id Upright.configuration.service_name
+json.start_date nil
+json.created_at nil
+json.updated_at api_timestamp(Time.current)

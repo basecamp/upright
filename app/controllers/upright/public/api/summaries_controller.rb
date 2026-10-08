@@ -1,5 +1,7 @@
 class Upright::Public::Api::SummariesController < Upright::Public::Api::BaseController
   def show
-    render json: status_json.summary
+    @status_page = Upright::Service::StatusPage.current
+    @incidents = public_incidents.unresolved
+    @maintenances = public_maintenances.unresolved
   end
 end
