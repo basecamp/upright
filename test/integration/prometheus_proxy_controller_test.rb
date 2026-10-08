@@ -86,6 +86,24 @@ class PrometheusProxyControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "OTLP endpoint responds service unavailable when Prometheus cannot be reached" do
+    stub_request(:post, "http://localhost:9090/api/v1/otlp/v1/metrics").to_raise(Faraday::ConnectionFailed.new("connection refused"))
+
+    post "/prometheus/api/v1/otlp/v1/metrics",
+      headers: { "Authorization" => "Bearer otlp-token", "Content-Type" => "application/x-protobuf" }
+
+    assert_response :service_unavailable
+  end
+
+  test "proxy responds service unavailable when Prometheus times out" do
+    stub_request(:get, "http://localhost:9090/graph").to_timeout
+    sign_in
+
+    get "/prometheus/graph", headers: { "Sec-Fetch-Site" => "same-origin" }
+
+    assert_response :service_unavailable
+  end
+
   test "proxies at a site that stores metrics" do
     stub_request(:get, "http://localhost:9090/graph").to_return(status: 200, body: "Prometheus UI")
     sign_in

@@ -5,6 +5,8 @@ class Upright::PrometheusProxyController < Upright::ApplicationController
   skip_before_action :block_cross_site_session_requests, only: :otlp
   before_action :authenticate_otlp_token, only: :otlp
 
+  rescue_from Faraday::ConnectionFailed, Faraday::TimeoutError, with: -> { head :service_unavailable }
+
   UNSUPPORTED_PATHS = %w[/api/v1/notifications]
 
   def show
