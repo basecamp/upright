@@ -97,6 +97,14 @@ class Upright::Traceroute::IpMetadataLookupTest < ActiveSupport::TestCase
     assert_equal({}, results)
   end
 
+  test "returns empty hash when the API cannot be reached" do
+    [ Net::OpenTimeout, Socket::ResolutionError, Errno::ECONNRESET ].each do |error|
+      stub_request(:post, "http://ip-api.com/batch").to_raise(error)
+
+      assert_equal({}, Upright::Traceroute::IpMetadataLookup.for_many([ "8.8.8.8" ]))
+    end
+  end
+
   test "deduplicates IPs" do
     stub = stub_ip_api_request(
       request_ips: [ "8.8.8.8" ],
