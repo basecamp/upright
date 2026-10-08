@@ -1,6 +1,6 @@
 require "test_helper"
 
-class Upright::Public::StatusJsonControllerTest < ActionDispatch::IntegrationTest
+class Upright::Public::ApiTest < ActionDispatch::IntegrationTest
   setup do
     on_subdomain Upright.configuration.public_status_subdomain
     Upright.configuration.stubs(:public_status_json_enabled).returns(true)

@@ -58,15 +58,21 @@ Upright::Engine.routes.draw do
       end
       resources :incidents, only: :show
 
-      scope "api/v2", controller: :status_json, as: :json, defaults: { format: :json }, constraints: { format: :json } do
-        get "summary"
-        get "status", action: :overall_status, as: :overall_status
-        get "components"
-        get "incidents"
-        get "incidents/unresolved", action: :unresolved_incidents, as: :unresolved_incidents
-        get "scheduled-maintenances", action: :scheduled_maintenances, as: :scheduled_maintenances
-        get "scheduled-maintenances/upcoming", action: :upcoming_maintenances, as: :upcoming_maintenances
-        get "scheduled-maintenances/active", action: :active_maintenances, as: :active_maintenances
+      scope "api/v2", module: :api, as: :api, defaults: { format: :json }, constraints: { format: :json } do
+        resource :summary, only: :show
+        resource :status, only: :show
+        resources :components, only: :index
+
+        namespace :incidents do
+          resources :unresolved, only: :index
+        end
+        resources :incidents, only: :index
+
+        namespace :scheduled_maintenances, path: "scheduled-maintenances" do
+          resources :upcoming, only: :index
+          resources :active, only: :index
+        end
+        resources :scheduled_maintenances, path: "scheduled-maintenances", only: :index
       end
     end
   end
