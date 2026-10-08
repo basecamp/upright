@@ -7,6 +7,6 @@ class Upright::ApplicationController < ActionController::Base
 
   private
     def default_url_options
-      Rails.application.routes.default_url_options
+      Rails.application.routes.default_url_options.except(:host)
     end
 end
