@@ -21,6 +21,14 @@ class Upright::Public::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a missing incident is a briefly cacheable 404 page" do
+    get upright.public_incident_path(id: 0)
+
+    assert_response :not_found
+    assert_equal "max-age=15, public", response.headers["Cache-Control"]
+    assert_match %r{text/html}, response.content_type
+  end
+
   test "returns 404 for an incident not tagged with any service" do
     incident = Upright::Incident.new(title: "Untagged incident", impact: "critical", status: "investigating", starts_at: 1.hour.ago)
     incident.save!(validate: false)

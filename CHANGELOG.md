@@ -43,6 +43,13 @@
 
 ### Fixed
 
+- Serve the public status pages as HTML whatever the request's `Accept`
+  header asks for. A client asking for JSON got a 406 with no `Cache-Control`
+  header, and a CDN that caches by URL served that 406 to every visitor until
+  its own default expiry. The RSS feed still serves RSS.
+- Give not-found responses on the public status pages the same 15-second
+  public cache as the pages, and render the app's 404 page for a missing
+  incident, so a CDN does not keep them for its default time.
 - Load only the stylesheets the public status pages use. The public layout
   called the same `upright_stylesheet_link_tag` as the signed-in UI, which
   globs every engine stylesheet, so a public page fetched all 18 when it uses
