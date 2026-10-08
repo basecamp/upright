@@ -31,6 +31,10 @@
 
 ### Added
 
+- `config.public_status_title` names the public status page, such as
+  `"Example Status"`. It is the page's `<title>` (after the incident or service
+  name on those pages) and the RSS feed's channel title. It defaults to
+  `"Status"`, which changes the feed's channel title from `"Upright Status"`.
 - `config.public_status_url` sets the address visitors use for the public
   status pages, such as `"https://status.example.com"`. The RSS feed's channel
   and incident links use it instead of the request's host, which is wrong when a

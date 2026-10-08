@@ -15,6 +15,16 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "max-age=15, public", response.headers["Cache-Control"]
   end
 
+  test "index uses the configured title for the page and the feed" do
+    Upright.configuration.stubs(:public_status_title).returns("Example Status")
+
+    get upright.public_services_root_path
+    assert_match "<title>Example Status</title>", response.body
+
+    get upright.public_services_feed_path
+    assert_match "<title>Example Status</title>", response.body
+  end
+
   test "index loads only the public JavaScript entry point" do
     get upright.public_services_root_path
 
@@ -40,7 +50,7 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match %r{application/rss\+xml}, response.content_type
     assert_match %r{<rss version="2\.0">}, response.body
-    assert_match "<title>Upright Status</title>", response.body
+    assert_match "<title>Status</title>", response.body
     assert_match "<channel>", response.body
   end
 

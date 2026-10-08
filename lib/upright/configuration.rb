@@ -64,6 +64,10 @@ class Upright::Configuration
   # (for example behind a CDN that rewrites the Host header). Absolute links,
   # such as those in the RSS feed, use it. Unset, they use the request's host.
   attr_accessor :public_status_url
+
+  # The name of the public status page, used in its <title> and as the RSS
+  # feed's channel title, such as "Example Status".
+  attr_accessor :public_status_title
   attr_reader :public_status_custom_domains
 
   # Extra stylesheets host apps layer on top of the engine's for the public
@@ -101,6 +105,7 @@ class Upright::Configuration
     self.trace_viewer_url = ENV.fetch("TRACE_VIEWER_URL", DEFAULT_TRACE_VIEWER_URL)
 
     @public_status_enabled = false
+    @public_status_title = "Status"
     @public_status_custom_domains = []
     @public_stylesheets = nil
   end
