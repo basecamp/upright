@@ -1,5 +1,5 @@
 class Upright::Public::Api::ScheduledMaintenancesController < Upright::Public::Api::BaseController
   def index
-    render json: status_json.scheduled_maintenances
+    @maintenances = public_maintenances.limit(INCIDENT_LIMIT)
   end
 end

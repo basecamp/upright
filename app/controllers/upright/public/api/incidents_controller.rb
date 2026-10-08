@@ -1,5 +1,5 @@
 class Upright::Public::Api::IncidentsController < Upright::Public::Api::BaseController
   def index
-    render json: status_json.incidents
+    @incidents = public_incidents.limit(INCIDENT_LIMIT)
   end
 end

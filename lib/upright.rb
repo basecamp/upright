@@ -15,6 +15,7 @@ require "turbo-rails"
 require "stimulus-rails"
 require "local_time"
 require "geared_pagination"
+require "jbuilder"
 require "yabeda/prometheus"
 require "yabeda/puma/plugin"
 
