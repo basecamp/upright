@@ -31,6 +31,16 @@
 
 ### Added
 
+- `config.public_status_json_enabled` serves the public status page as
+  read-only v2 status JSON on the public status host, for status widgets,
+  aggregators and chat integrations: `/api/v2/summary.json`, `status.json`,
+  `components.json`, `incidents.json`, `incidents/unresolved.json`,
+  `scheduled-maintenances.json`, `scheduled-maintenances/upcoming.json` and
+  `scheduled-maintenances/active.json`. Public services are the components,
+  and only incidents and maintenances that affect a public service are
+  listed. Responses carry the same 15-second public cache as the pages and
+  `Access-Control-Allow-Origin: *`, so pages on other origins can read them. Off
+  by default.
 - `config.public_status_title` names the public status page, such as
   `"Example Status"`. It is the page's `<title>` (after the incident or service
   name on those pages) and the RSS feed's channel title. It defaults to
