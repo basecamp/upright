@@ -15,6 +15,21 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "max-age=15, public", response.headers["Cache-Control"]
   end
 
+  test "index serves the HTML page to clients that ask for another format" do
+    get upright.public_services_root_path, headers: { "Accept" => "application/json" }
+
+    assert_response :success
+    assert_match %r{text/html}, response.content_type
+    assert_equal "max-age=15, public", response.headers["Cache-Control"]
+  end
+
+  test "feed still serves RSS" do
+    get upright.public_services_feed_path, headers: { "Accept" => "application/json" }
+
+    assert_response :success
+    assert_match %r{application/rss\+xml}, response.content_type
+  end
+
   test "index uses the configured title for the page and the feed" do
     Upright.configuration.stubs(:public_status_title).returns("Example Status")
 

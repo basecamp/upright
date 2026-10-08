@@ -2,6 +2,6 @@ class Upright::Public::ServiceIncidentsController < Upright::Public::BaseControl
   def index
     service = Upright::Service.public_facing.find_by!(code: params[:service_code])
     @incident_history = service.incident_history(page: params[:page])
-    expires_in 15.seconds, public: true
+    expires_in CACHE_TTL, public: true
   end
 end
