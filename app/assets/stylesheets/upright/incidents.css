@@ -148,6 +148,20 @@
     opacity: 1;
   }
 
+  .field__row {
+    align-items: stretch;
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .field__row .field__input { flex: 1; min-width: 0; }
+
+  .field__row .btn {
+    align-items: center;
+    display: inline-flex;
+    text-transform: none;
+  }
+
   textarea.field__input {
     min-height: 6rem;
     resize: vertical;

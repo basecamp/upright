@@ -47,6 +47,7 @@ class Upright::Incident < Upright::PersistentRecord
   validates :affected_services, presence: { message: "must include at least one service" }
 
   before_validation :set_default_status, on: :create
+  before_validation :clear_ends_at, unless: :maintenance?
   before_create { self.created_by ||= Upright::Current.user&.name }
   before_update { self.updated_by = Upright::Current.user.name if Upright::Current.user }
   after_create :record_initial_update
@@ -102,6 +103,11 @@ class Upright::Incident < Upright::PersistentRecord
 
     def set_default_status
       self.status ||= self.class::STATUSES.first
+    end
+
+    # Only a maintenance has an end; an incident ends when it's resolved.
+    def clear_ends_at
+      self.ends_at = nil
     end
 
     def record_initial_update

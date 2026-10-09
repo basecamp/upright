@@ -1,7 +1,7 @@
 <% url = @incident.new_record? ? incidents_path : incident_path(@incident) %>
 <% suggestion_context = %w[ maintenance incident[impact] incident[service_codes][] ] %>
 <%= form_with model: @incident, scope: :incident, url: url,
-      data: { controller: "form", action: "keydown.meta+enter->form#submit keydown.ctrl+enter->form#submit" },
+      data: { controller: "form maintenance-window", action: "keydown.meta+enter->form#submit keydown.ctrl+enter->form#submit" },
       class: class_names("incident-form",
         "incident-form--maintenance" => @incident.persisted? && @incident.maintenance?,
         "incident-form--incident" => @incident.persisted? && !@incident.maintenance?,
@@ -28,7 +28,7 @@
         <div class="segmented" role="radiogroup" aria-label="Type">
           <input type="radio" name="maintenance" id="kind_incident" value="false" <%= "checked" unless @incident.maintenance? %>>
           <label for="kind_incident">Incident</label>
-          <input type="radio" name="maintenance" id="kind_maintenance" value="true" <%= "checked" if @incident.maintenance? %>>
+          <input type="radio" name="maintenance" id="kind_maintenance" value="true" <%= "checked" if @incident.maintenance? %> data-action="maintenance-window#fillEnd">
           <label for="kind_maintenance">Maintenance</label>
         </div>
       </div>
@@ -89,12 +89,16 @@
 
     <div class="field field--starts-at">
       <%= f.label :starts_at, "Starts", class: "field__label" %>
-      <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input" %>
+      <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input",
+            data: { maintenance_window_target: "start", action: "change->maintenance-window#startChanged" } %>
     </div>
 
     <div class="field field--maintenance">
       <%= f.label :ends_at, "Ends", class: "field__label" %>
-      <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input" %>
+      <div class="field__row">
+        <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input", data: { maintenance_window_target: "end" } %>
+        <%= button_tag "+1h", type: "button", class: "btn btn--ghost", title: "End an hour later", data: { action: "maintenance-window#extend" } %>
+      </div>
       <span class="field__hint">Affected services read as “Under maintenance” for this window and stay out of the outage alarm.</span>
     </div>
 
