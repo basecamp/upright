@@ -6,7 +6,7 @@ module Upright::Services::MaintenanceStatus
   end
 
   def maintenance_active?
-    active_maintenance.present?
+    Upright::Maintenance.active_service_codes.include?(code)
   end
 
   def upcoming_maintenances

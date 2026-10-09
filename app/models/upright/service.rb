@@ -17,7 +17,23 @@ class Upright::Service < FrozenRecord::Base
   end
 
   def self.by_history(past: 90.days)
-    all.to_h { |service| [ service, service.daily_status_history(past: past) ] }
+    uptimes = daily_uptimes(past: past)
+    all.to_h { |service| [ service, service.daily_status_history(past: past, uptime_by_day: uptimes.fetch(service.code)) ] }
+  end
+
+  # Each service's daily uptime, from one query across all services. Matches
+  # #daily_uptime: the lowest uptime among the service's uptime probe types.
+  def self.daily_uptimes(past: 90.days)
+    minimums = Upright::Rollups::ProbeRollup
+      .where(probe_service: all.map(&:code), period_start: past.ago.beginning_of_day..)
+      .group(:probe_service, :probe_type, :period_start)
+      .minimum(:uptime_fraction)
+
+    all.to_h do |service|
+      probe_types = [ *service.uptime_probe_types, nil ]
+      rows = minimums.select { |(code, probe_type, _), _| code == service.code && probe_types.include?(probe_type) }
+      [ service.code, rows.group_by { |(_, _, period_start), _| period_start }.transform_values { |day| day.map(&:last).min } ]
+    end
   end
 
   def self.degraded
@@ -82,14 +98,12 @@ class Upright::Service < FrozenRecord::Base
   # Unified day-by-day view: past days from ProbeRollup, today from live
   # Prometheus state, missing days as no-data. Callers iterate without caring
   # which source backs each entry.
-  def daily_status_history(past: 90.days)
-    rollup_by_day = daily_uptime(past: past)
-
+  def daily_status_history(past: 90.days, uptime_by_day: daily_uptime(past: past))
     (past.ago.to_date.next_day..Date.current).map do |date|
       if date == Date.current
         DailyStatus.new(date: date, status: live_status)
       else
-        fraction = rollup_by_day[date.beginning_of_day]
+        fraction = uptime_by_day[date.beginning_of_day]
         DailyStatus.new(
           date: date,
           status: Upright::Status.for(fraction),

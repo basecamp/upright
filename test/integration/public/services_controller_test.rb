@@ -15,6 +15,26 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "max-age=15, public", response.headers["Cache-Control"]
   end
 
+  test "index checks maintenance and uptime once for all services" do
+    Upright::Service.stubs(:public_facing).returns(Upright::Service.all)
+    assert_operator Upright::Service.all.count, :>, 1
+
+    assert_queries_match(/upright_rollups_probe_rollups/, count: 1) do
+      assert_queries_match(/SELECT DISTINCT "service_code"/, count: 1) do
+        get upright.public_services_root_path
+      end
+    end
+  end
+
+  test "upcoming maintenance shows its latest update" do
+    maintenance = Upright::Maintenance.create! title: "Planned failover", starts_at: 1.hour.from_now, ends_at: 2.hours.from_now, service_codes: [ "example_app" ]
+    maintenance.record_update(status: "scheduled", body: "Moved to a later window.", recorded_at: 1.minute.from_now)
+
+    get upright.public_services_root_path
+
+    assert_match "Moved to a later window.", response.body
+  end
+
   test "index serves the HTML page to clients that ask for another format" do
     get upright.public_services_root_path, headers: { "Accept" => "application/json" }
 

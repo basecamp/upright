@@ -64,4 +64,15 @@ class Upright::ServiceTest < ActiveSupport::TestCase
       assert_equal 0.8,  series[Date.new(2026, 5, 12).beginning_of_day]
     end
   end
+
+  test "daily_uptimes matches each service's daily_uptime from one query" do
+    travel_to Date.new(2026, 5, 13) do
+      uptimes = nil
+      assert_queries_match(/upright_rollups_probe_rollups/, count: 1) { uptimes = Upright::Service.daily_uptimes(past: 7.days) }
+
+      Upright::Service.all.each do |service|
+        assert_equal service.daily_uptime(past: 7.days), uptimes.fetch(service.code), service.code
+      end
+    end
+  end
 end

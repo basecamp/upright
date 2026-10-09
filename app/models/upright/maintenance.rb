@@ -14,6 +14,12 @@ class Upright::Maintenance < Upright::Incident
 
   def maintenance? = true
 
+  # Codes of the services under maintenance now, looked up once per request or
+  # job so pages that check every service run one query.
+  def self.active_service_codes
+    Upright::Current.maintenance_service_codes ||= active.joins(:affected_services).distinct.pluck(:service_code).to_set
+  end
+
   def self.export_service_metrics
     Upright::Service.all.each do |service|
       Yabeda.upright_service_under_maintenance.set({ probe_service: service.code }, suppressing.for_service(service.code).exists? ? 1 : 0)
