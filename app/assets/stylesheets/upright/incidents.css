@@ -565,6 +565,34 @@
     margin: 0;
   }
 
+  .incident-section__head {
+    align-items: baseline;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin-bottom: var(--block-space);
+  }
+
+  .incident-section__head .incident-section__title { margin: 0; }
+
+  .incidents-index > .incident-editor__back {
+    display: inline-block;
+    margin-bottom: var(--block-space);
+  }
+
+  .history-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .history-filters .input--select { width: auto; }
+
+  .history-filters__search {
+    font-size: var(--text-small);
+    width: 16rem;
+  }
+
   .incidents-actions {
     display: flex;
     gap: 0.5rem;

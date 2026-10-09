@@ -16,4 +16,14 @@ module Upright::IncidentsHelper
   def suggestion_input_data
     { suggestions_target: "input", action: "input->suggestions#input focus->suggestions#show blur->suggestions#hide keydown->suggestions#navigate scroll->suggestions#sync" }
   end
+
+  def history_when_label(incident)
+    if incident.maintenance?
+      maintenance_window_description(incident)
+    elsif incident.resolved_at
+      "#{incident.starts_at.to_fs(:month_day_at_zone)}, resolved after #{distance_of_time_in_words(incident.starts_at, incident.resolved_at)}"
+    else
+      "Started #{incident.starts_at.to_fs(:month_day_at_zone)}"
+    end
+  end
 end

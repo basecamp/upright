@@ -1,6 +1,7 @@
 class Upright::Incident < Upright::PersistentRecord
   include Upright::Incidents::Lifecycle
   include Upright::Incidents::AutoReporting
+  include Upright::Incidents::Searchable
 
   attr_accessor :body
 

@@ -20,6 +20,7 @@ Upright::Engine.routes.draw do
 
     namespace :incidents do
       resources :suggestions, only: :index
+      resource :history, only: :show
     end
 
     resources :incidents do

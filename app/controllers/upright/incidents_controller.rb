@@ -4,7 +4,7 @@ class Upright::IncidentsController < Upright::ApplicationController
   def index
     @current  = Upright::Incident.active.order(starts_at: :desc)
     @upcoming = Upright::Maintenance.upcoming.order(:starts_at)
-    @past     = Upright::Incident.past.limit(50)
+    @past     = Upright::Incident.past.limit(10)
   end
 
   def new
