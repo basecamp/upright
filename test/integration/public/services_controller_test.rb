@@ -26,6 +26,32 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "past uptime bars are cached until their rollups change" do
+    with_fragment_caching do
+      travel_to Time.utc(2026, 5, 13, 12) do
+        get upright.public_services_root_path
+        assert_match "85.00% uptime", response.body
+
+        assert_equal 1, uptime_bar_renders { get upright.public_services_root_path }
+
+        upright_rollups_probe_rollups(:example_web_may_05).update!(uptime_fraction: 0.75)
+        get upright.public_services_root_path
+        assert_match "75.00% uptime", response.body
+      end
+    end
+  end
+
+  test "today's bar shows the live status while past bars come from the cache" do
+    with_fragment_caching do
+      get upright.public_services_root_path
+
+      Upright::Service.any_instance.stubs(:live_status).returns(:major_outage)
+      get upright.public_services_root_path
+
+      assert_match "uptime__bar--major_outage", response.body
+    end
+  end
+
   test "upcoming maintenance shows its latest update" do
     maintenance = Upright::Maintenance.create! title: "Planned failover", starts_at: 1.hour.from_now, ends_at: 2.hours.from_now, service_codes: [ "example_app" ]
     maintenance.record_update(status: "scheduled", body: "Moved to a later window.", recorded_at: 1.minute.from_now)
@@ -171,5 +197,20 @@ class Upright::Public::ServicesControllerTest < ActionDispatch::IntegrationTest
     def raise_internal_incident(impact: "critical")
       Upright::Incident.create! title: "Internal tools are down", impact: impact,
         starts_at: 1.hour.ago, service_codes: [ "internal_tools" ]
+    end
+
+    def with_fragment_caching(&block)
+      Upright::Public::ServicesController.with(perform_caching: true, cache_store: ActiveSupport::Cache::MemoryStore.new, &block)
+    end
+
+    def uptime_bar_renders(&block)
+      renders = 0
+      subscription = ActiveSupport::Notifications.subscribe(/\Arender_(partial|collection)\.action_view\z/) do |*, payload|
+        renders += 1 if payload[:identifier].to_s.end_with?("_uptime_bar.html.erb")
+      end
+      block.call
+      renders
+    ensure
+      ActiveSupport::Notifications.unsubscribe(subscription)
     end
 end
