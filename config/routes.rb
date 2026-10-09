@@ -18,8 +18,13 @@ Upright::Engine.routes.draw do
       resource :probe_status, only: :show
     end
 
+    namespace :incidents do
+      resources :suggestions, only: :index
+    end
+
     resources :incidents do
       resources :updates, only: %i[ create edit update ], controller: "incidents/updates"
+      resources :suggestions, only: :index, controller: "incidents/suggestions"
     end
   end
 

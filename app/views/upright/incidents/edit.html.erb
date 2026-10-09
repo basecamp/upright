@@ -18,24 +18,24 @@
 
   <section class="incident-section">
     <h2 class="incident-section__title">Post an update</h2>
-    <%= form_with url: incident_updates_path(@incident), scope: :incident_update, class: "composer", data: { controller: "template" } do |f| %>
+    <%= form_with url: incident_updates_path(@incident), scope: :incident_update, class: "composer",
+          data: { controller: "form", action: "keydown.meta+enter->form#submit keydown.ctrl+enter->form#submit" } do |f| %>
       <div class="field">
-        <%= f.label :status, "Status", class: "field__label" %>
-        <%= f.select :status, @incident.class::STATUSES.map { |status| [ status.humanize, status ] },
-              { selected: @incident.status }, class: "input--select" %>
+        <span class="field__label">Status</span>
+        <div class="segmented segmented--status" role="radiogroup" aria-label="Status">
+          <% @incident.class::STATUSES.each do |status| %>
+            <%= f.radio_button :status, status, checked: status == @incident.status, id: "update_status_#{status}" %>
+            <%= label_tag "update_status_#{status}", status.humanize %>
+          <% end %>
+        </div>
       </div>
       <div class="field">
         <%= f.label :body, "Message", class: "field__label" %>
-        <% unless @incident.maintenance? %>
-          <span class="field__hint">Each button fills in the message with suggested text. It doesn’t change the status.</span>
-          <div class="composer__templates">
-            <% @incident.class::TEMPLATES.each_key do |template| %>
-              <%= button_tag template.to_s.humanize, type: "button", class: "btn btn--small",
-                    data: { action: "template#fill", template_body_param: @incident.update_body_for(template) } %>
-            <% end %>
-          </div>
+        <%= suggestion_picker url: incident_suggestions_path(@incident, field: :body), fields: %w[ incident_update[status] ], autofill: true do %>
+          <%= f.text_area :body, value: @incident.suggestions.messages(status: @incident.status).first&.text,
+                class: "field__input", placeholder: "What changed.", data: suggestion_input_data %>
         <% end %>
-        <%= f.text_area :body, class: "field__input", placeholder: "What changed.", data: { template_target: "body" } %>
+        <span class="field__hint">Choosing a status fills in the message used most often for it. Type to search past messages.</span>
       </div>
       <div class="incident-form__actions">
         <%= f.submit "Post update", class: "btn" %>

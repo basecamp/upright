@@ -44,10 +44,21 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".incident-editor--resolved .incident-form--resolved .incident-form__eyebrow", text: "Incident · Resolved"
   end
 
-  test "the message buttons explain that they don't change the status" do
-    get upright.edit_incident_path(upright_incidents(:reactive_resolved))
+  test "the new form lists services before the title and offers past titles" do
+    get upright.new_incident_path
 
-    assert_select ".composer .field__hint", text: /doesn’t change the status/
+    assert_select ".field:has(.chips) ~ .field [data-controller=suggestions] input[name='incident[title]']"
+    assert_select "[data-controller=suggestions] textarea[name='incident[body]']"
+  end
+
+  test "the update composer has a button for each status, with the current one chosen and its most used message filled in" do
+    incident = Upright::Incident.create!(incident_params)
+
+    get upright.edit_incident_path(incident)
+
+    assert_select ".composer input[type=radio][name='incident_update[status]']", count: 3
+    assert_select ".composer input#update_status_investigating[checked]"
+    assert_select ".composer textarea[name='incident_update[body]']", text: "We are investigating."
   end
 
   private

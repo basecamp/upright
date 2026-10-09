@@ -43,8 +43,7 @@ class Upright::IncidentsController < Upright::ApplicationController
     end
 
     def incident_class
-      maintenance = ActiveModel::Type::Boolean.new.cast(params[:maintenance])
-      maintenance ? Upright::Maintenance : Upright::Incident
+      Upright::Incident.class_for(maintenance: params[:maintenance])
     end
 
     def incident_params

@@ -1,10 +1,4 @@
 @layer components {
-  .composer__templates {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
   :root {
     --impact-minor: oklch(78% 0.18 95);
     --impact-major: oklch(70% 0.18 50);
@@ -38,26 +32,19 @@
     background: var(--color-canvas);
     border: var(--border);
     border-radius: 0.75rem;
-    box-shadow: var(--shadow);
+    box-shadow: inset 4px 0 0 var(--accent), var(--shadow);
     margin-top: var(--block-space);
-    overflow: hidden;
     position: relative;
+    transition: box-shadow 200ms ease-out;
   }
 
   .incident-form:not(.incident-form--resolved):has(#impact_minor:checked) { --accent: var(--impact-minor); }
   .incident-form:not(.incident-form--resolved):has(#impact_major:checked) { --accent: var(--impact-major); }
   .incident-form:not(.incident-form--resolved):has(#impact_critical:checked) { --accent: var(--impact-critical); }
-  .incident-form:has(#kind_maintenance:checked),
+  .incident-form:not(.incident-form--resolved):has(#kind_maintenance:checked),
   .incident-form--maintenance { --accent: var(--impact-maintenance); }
   .incident-form--resolved { --accent: var(--color-positive); }
 
-  .incident-form__spine {
-    background: var(--accent);
-    inset: 0 auto 0 0;
-    position: absolute;
-    transition: background 200ms ease-out;
-    width: 4px;
-  }
 
   .incident-form__body {
     display: flex;
@@ -206,6 +193,94 @@
     background: var(--color-canvas);
     box-shadow: var(--shadow);
     color: var(--color-ink);
+  }
+
+  .segmented--status input:is([value="resolved"], [value="completed"]):checked + label { color: var(--color-positive); }
+
+  .incident-form:has(#kind_incident:checked):not(:has(#change_starts_at:checked)) .field--starts-at,
+  .incident-form:has(#kind_maintenance:checked) .field--starts-now,
+  .incident-form:has(#change_starts_at:checked) .field--starts-now { display: none; }
+
+  .starts-now {
+    align-items: baseline;
+    display: flex;
+    font-family: var(--font-mono);
+    gap: 1rem;
+    margin: 0;
+  }
+
+  .starts-now__change {
+    color: var(--color-link);
+    cursor: pointer;
+    font-size: var(--text-small);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .starts-now__change input { position: absolute; opacity: 0; pointer-events: none; }
+
+  .starts-now__change:has(:focus-visible) {
+    outline: var(--focus-ring-size) solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  .picker { position: relative; }
+
+  .picker__completion {
+    color: transparent;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    position: absolute;
+    word-wrap: break-word;
+  }
+
+  .picker__completion span { color: var(--color-ink-medium); }
+
+  .picker__list {
+    background: var(--color-canvas);
+    border: 1px solid var(--color-ink-light);
+    border-radius: 0.5rem;
+    box-shadow: var(--shadow);
+    inset-inline: 0;
+    list-style: none;
+    margin: 0;
+    padding: 0.25rem;
+    position: absolute;
+    top: calc(100% + 0.25rem);
+    z-index: 10;
+  }
+
+  .picker__option {
+    border-radius: 0.35rem;
+    color: var(--color-ink-dark);
+    cursor: pointer;
+    display: flex;
+    font-size: var(--text-small);
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.45em 0.6em;
+  }
+
+  .picker__option:hover,
+  .picker__option[aria-selected="true"] {
+    background: var(--color-selected);
+    color: var(--color-ink);
+  }
+
+  .picker__text { min-width: 0; }
+
+  .picker__text mark {
+    background: none;
+    color: var(--color-ink);
+    font-weight: 600;
+  }
+
+  .picker__uses {
+    color: var(--color-ink-medium);
+    font-family: var(--font-mono);
+    font-size: var(--text-x-small);
+    white-space: nowrap;
   }
 
   .segmented input:focus-visible + label {
@@ -619,7 +694,7 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .incident-form__spine,
+    .incident-form,
     .incident-form__eyebrow,
     .incident-form__eyebrow::before,
     .segmented label,
