@@ -1,0 +1,36 @@
+<% @page_title = "Incident history" %>
+
+<div class="incidents-index">
+  <%= link_to "← All incidents", incidents_path, class: "incident-editor__back" %>
+
+  <header class="incidents-header">
+    <h1 class="incidents-header__title">History</h1>
+    <%= form_with url: incidents_history_path, method: :get, class: "history-filters", data: { controller: "form" } do %>
+      <%= select_tag :kind, options_for_select(Upright::Incidents::Searchable::KINDS.invert, params[:kind]),
+            include_blank: "Incidents and maintenance", class: "input--select", aria: { label: "Type" }, data: { action: "change->form#submit" } %>
+      <%= select_tag :service, options_from_collection_for_select(Upright::Service.all, :code, :name, params[:service]),
+            include_blank: "All services", class: "input--select", aria: { label: "Service" }, data: { action: "change->form#submit" } %>
+      <%= search_field_tag :q, params[:q], class: "field__input history-filters__search", placeholder: "Search titles and updates", aria: { label: "Search" } %>
+    <% end %>
+  </header>
+
+  <% if @page.records.none? %>
+    <div class="incidents-empty">
+      <p class="incidents-empty__headline">Nothing found</p>
+      <p class="incidents-empty__body">No incident or maintenance matches these filters. Clear the search or choose all services to see more.</p>
+    </div>
+  <% end %>
+
+  <% @page.records.group_by { it.starts_at.beginning_of_month }.each do |month, incidents| %>
+    <section class="incident-section">
+      <h2 class="incident-section__title"><%= month.strftime("%B %Y") %></h2>
+      <div class="incident-list">
+        <% incidents.each do |incident| %>
+          <%= render "upright/incidents/row", incident: incident, when_label: history_when_label(incident) %>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+
+  <%= render "upright/probe_results/pagination", page: @page %>
+</div>

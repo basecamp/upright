@@ -1,11 +1,11 @@
 <% url = @incident.new_record? ? incidents_path : incident_path(@incident) %>
+<% suggestion_context = %w[ maintenance incident[impact] incident[service_codes][] ] %>
 <%= form_with model: @incident, scope: :incident, url: url,
+      data: { controller: "form maintenance-window", action: "keydown.meta+enter->form#submit keydown.ctrl+enter->form#submit" },
       class: class_names("incident-form",
         "incident-form--maintenance" => @incident.persisted? && @incident.maintenance?,
         "incident-form--incident" => @incident.persisted? && !@incident.maintenance?,
         "incident-form--resolved" => @incident.persisted? && @incident.past?) do |f| %>
-  <span class="incident-form__spine" aria-hidden="true"></span>
-
   <div class="incident-form__body">
     <header class="incident-form__head">
       <p class="incident-form__eyebrow"><%= @incident.new_record? ? "New event" : "#{@incident.maintenance? ? "Maintenance" : "Incident"} · #{@incident.status.humanize}" %></p>
@@ -28,16 +28,24 @@
         <div class="segmented" role="radiogroup" aria-label="Type">
           <input type="radio" name="maintenance" id="kind_incident" value="false" <%= "checked" unless @incident.maintenance? %>>
           <label for="kind_incident">Incident</label>
-          <input type="radio" name="maintenance" id="kind_maintenance" value="true" <%= "checked" if @incident.maintenance? %>>
+          <input type="radio" name="maintenance" id="kind_maintenance" value="true" <%= "checked" if @incident.maintenance? %> data-action="maintenance-window#fillEnd">
           <label for="kind_maintenance">Maintenance</label>
         </div>
       </div>
     <% end %>
 
     <div class="field">
-      <%= f.label :title, "Title", class: "field__label" %>
-      <%= f.text_field :title, class: "field__input",
-            placeholder: "Short summary customers will see", autofocus: @incident.new_record? %>
+      <span class="field__label">Affected services</span>
+      <div class="chips">
+        <input type="hidden" name="incident[service_codes][]" value="">
+        <% (@incident.new_record? ? Upright::Service.by_incident_count : Upright::Service.all).each do |service| %>
+          <label class="chip">
+            <%= check_box_tag "incident[service_codes][]", service.code,
+                  @incident.service_codes.include?(service.code), id: "service_#{service.code}" %>
+            <%= service.name %>
+          </label>
+        <% end %>
+      </div>
     </div>
 
     <div class="field field--incident">
@@ -54,37 +62,45 @@
     </div>
 
     <div class="field">
-      <%= f.label :starts_at, "Starts", class: "field__label" %>
-      <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input" %>
-    </div>
-
-    <div class="field field--maintenance">
-      <%= f.label :ends_at, "Ends", class: "field__label" %>
-      <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input" %>
-      <span class="field__hint">Affected services read as “Under maintenance” for this window and stay out of the outage alarm.</span>
-    </div>
-
-    <div class="field">
-      <span class="field__label">Affected services</span>
-      <div class="chips">
-        <input type="hidden" name="incident[service_codes][]" value="">
-        <% Upright::Service.all.each do |service| %>
-          <label class="chip">
-            <%= check_box_tag "incident[service_codes][]", service.code,
-                  @incident.service_codes.include?(service.code), id: "service_#{service.code}" %>
-            <%= service.name %>
-          </label>
+      <%= f.label :title, "Title", class: "field__label" %>
+      <% if @incident.new_record? %>
+        <%= suggestion_picker url: incidents_suggestions_path(field: :title), fields: suggestion_context, autofill: true do %>
+          <%= f.text_field :title, class: "field__input", placeholder: "Short summary customers will see", data: suggestion_input_data %>
         <% end %>
-      </div>
+      <% else %>
+        <%= f.text_field :title, class: "field__input", placeholder: "Short summary customers will see" %>
+      <% end %>
     </div>
 
     <% if @incident.new_record? %>
       <div class="field">
         <%= label_tag "incident_body", "First update", class: "field__label" %>
-        <%= text_area_tag "incident[body]", nil, id: "incident_body", class: "field__input",
-              placeholder: "What’s happening, and what you’re doing about it." %>
+        <%= suggestion_picker url: incidents_suggestions_path(field: :body), fields: suggestion_context, autofill: true do %>
+          <%= text_area_tag "incident[body]", @incident.body, id: "incident_body", class: "field__input",
+                placeholder: "What’s happening, and what you’re doing about it.", data: suggestion_input_data %>
+        <% end %>
+      </div>
+
+      <div class="field field--incident field--starts-now">
+        <span class="field__label">Starts</span>
+        <p class="starts-now">Now <label class="starts-now__change"><input type="checkbox" name="change_starts_at" id="change_starts_at" value="1">Change</label></p>
       </div>
     <% end %>
+
+    <div class="field field--starts-at">
+      <%= f.label :starts_at, "Starts", class: "field__label" %>
+      <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input",
+            data: { maintenance_window_target: "start", action: "change->maintenance-window#startChanged" } %>
+    </div>
+
+    <div class="field field--maintenance">
+      <%= f.label :ends_at, "Ends", class: "field__label" %>
+      <div class="field__row">
+        <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input", data: { maintenance_window_target: "end" } %>
+        <%= button_tag "+1h", type: "button", class: "btn btn--ghost", title: "End an hour later", data: { action: "maintenance-window#extend" } %>
+      </div>
+      <span class="field__hint">Affected services read as “Under maintenance” for this window and stay out of the outage alarm.</span>
+    </div>
 
     <div class="incident-form__actions">
       <%= link_to "Cancel", incidents_path, class: "incident-form__cancel" %>

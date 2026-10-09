@@ -41,7 +41,10 @@
 
   <% if @past.any? %>
     <section class="incident-section">
-      <h2 class="incident-section__title">Past</h2>
+      <header class="incident-section__head">
+        <h2 class="incident-section__title">Recently resolved</h2>
+        <%= link_to "All history", incidents_history_path, class: "btn btn--ghost" %>
+      </header>
       <div class="incident-list">
         <% @past.each do |incident| %>
           <%= render "row", incident: incident,

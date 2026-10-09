@@ -12,6 +12,22 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to upright.edit_incident_path(Upright::Incident.last)
   end
 
+  test "an incident left to start now starts when it's created, not when the form was opened" do
+    travel_to Time.zone.parse("2026-10-09 15:00:00") do
+      post upright.incidents_path, params: { incident: incident_params(starts_at: "2026-10-09T14:00") }
+    end
+
+    assert_equal Time.zone.parse("2026-10-09 15:00:00"), Upright::Incident.last.starts_at
+  end
+
+  test "an incident whose start was changed keeps the chosen time" do
+    travel_to Time.zone.parse("2026-10-09 15:00:00") do
+      post upright.incidents_path, params: { change_starts_at: "1", incident: incident_params(starts_at: "2026-10-09T14:00") }
+    end
+
+    assert_equal Time.zone.parse("2026-10-09 14:00:00"), Upright::Incident.last.starts_at
+  end
+
   test "creating an incident without an affected service shows an error" do
     assert_no_difference -> { Upright::Incident.count } do
       post upright.incidents_path, params: { incident: incident_params(service_codes: [ "" ]) }
@@ -44,10 +60,21 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".incident-editor--resolved .incident-form--resolved .incident-form__eyebrow", text: "Incident · Resolved"
   end
 
-  test "the message buttons explain that they don't change the status" do
-    get upright.edit_incident_path(upright_incidents(:reactive_resolved))
+  test "the new form lists services before the title and offers past titles" do
+    get upright.new_incident_path
 
-    assert_select ".composer .field__hint", text: /doesn’t change the status/
+    assert_select ".field:has(.chips) ~ .field [data-controller=suggestions] input[name='incident[title]']"
+    assert_select "[data-controller=suggestions] textarea[name='incident[body]']"
+  end
+
+  test "the update composer has a button for each status, with the current one chosen and its most used message filled in" do
+    incident = Upright::Incident.create!(incident_params)
+
+    get upright.edit_incident_path(incident)
+
+    assert_select ".composer input[type=radio][name='incident_update[status]']", count: 3
+    assert_select ".composer input#update_status_investigating[checked]"
+    assert_select ".composer textarea[name='incident_update[body]']", text: "We are investigating."
   end
 
   private

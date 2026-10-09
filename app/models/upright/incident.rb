@@ -1,6 +1,7 @@
 class Upright::Incident < Upright::PersistentRecord
   include Upright::Incidents::Lifecycle
   include Upright::Incidents::AutoReporting
+  include Upright::Incidents::Searchable
 
   attr_accessor :body
 
@@ -17,8 +18,15 @@ class Upright::Incident < Upright::PersistentRecord
   TEMPLATES = {
     down: "%{services} %{is_or_are} down. We are investigating.",
     investigating: "We are investigating the cause and will post updates here.",
+    monitoring: "A fix is in place and we are monitoring %{services}.",
     back_up: "%{services} %{is_or_are} back up and operating normally."
   }
+
+  STATUS_TEMPLATES = { "investigating" => :investigating, "monitoring" => :monitoring, "resolved" => :back_up }
+
+  def self.class_for(maintenance:)
+    ActiveModel::Type::Boolean.new.cast(maintenance) ? Upright::Maintenance : self
+  end
 
   def self.active_statuses
     reactive.active.map { |incident| IMPACT_STATUS.fetch(incident.impact) }
@@ -39,6 +47,7 @@ class Upright::Incident < Upright::PersistentRecord
   validates :affected_services, presence: { message: "must include at least one service" }
 
   before_validation :set_default_status, on: :create
+  before_validation :clear_ends_at, unless: :maintenance?
   before_create { self.created_by ||= Upright::Current.user&.name }
   before_update { self.updated_by = Upright::Current.user.name if Upright::Current.user }
   after_create :record_initial_update
@@ -63,19 +72,42 @@ class Upright::Incident < Upright::PersistentRecord
   end
 
   def update_body_for(key)
-    subjects = services
-    template = subjects.filter_map { |service| service.incident_update_template(key) }.uniq
-    template = template.one? ? template.first : TEMPLATES.fetch(key)
+    templates = services.filter_map { |service| service.incident_update_template(key) }.uniq
+    fill_template templates.one? ? templates.first : self.class::TEMPLATES.fetch(key)
+  end
 
-    template % {
-      services: subjects.any? ? subjects.map(&:name).to_sentence : "This service",
-      is_or_are: subjects.many? ? "are" : "is"
-    }
+  # The first update of a new incident says what is down; later updates follow the status.
+  def update_body_for_status(status)
+    update_body_for(new_record? && impact_critical? ? :down : self.class::STATUS_TEMPLATES.fetch(status))
+  end
+
+  def default_title
+    fill_template title_template
+  end
+
+  def suggestions
+    Upright::Incident::Suggestions.new(self)
   end
 
   private
+    def title_template
+      impact_critical? ? "%{services} %{is_or_are} down" : "%{services} %{is_or_are} having trouble"
+    end
+
+    def fill_template(template)
+      template % {
+        services: services.any? ? services.map(&:name).to_sentence : "This service",
+        is_or_are: services.many? ? "are" : "is"
+      }
+    end
+
     def set_default_status
       self.status ||= self.class::STATUSES.first
+    end
+
+    # Only a maintenance has an end; an incident ends when it's resolved.
+    def clear_ends_at
+      self.ends_at = nil
     end
 
     def record_initial_update

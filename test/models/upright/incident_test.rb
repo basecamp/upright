@@ -10,6 +10,13 @@ class Upright::IncidentTest < ActiveSupport::TestCase
     assert_not incident.maintenance?
   end
 
+  test "an incident doesn't keep an end time" do
+    incident = upright_incidents(:reactive_resolved)
+    incident.update!(ends_at: 1.hour.from_now)
+
+    assert_nil incident.ends_at
+  end
+
   test "requires at least one affected service" do
     incident = upright_incidents(:reactive_resolved)
     incident.service_codes = []

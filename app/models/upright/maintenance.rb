@@ -3,6 +3,14 @@ class Upright::Maintenance < Upright::Incident
   TERMINAL_STATUSES = %w[ completed ]
   IMPACTS           = %w[ maintenance ]
 
+  TEMPLATES = {
+    scheduled: "We will be performing maintenance on %{services}.",
+    in_progress: "Maintenance is underway.",
+    completed: "Maintenance is complete."
+  }
+
+  STATUS_TEMPLATES = TEMPLATES.keys.index_by(&:to_s)
+
   SUPPRESSION_LEAD = 1.minute
 
   scope :suppressing, -> { unresolved.where(starts_at: ..SUPPRESSION_LEAD.from_now) }
@@ -31,7 +39,15 @@ class Upright::Maintenance < Upright::Incident
     record_update(status: "completed",  body: "Maintenance is complete.")  if in_progress? && now >= ends_at
   end
 
+  def update_body_for_status(status)
+    update_body_for self.class::STATUS_TEMPLATES.fetch(status)
+  end
+
   private
+    def title_template
+      "%{services} maintenance"
+    end
+
     def set_maintenance_impact
       self.impact = "maintenance"
     end

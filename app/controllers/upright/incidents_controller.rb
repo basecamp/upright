@@ -4,7 +4,7 @@ class Upright::IncidentsController < Upright::ApplicationController
   def index
     @current  = Upright::Incident.active.order(starts_at: :desc)
     @upcoming = Upright::Maintenance.upcoming.order(:starts_at)
-    @past     = Upright::Incident.past.limit(50)
+    @past     = Upright::Incident.past.limit(10)
   end
 
   def new
@@ -13,6 +13,7 @@ class Upright::IncidentsController < Upright::ApplicationController
 
   def create
     @incident = incident_class.new(incident_params)
+    @incident.starts_at = Time.current if starts_now?
 
     if @incident.save
       redirect_to edit_incident_path(@incident), notice: "#{@incident.model_name.human} created."
@@ -43,8 +44,13 @@ class Upright::IncidentsController < Upright::ApplicationController
     end
 
     def incident_class
-      maintenance = ActiveModel::Type::Boolean.new.cast(params[:maintenance])
-      maintenance ? Upright::Maintenance : Upright::Incident
+      Upright::Incident.class_for(maintenance: params[:maintenance])
+    end
+
+    # A new incident shows its start as "Now" until Change is chosen, so it
+    # starts when it's created rather than when the form was opened.
+    def starts_now?
+      !@incident.maintenance? && params[:change_starts_at].blank?
     end
 
     def incident_params

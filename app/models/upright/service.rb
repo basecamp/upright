@@ -38,6 +38,12 @@ class Upright::Service < FrozenRecord::Base
     end
   end
 
+  # Services that have had the most incidents and maintenances first, then in services.yml order.
+  def self.by_incident_count
+    counts = Upright::IncidentAffectedService.group(:service_code).count
+    all.each_with_index.sort_by { |service, index| [ -counts.fetch(service.code, 0), index ] }.map(&:first)
+  end
+
   def self.degraded
     all.filter_map(&:current_outage)
   end
