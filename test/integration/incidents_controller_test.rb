@@ -12,6 +12,22 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to upright.edit_incident_path(Upright::Incident.last)
   end
 
+  test "an incident left to start now starts when it's created, not when the form was opened" do
+    travel_to Time.zone.parse("2026-10-09 15:00:00") do
+      post upright.incidents_path, params: { incident: incident_params(starts_at: "2026-10-09T14:00") }
+    end
+
+    assert_equal Time.zone.parse("2026-10-09 15:00:00"), Upright::Incident.last.starts_at
+  end
+
+  test "an incident whose start was changed keeps the chosen time" do
+    travel_to Time.zone.parse("2026-10-09 15:00:00") do
+      post upright.incidents_path, params: { change_starts_at: "1", incident: incident_params(starts_at: "2026-10-09T14:00") }
+    end
+
+    assert_equal Time.zone.parse("2026-10-09 14:00:00"), Upright::Incident.last.starts_at
+  end
+
   test "creating an incident without an affected service shows an error" do
     assert_no_difference -> { Upright::Incident.count } do
       post upright.incidents_path, params: { incident: incident_params(service_codes: [ "" ]) }

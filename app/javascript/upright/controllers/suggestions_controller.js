@@ -6,6 +6,11 @@ const VISIBLE = 4
 // characters must appear in order, and matches at word starts or in runs score
 // higher. When the best match continues the typed text, the rest is shown
 // inline and Tab accepts it.
+//
+// With autofill, a change to the context fields replaces the text with the top
+// suggestion unless someone has typed their own. A picked suggestion is still
+// replaced, so a message picked for one status doesn't stay after the status
+// changes.
 export default class extends Controller {
   static targets = [ "input", "completion", "list" ]
   static values = { url: String, fields: Array, autofill: Boolean }
@@ -201,7 +206,7 @@ export default class extends Controller {
   }
 
   #pick(text) {
-    this.edited = true
+    this.edited = false
     this.inputTarget.value = text
     this.inputTarget.setSelectionRange(text.length, text.length)
     this.inputTarget.focus()
