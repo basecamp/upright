@@ -55,12 +55,12 @@
 
     <div class="field">
       <%= f.label :starts_at, "Starts", class: "field__label" %>
-      <%= f.datetime_field :starts_at, class: "field__input" %>
+      <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input" %>
     </div>
 
     <div class="field field--maintenance">
       <%= f.label :ends_at, "Ends", class: "field__label" %>
-      <%= f.datetime_field :ends_at, class: "field__input" %>
+      <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input" %>
       <span class="field__hint">Affected services read as “Under maintenance” for this window and stay out of the outage alarm.</span>
     </div>
 

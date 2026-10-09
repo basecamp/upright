@@ -21,6 +21,14 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".incident-errors li", text: "Affected services must include at least one service"
   end
 
+  test "the start time is prefilled to the minute so whole-minute times are valid" do
+    travel_to Time.zone.parse("2026-10-09 14:29:17") do
+      get upright.new_incident_path
+    end
+
+    assert_select "input[name='incident[starts_at]'][value='2026-10-09T14:29']"
+  end
+
   test "the header of an active incident shows its status" do
     incident = Upright::Incident.create!(incident_params)
 
