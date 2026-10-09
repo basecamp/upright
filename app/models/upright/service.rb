@@ -29,9 +29,11 @@ class Upright::Service < FrozenRecord::Base
       .group(:probe_service, :probe_type, :period_start)
       .minimum(:uptime_fraction)
 
+    rows_by_service = minimums.group_by { |(code, _, _), _| code }
+
     all.to_h do |service|
       probe_types = [ *service.uptime_probe_types, nil ]
-      rows = minimums.select { |(code, probe_type, _), _| code == service.code && probe_types.include?(probe_type) }
+      rows = rows_by_service.fetch(service.code, []).select { |(_, probe_type, _), _| probe_types.include?(probe_type) }
       [ service.code, rows.group_by { |(_, _, period_start), _| period_start }.transform_values { |day| day.map(&:last).min } ]
     end
   end

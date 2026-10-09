@@ -9,6 +9,12 @@ module Upright::Public::ServicesHelper
     maintenance:    "Service Under Maintenance"
   }
 
+  # Past days only change when a rollup does, so the key is the days' data:
+  # a new or corrected rollup renders fresh bars, and the same data reuses them.
+  def uptime_bars_cache_key(service, days)
+    [ "upright/public/uptime_bars", service.code, Digest::SHA256.hexdigest(days.map { |day| "#{day.date}:#{day.status}:#{day.uptime_fraction}" }.join(",")) ]
+  end
+
   def overall_status_label(status)
     OVERALL_STATUS_LABELS.fetch(status)
   end

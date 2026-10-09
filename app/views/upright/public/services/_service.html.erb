@@ -18,7 +18,10 @@
 
   <div class="uptime">
     <div class="uptime__bars" role="img" aria-label="<%= history.size %>-day uptime for <%= service.name %>">
-      <%= render partial: "uptime_bar", collection: history, as: :day %>
+      <% cache uptime_bars_cache_key(service, history[0...-1]), expires_in: 1.day do %>
+        <%= render partial: "uptime_bar", collection: history[0...-1], as: :day %>
+      <% end %>
+      <%= render "uptime_bar", day: history.last %>
     </div>
 
     <div class="uptime__meta">

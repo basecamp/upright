@@ -53,6 +53,12 @@
 
 ### Fixed
 
+- Cache each service's past-day uptime bars on the public status page. They
+  were rendered from 89 partials per service on every request. The cache key
+  is a digest of the days' data, so a new or corrected rollup renders fresh
+  bars; today's bar is rendered live. `Service.daily_uptimes` also groups the
+  rollup rows by service once, instead of scanning every row for each
+  service.
 - Render the public status page with a fixed number of queries. It ran four
   per public service: three for the same "is this service under maintenance"
   check and one for its 90-day uptime. Maintenance is now checked once per
