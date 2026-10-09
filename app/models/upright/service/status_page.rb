@@ -5,9 +5,9 @@ class Upright::Service::StatusPage
     services = Upright::Service.public_facing
 
     new services: services,
-      active_incidents: Upright::Incident.public_facing.reactive.active.order(starts_at: :desc),
-      active_maintenances: Upright::Maintenance.public_facing.active.order(:starts_at),
-      upcoming_maintenances: Upright::Maintenance.public_facing.upcoming.order(:starts_at)
+      active_incidents: Upright::Incident.public_facing.reactive.active.order(starts_at: :desc).preload(:affected_services, :updates),
+      active_maintenances: Upright::Maintenance.public_facing.active.order(:starts_at).preload(:affected_services, :updates),
+      upcoming_maintenances: Upright::Maintenance.public_facing.upcoming.order(:starts_at).preload(:affected_services, :updates)
   end
 
   def initialize(services:, active_incidents:, active_maintenances:, upcoming_maintenances:)

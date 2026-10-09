@@ -12,10 +12,10 @@ class Upright::Public::Api::BaseController < Upright::Public::BaseController
     end
 
     def public_incidents
-      Upright::Incident.public_facing.reactive.order(starts_at: :desc).includes(:updates, :affected_services)
+      Upright::Incident.public_facing.reactive.order(starts_at: :desc).preload(:updates, :affected_services)
     end
 
     def public_maintenances
-      Upright::Maintenance.public_facing.order(starts_at: :desc).includes(:updates, :affected_services)
+      Upright::Maintenance.public_facing.order(starts_at: :desc).preload(:updates, :affected_services)
     end
 end

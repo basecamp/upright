@@ -53,6 +53,12 @@
 
 ### Fixed
 
+- Render the public status page with a fixed number of queries. It ran four
+  per public service: three for the same "is this service under maintenance"
+  check and one for its 90-day uptime. Maintenance is now checked once per
+  request, uptime comes from one grouped query across services, and the
+  incident and maintenance lists preload their services and updates. With
+  eight public services the page runs 7 queries, down from 37.
 - Serve the public status pages as HTML whatever the request's `Accept`
   header asks for. A client asking for JSON got a 406 with no `Cache-Control`
   header, and a CDN that caches by URL served that 406 to every visitor until
