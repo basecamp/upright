@@ -1,4 +1,8 @@
 development:
+  mcp_probes:
+    schedule: every minute
+    command: "Upright::Probes::MCPProbe.check_and_record_all_later"
+
   http_probes:
     schedule: every minute
     command: "Upright::Probes::HTTPProbe.check_and_record_all_later"
@@ -12,6 +16,10 @@ development:
     command: "Probes::Playwright::ExampleProbe.check_and_record_later"
 
 production:
+  mcp_probes:
+    schedule: "*/30 * * * * *"
+    command: "Upright::Probes::MCPProbe.check_and_record_all_later"
+
   http_probes:
     schedule: "*/30 * * * * *"
     command: "Upright::Probes::HTTPProbe.check_and_record_all_later"

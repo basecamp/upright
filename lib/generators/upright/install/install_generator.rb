@@ -34,6 +34,7 @@ module Upright
         empty_directory "probes"
         empty_directory "probes/authenticators"
         template "http_probes.yml", "probes/http_probes.yml"
+        template "mcp_probes.yml", "probes/mcp_probes.yml"
         template "smtp_probes.yml", "probes/smtp_probes.yml"
         template "traceroute_probes.yml", "probes/traceroute_probes.yml"
       end

@@ -88,6 +88,18 @@ groups:
           severity: critical
           group: upright
 
+      # No MCP metrics at all - probes completely stopped
+      - alert: UprightMCPProbesMissing
+        annotations:
+          summary: "MCP probes missing - no metrics received"
+          description: "No MCP probe metrics are being reported. Upright may be down or probes are stuck."
+          upright: "https://app.<%= app_domain %>/?probe_type=mcp"
+        expr: absent(upright_probe_up{type="mcp"})
+        for: 5m
+        labels:
+          severity: critical
+          group: upright
+
       # No Playwright metrics at all - probes completely stopped
       - alert: UprightPlaywrightProbesMissing
         annotations:
@@ -125,6 +137,21 @@ groups:
           count by (site_code, site_city) (max_over_time(upright_probe_up{type="smtp"}[1h]))
           unless
           count by (site_code, site_city) (upright_probe_up{type="smtp"})
+        for: 5m
+        labels:
+          severity: warning
+          group: upright
+
+      # Site stopped reporting MCP probes (was reporting in last hour, not now)
+      - alert: UprightMCPSiteMissing
+        annotations:
+          summary: "MCP probes missing from {{ $labels.site_city }}"
+          description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting MCP probe metrics."
+          upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=mcp"
+        expr: |
+          count by (site_code, site_city) (max_over_time(upright_probe_up{type="mcp"}[1h]))
+          unless
+          count by (site_code, site_city) (upright_probe_up{type="mcp"})
         for: 5m
         labels:
           severity: warning
@@ -216,6 +243,45 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="smtp"} == 0
+          and on (name, type, probe_target)
+          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+        for: 2m
+        labels:
+          severity: warning
+          group: upright
+
+  # MCP probe alerts (remote MCP server sign-in discovery)
+  - name: upright_mcp_alerts
+    rules:
+      - alert: UprightMCPProbeDown
+        annotations:
+          summary: "MCP: {{ $labels.name }} is DOWN"
+          description: "{{ $value | humanizePercentage }} of regions report failure on {{ $labels.probe_target }}"
+          upright: "https://app.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
+        expr: upright:probe_down_fraction{type="mcp"} > 0.5
+        labels:
+          severity: "{{ $labels.alert_severity }}"
+          group: upright
+
+      - alert: UprightMCPProbeDegraded
+        annotations:
+          summary: "MCP: {{ $labels.name }} degraded - {{ $value | humanizePercentage }} of regions down"
+          description: "{{ $value | humanizePercentage }} of regions report failure on {{ $labels.probe_target }}"
+          upright: "https://app.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
+        expr: upright:probe_down_fraction{type="mcp"} > 0.25 and upright:probe_down_fraction{type="mcp"} <= 0.5
+        for: 5m
+        labels:
+          severity: warning
+          group: upright
+
+      - alert: UprightMCPRegionalFailure
+        annotations:
+          summary: "MCP: {{ $labels.name }} failing from {{ $labels.site_city }}"
+          description: "MCP: {{ $labels.probe_target }} failing from {{ $labels.site_city }}"
+          upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type={{ $labels.type }}&status=fail&probe_name={{ $labels.name | urlquery }}"
+        # Only fire when exactly 1 site is down (isolated regional issue)
+        expr: |
+          upright_probe_up{type="mcp"} == 0
           and on (name, type, probe_target)
           count by (name, type, probe_target) (upright_probe_up == 0) == 1
         for: 2m
