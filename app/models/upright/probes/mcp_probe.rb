@@ -59,7 +59,7 @@ class Upright::Probes::MCPProbe < FrozenRecord::Base
 
       expect response.code == 401, "initialize without a token returned #{response.code}, expected 401"
 
-      challenge = response.headers["WWW-Authenticate"].to_s
+      challenge = Array(response.headers["WWW-Authenticate"]).join(", ")
       resource_metadata_url = challenge[/resource_metadata="([^"]+)"/, 1]
       expect resource_metadata_url, "401 response has no resource_metadata in WWW-Authenticate: #{challenge.inspect}"
 
@@ -79,7 +79,7 @@ class Upright::Probes::MCPProbe < FrozenRecord::Base
     end
 
     def verify_authorization_server_metadata
-      metadata = fetch_json("#{authorization_server}/.well-known/oauth-authorization-server")
+      metadata = fetch_json(authorization_server_metadata_url)
 
       expect metadata["issuer"] == authorization_server, "issuer is #{metadata["issuer"].inspect}, expected #{authorization_server}"
       expect Array(metadata["code_challenge_methods_supported"]).include?("S256"), "S256 is not a supported code challenge method"
@@ -87,6 +87,13 @@ class Upright::Probes::MCPProbe < FrozenRecord::Base
       REQUIRED_AUTHORIZATION_SERVER_KEYS.each do |key|
         expect metadata[key].present?, "authorization server metadata has no #{key}"
       end
+    end
+
+    # RFC 8414: the well-known segment goes between the host and the issuer's path.
+    def authorization_server_metadata_url
+      issuer = URI.parse(authorization_server)
+
+      "#{issuer.origin}/.well-known/oauth-authorization-server#{issuer.path.chomp("/")}"
     end
 
     def fetch_json(json_url)

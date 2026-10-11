@@ -24,6 +24,24 @@ class Upright::Probes::MCPProbeTest < ActiveSupport::TestCase
     assert @probe.check
   end
 
+  test "passes when the 401 carries several WWW-Authenticate challenges" do
+    stub_mcp(headers: { "WWW-Authenticate" => [ %(Bearer resource_metadata="#{METADATA_URL}"), %(Basic realm="api") ] })
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server", authorization_server_metadata)
+
+    assert @probe.check
+  end
+
+  test "looks up authorization server metadata after the host for an issuer with a path" do
+    issuer = "#{AUTH_SERVER}/tenant"
+    @probe = @probe.class.new(name: "test", url: MCP_URL, authorization_server: issuer)
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ issuer ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server/tenant", authorization_server_metadata.merge(issuer: issuer))
+
+    assert @probe.check
+  end
+
   test "fails when the endpoint accepts an unauthenticated request" do
     stub_mcp(status: 200, headers: {})
 
