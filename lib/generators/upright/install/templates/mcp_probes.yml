@@ -1,0 +1,16 @@
+# MCP Probe Definitions
+# Add remote MCP servers to check here. The probe makes an unauthenticated
+# initialize request and follows the OAuth discovery documents the server
+# points to, the way an MCP client does before the user signs in.
+#
+# Required fields:
+#   - name: Unique identifier for the probe
+#   - url: The MCP endpoint, for example https://mcp.example.com/mcp
+#   - authorization_server: Issuer URL the server's resource metadata must list
+#
+# Optional fields:
+#   - alert_severity: Alert severity when probe fails: medium, high (default), critical
+
+- name: Example MCP Server
+  url: https://mcp.example.com/mcp
+  authorization_server: https://auth.example.com

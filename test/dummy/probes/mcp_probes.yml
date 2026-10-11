@@ -1,0 +1,3 @@
+- name: "Example MCP"
+  url: "https://mcp.example.com/mcp"
+  authorization_server: "https://auth.example.com"

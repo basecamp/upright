@@ -57,6 +57,7 @@ class Upright::Engine < ::Rails::Engine
     ActiveSupport::Inflector.inflections(:en) do |inflect|
       inflect.acronym "HTTP"
       inflect.acronym "SMTP"
+      inflect.acronym "MCP"
     end
   end
 
@@ -77,6 +78,7 @@ class Upright::Engine < ::Rails::Engine
 
   initializer "upright.probe_types", before: :load_config_initializers do
     Upright.config.probe_types.register :http, name: "HTTP", icon: "🌐"
+    Upright.config.probe_types.register :mcp, name: "MCP", icon: "🔌"
     Upright.config.probe_types.register :playwright, name: "Playwright", icon: "🎭"
     Upright.config.probe_types.register :smtp, name: "SMTP", icon: "✉️"
     Upright.config.probe_types.register :traceroute, name: "Traceroute", icon: "🛤️"

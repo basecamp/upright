@@ -31,6 +31,15 @@
 
 ### Added
 
+- MCP probes (`Upright::Probes::MCPProbe`, `probes/mcp_probes.yml`) check the
+  sign-in discovery chain of a remote MCP server: an unauthenticated
+  `initialize` request returns 401 with a `resource_metadata` URL, the resource
+  metadata lists the configured authorization server, and the authorization
+  server metadata advertises the authorization, token and registration
+  endpoints. The generated alert rules include down, degraded, regional failure
+  and metrics-missing alerts for the `mcp` type. Existing apps add
+  `probes/mcp_probes.yml`, a `mcp_probes` entry in `config/recurring.yml` and the
+  `mcp` alert rules from the install templates to use it.
 - `config.public_status_json_enabled` serves the public status page as
   read-only v2 status JSON on the public status host, for status widgets,
   aggregators and chat integrations: `/api/v2/summary.json`, `status.json`,

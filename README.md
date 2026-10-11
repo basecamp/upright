@@ -24,6 +24,7 @@ Upright is a self-hosted synthetic monitoring system. It provides a framework fo
 - **Playwright Probes** - Browser-based probes for user flows with video recording and logs
 - **HTTP Probes** - Simple HTTP health checks with configurable expected status codes
 - **SMTP Probes** - EHLO handshake verification for mail servers
+- **MCP Probes** - Sign-in discovery checks for remote MCP servers
 - **Traceroute Probes** - Network path analysis with hop-by-hop latency tracking
 - **Multi-Site Support** - Run probes from multiple geographic locations with staggered scheduling
 - **Observability** - OTLP compatible, Prometheus metrics, OpenTelemetry tracing, and AlertManager support
@@ -200,7 +201,7 @@ end
 
 ## Custom Probe Types
 
-Upright ships with four built-in probe types: HTTP, Playwright, SMTP, and Traceroute. You can register your own to extend the system.
+Upright ships with five built-in probe types: HTTP, MCP, Playwright, SMTP, and Traceroute. You can register your own to extend the system.
 
 ### 1. Register the type
 
@@ -299,6 +300,34 @@ Add probes to `probes/http_probes.yml`:
 ```
 
 The optional `alert_severity` field controls the Prometheus alert severity when a probe fails. Values: `medium`, `high` (default), `critical`.
+
+### MCP Probes
+
+Add probes to `probes/mcp_probes.yml`:
+
+```yaml
+- name: Example MCP Server
+  url: https://mcp.example.com/mcp
+  authorization_server: https://auth.example.com
+  alert_severity: critical
+```
+
+The probe checks the public side of a remote [MCP](https://modelcontextprotocol.io) server, in the order an MCP client uses before the user signs in:
+
+1. An unauthenticated `initialize` request to `url` returns 401 with a `resource_metadata` URL in the `WWW-Authenticate` header. The URL must be https on the same host as `url`.
+2. The resource metadata names `url` as the `resource` and lists `authorization_server`.
+3. The authorization server metadata has `authorization_endpoint`, `token_endpoint` and `registration_endpoint`, and supports the S256 code challenge method.
+
+An HTTP probe cannot check this, because MCP endpoints accept only POST and the resource metadata is often cached by a CDN. The probe does not authenticate, so it does not call `tools/list`. The failing step is written to an `mcp.log` artifact on the result.
+
+Schedule it in `config/recurring.yml`:
+
+```yaml
+production:
+  mcp_probes:
+    command: "Upright::Probes::MCPProbe.check_and_record_all_later"
+    schedule: every 30 seconds
+```
 
 ### SMTP Probes
 
