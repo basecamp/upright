@@ -95,7 +95,7 @@ class Upright::Configuration
 
     @probe_types = Upright::ProbeTypeRegistry.new
 
-    @playwright_cli_path = ENV.fetch("PLAYWRIGHT_CLI_PATH", "npx playwright")
+    @playwright_cli_path = ENV["PLAYWRIGHT_CLI_PATH"].presence
     @otel_endpoint = ENV["OTEL_EXPORTER_OTLP_ENDPOINT"]
     @prometheus_url = nil
 

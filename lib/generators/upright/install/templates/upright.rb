@@ -5,7 +5,7 @@ Upright.configure do |config|
   config.user_agent   = "<%= Rails.application.class.module_parent_name.underscore %>/1.0"
   config.hostname     = Rails.env.local? ? "<%= Rails.application.class.module_parent_name.underscore.dasherize %>.localhost" : "<%= Rails.application.class.module_parent_name.underscore.dasherize %>.com"
 
-  # Playwright CLI path (defaults to "npx playwright", override with PLAYWRIGHT_CLI_PATH env var)
+  # Playwright CLI path (defaults to the driver bundled in the venetian gem, override with PLAYWRIGHT_CLI_PATH env var)
   # config.playwright_cli_path = "npx playwright"
 
   # Machine credentials, read from the environment. Both are required outside

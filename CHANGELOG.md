@@ -29,6 +29,18 @@
   is empty or both are the same. Kamal otherwise deploys an empty secret and the
   failure surfaces only at the health check.
 
+### Changed
+
+- Get Playwright from the [venetian](https://github.com/jmalcic/venetian) gem in
+  place of `playwright-ruby-client` and an npm install. Venetian includes the
+  Playwright driver and Node.js and pins the matching `playwright-ruby-client`,
+  so the gem and driver versions cannot differ. Probes start the bundled driver
+  unless `config.playwright_cli_path` is set, `Upright::PLAYWRIGHT_VERSION` is
+  removed, and the generated Dockerfile no longer installs Node.js or npm.
+  Playwright moves from 1.59 to 1.63. See UPGRADING.md.
+- Remove the unused Playwright server from `test/dummy/docker-compose.yml`, the
+  README's deploy example and `test/dummy/config/playwright.yml`.
+
 ### Added
 
 - MCP probes (`Upright::Probes::MCPProbe`, `probes/mcp_probes.yml`) check the

@@ -11,10 +11,9 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages and Node.js (for Playwright)
+# Install base packages
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 iputils-ping mtr-tiny \
-    nodejs npm && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 iputils-ping mtr-tiny && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 # Set production environment
@@ -37,7 +36,7 @@ RUN --mount=type=secret,id=GITHUB_TOKEN \
     BUNDLE_GITHUB__COM="$(cat /run/secrets/GITHUB_TOKEN):x-oauth-basic" bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
     bundle exec bootsnap precompile --gemfile && \
-    bundle exec ruby -e "require 'upright/version'; puts Upright::PLAYWRIGHT_VERSION" > /tmp/playwright_version
+    cp -r "$(bundle exec ruby -e 'print Gem.loaded_specs["venetian"].full_gem_path')" /venetian
 
 # Copy application code
 COPY . .
@@ -51,14 +50,13 @@ RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 # Final stage for app image
 FROM base
 
-# Install Playwright before copying app code so the layer is cached on code-only deploys.
-# The version is extracted to a file in the build stage; BuildKit's content-based caching
-# keeps this layer cached even across Gemfile changes when the version is unchanged.
-COPY --from=build /tmp/playwright_version /tmp/playwright_version
+# Install Chromium with the Playwright driver bundled in the venetian gem, before copying
+# app code so the layer is cached on code-only deploys. The gem is bind-mounted from the
+# build stage, so BuildKit's content-based caching keeps this layer cached across Gemfile
+# changes until the venetian version changes.
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN PLAYWRIGHT_VERSION=$(cat /tmp/playwright_version) && \
-    npm install -g playwright@~${PLAYWRIGHT_VERSION}.0 && \
-    playwright install --with-deps chromium && \
+RUN --mount=type=bind,from=build,source=/venetian,target=/venetian \
+    ruby -I/venetian/lib /venetian/exe/playwright install --with-deps chromium && \
     chmod -R o+rx /ms-playwright
 
 # Copy built artifacts: gems, application

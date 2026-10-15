@@ -1,4 +1,4 @@
-require "playwright"
+require "venetian/playwright"
 
 class Upright::Probes::Playwright::Base
   include ActiveSupport::Callbacks
