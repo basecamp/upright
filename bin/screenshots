@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Takes screenshots of the Upright UI for the README.
-// Requires: bin/dev running, bin/services running, Playwright installed (npx playwright install chromium)
+// Requires: bin/dev running, bin/services running, Playwright installed (npm install && npx playwright install chromium)
 //
 // Usage: bin/screenshots
 

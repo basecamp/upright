@@ -500,12 +500,6 @@ env:
       SITE_SUBDOMAIN: sfo
 
 accessories:
-  playwright:
-    image: jacoblincool/playwright:chromium-server-1.55.0
-    port: "127.0.0.1:53333:53333"
-    roles:
-      - jobs
-
   prometheus:
     # Pinned by digest; CVE-2026-40179 (stored XSS in the web UI) affects 3.0 to 3.5.1
     # and 3.6 to 3.11.1, fixed in 3.5.2 (LTS) and 3.11.2
@@ -594,7 +588,7 @@ This installs dependencies, prepares the database, and starts the dev server.
 
 ### Running Services
 
-Start supporting Docker services (Playwright server, etc.):
+Start supporting Docker services (Prometheus, Alertmanager):
 
 ```bash
 bin/services
@@ -624,13 +618,13 @@ Probes::Playwright::MyServiceAuthProbe.check
 
 ### Upgrading Playwright
 
-Playwright versions are pinned via `Upright::PLAYWRIGHT_VERSION` in `lib/upright/version.rb`. This drives the Ruby gem and npm package versions. To upgrade:
+Upright gets Playwright from the [venetian](https://github.com/jmalcic/venetian) gem. Each venetian release pins `playwright-ruby-client` and includes the matching Playwright driver and Node.js, so `Gemfile.lock` sets the Playwright version and the gem and driver always match. Neither Node.js nor npm is needed to run probes. To upgrade:
 
-1. Update `PLAYWRIGHT_VERSION` in `lib/upright/version.rb`
-2. Update the version in `package.json`
-3. Run `bin/setup` (or manually: `npm install && npx playwright install chromium`)
-4. Run `bin/rails test` to verify compatibility
-5. Commit the updated `package.json` and `package-lock.json`
+1. Run `bundle update venetian`, or widen the `venetian` constraint in `upright.gemspec` for a new minor version
+2. Run `bundle exec playwright install chromium` to install the matching browser
+3. Run `bin/rails test` to verify compatibility
+
+To run probes with a different Playwright driver, set `config.playwright_cli_path` or the `PLAYWRIGHT_CLI_PATH` environment variable.
 
 ### Viewing Playwright Traces
 

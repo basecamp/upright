@@ -24,10 +24,9 @@ produces the same bytes as the published gem.
    `bundle install` to refresh `Gemfile.lock`, move the CHANGELOG's Unreleased
    notes under the new version, open a PR, and merge it.
 
-   A `playwright-ruby-client` constraint change is not a routine bump.
-   `Upright::PLAYWRIGHT_VERSION`, the gemspec constraint, `package.json`, the
-   install generator's Dockerfile and `test/dummy/docker-compose.yml` change
-   together.
+   A `venetian` update changes the Playwright driver and the Chromium version
+   that every install runs. Run the Playwright probe tests and build an image
+   from the install generator's Dockerfile before releasing it.
 2. On an up-to-date `main` checkout, run `rake tag`. It stops if the tree is
    dirty, the branch is not `main`, `HEAD` differs from `origin/main`, or the
    tag already exists. Otherwise it creates the annotated tag and pushes it.

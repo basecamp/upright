@@ -29,14 +29,6 @@ services:
       - '--config.file=/etc/alertmanager/alertmanager.yml'
       - '--storage.path=/alertmanager'
 
-  playwright:
-    image: jacoblincool/playwright:chromium-server-1.55.0
-    container_name: upright-playwright
-    ports:
-      - "53333:53333"
-    environment:
-      - DEBUG=true
-
 volumes:
   prometheus_data:
   alertmanager_data:

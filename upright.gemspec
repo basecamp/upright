@@ -46,9 +46,10 @@ Gem::Specification.new do |spec|
   # URI#merge, an SSRF through the proxies (CVE-2026-25765 / -33637 / -54297).
   spec.add_dependency "faraday", ">= 2.14.3"
 
-  # Playwright (browser automation)
-  # Keep in sync with Upright::PLAYWRIGHT_VERSION in lib/upright/version.rb
-  spec.add_dependency "playwright-ruby-client", "~> 1.59.0"
+  # Playwright (browser automation). Venetian pins playwright-ruby-client and
+  # bundles the matching Playwright driver and Node.js, so the gem and the driver
+  # always have the same version.
+  spec.add_dependency "venetian", "~> 0.3"
 
   # Observability
   spec.add_dependency "prometheus-api-client"

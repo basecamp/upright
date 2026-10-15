@@ -16,7 +16,7 @@ module Upright::Playwright::Lifecycle
 
   private
     def with_browser(&block)
-      ::Playwright.create(playwright_cli_executable_path: Upright.configuration.playwright_cli_path) do |playwright|
+      Venetian.start(playwright_cli_executable_path: Upright.configuration.playwright_cli_path) do |playwright|
         playwright.chromium.launch(headless: ENV.fetch("HEADLESS", "true") != "false", &block)
       end
     end
