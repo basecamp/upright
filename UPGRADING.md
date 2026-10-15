@@ -4,8 +4,8 @@
 
 0.5 removes the machine token the 0.4 installer wrote into
 `config/initializers/upright.rb`, splits it into a write token and a read token,
-and upgrades Prometheus past CVE-2026-40179. Every step applies to every
-install.
+upgrades Prometheus past CVE-2026-40179, and labels probe metrics with the
+environment. Every step applies to every install.
 
 ### 1. Update the gem
 
@@ -66,7 +66,32 @@ and in `docker-compose.yml`, `prom/prometheus:v3.5.5`. Deploy the accessory:
 bin/kamal accessory reboot prometheus
 ```
 
-### 5. Check the result
+### 5. Keep the `environment` label in the recording rules
+
+0.4 scopes every probe query to `environment="<Rails.env>"`, but nothing in a
+generated install added that label, so the dashboards showed no probe data and
+the public status page reported no downtime. 0.5 adds `environment` to every
+metric the app exports.
+
+Copy the two recording rules, `upright:probe_down_fraction` and
+`upright:probe_uptime_daily`, from
+`lib/generators/upright/install/templates/upright.rules.yml` in the gem over
+the ones in `config/prometheus/rules/upright.rules.yml`. Their `by (...)`
+clauses now include `environment`. Redeploy Prometheus:
+
+```sh
+bin/kamal accessory reboot prometheus
+```
+
+If your collector or Prometheus scrape config already adds an `environment`
+label, remove that relabel rule. Otherwise Prometheus keeps the target label
+and renames the app's label to `exported_environment`.
+
+Series recorded before the upgrade have no `environment` label, so the 30-day
+history on the Uptime dashboard starts from the deploy. Daily rollups already
+written to the database are not affected.
+
+### 6. Check the result
 
 ```sh
 curl -sS -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $METRICS_READ_TOKEN" \
@@ -76,7 +101,8 @@ curl -sS -o /dev/null -w '%{http_code}\n' -H "Authorization: Bearer $PROMETHEUS_
 ```
 
 Confirm the collector still writes: a query for `up` returns fresh samples from
-every site.
+every site. A query for `upright_probe_up{environment="production"}` returns a
+series for every probe and site.
 
 ## From 0.3 to 0.4
 
