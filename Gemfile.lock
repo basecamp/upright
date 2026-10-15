@@ -24,7 +24,7 @@ PATH
       stimulus-rails
       turbo-rails
       typhoeus
-      venetian (~> 0.3)
+      venetian (~> 0.3, >= 0.3.1)
       webrick
       yabeda
       yabeda-prometheus

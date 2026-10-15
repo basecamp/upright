@@ -115,8 +115,11 @@ build on 0.5. Copy these changes from
 - Remove `nodejs npm` from the base packages.
 - In the build stage, replace the line that writes `/tmp/playwright_version`
   with the line that copies the venetian gem to `/venetian`.
-- In the final stage, replace the `npm install -g playwright` step with the
-  step that runs `/venetian/exe/playwright install --with-deps chromium`.
+- In the final stage, remove `COPY --from=build /tmp/playwright_version
+  /tmp/playwright_version` and the `npm install -g playwright` step. Add the
+  step that bind-mounts `/venetian` from the build stage and runs
+  `/venetian/exe/playwright install --with-deps chromium`. Keep
+  `ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright` before it.
 
 If `config/initializers/upright.rb` sets `config.playwright_cli_path =
 "npx playwright"`, remove the line. Set it only to run a Playwright driver other

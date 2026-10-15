@@ -48,8 +48,8 @@ Gem::Specification.new do |spec|
 
   # Playwright (browser automation). Venetian pins playwright-ruby-client and
   # bundles the matching Playwright driver and Node.js, so the gem and the driver
-  # always have the same version.
-  spec.add_dependency "venetian", "~> 0.3"
+  # always have the same version. 0.3.0 allowed any newer client, so require 0.3.1.
+  spec.add_dependency "venetian", "~> 0.3", ">= 0.3.1"
 
   # Observability
   spec.add_dependency "prometheus-api-client"
