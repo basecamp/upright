@@ -64,7 +64,8 @@
 
 - Label every exported metric with `environment`, set to `Rails.env`, and keep
   the label in the `upright:probe_down_fraction` and `upright:probe_uptime_daily`
-  recording rules. 0.4 scopes the dashboard, live status and rollup queries by
+  recording rules. `UprightMassFailure` and the `*RegionalFailure` alerts
+  count probes for each environment separately. 0.4 scopes the dashboard, live status and rollup queries by
   `environment` (#95), but nothing in a generated install added the label, so
   the dashboards showed no probe data and live status reported no downtime.
   See UPGRADING.md.

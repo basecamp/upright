@@ -33,7 +33,7 @@ groups:
 
   - name: upright_alerts
     rules:
-      # Mass failure alert - fires when >20% of all probes are failing
+      # Mass failure alert - fires when >20% of an environment's probes are failing
       # When this fires, individual probe alerts are suppressed via inhibition rules
       - alert: UprightMassFailure
         annotations:
@@ -41,9 +41,9 @@ groups:
           description: "Many probes failing simultaneously, likely an Upright or network issue"
           upright: "https://app.<%= app_domain %>/?status=fail"
         expr: |
-          count(upright:probe_down_fraction > 0.5)
+          count by (environment) (upright:probe_down_fraction > 0.5)
           /
-          count(count by (name, type, probe_target) (upright_probe_up))
+          count by (environment) (count by (name, type, probe_target, environment) (upright_probe_up))
           > 0.2
         labels:
           severity: critical
@@ -205,8 +205,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="http"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -244,8 +244,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="smtp"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -283,8 +283,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="mcp"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -322,8 +322,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="playwright"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 20m
         labels:
           severity: warning

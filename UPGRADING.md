@@ -73,11 +73,13 @@ generated install added that label, so the dashboards showed no probe data and
 the public status page reported no downtime. 0.5 adds `environment` to every
 metric the app exports.
 
-Copy the two recording rules, `upright:probe_down_fraction` and
-`upright:probe_uptime_daily`, from
-`lib/generators/upright/install/templates/upright.rules.yml` in the gem over
-the ones in `config/prometheus/rules/upright.rules.yml`. Their `by (...)`
-clauses now include `environment`. Redeploy Prometheus:
+Copy `lib/generators/upright/install/templates/upright.rules.yml` from the gem
+over `config/prometheus/rules/upright.rules.yml`, keeping any alerts of your
+own. The recording rules `upright:probe_down_fraction` and
+`upright:probe_uptime_daily` now keep `environment` in their `by (...)`
+clauses. `UprightMassFailure` and the `*RegionalFailure` alerts now count
+probes separately for each environment, so probes that share a name in two
+environments are not counted together. Redeploy Prometheus:
 
 ```sh
 bin/kamal accessory reboot prometheus
