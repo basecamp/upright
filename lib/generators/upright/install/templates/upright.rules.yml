@@ -56,9 +56,13 @@ groups:
           description: "Upright pool degraded - {{ $value }} site(s) missing"
           upright: "https://app.<%= app_domain %>/"
         expr: |
-          max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up))[1h:1m])
+          max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up{environment!=""}))[1h:1m])
           -
-          count by (environment) (count by (site_code, environment) (upright_probe_up))
+          (
+            count by (environment) (count by (site_code, environment) (upright_probe_up))
+            or
+            max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up{environment!=""}))[1h:1m]) * 0
+          )
           > 0
         for: 5m
         labels:
@@ -124,7 +128,7 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting HTTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=http"
         expr: |
-          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="http"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="http", environment!=""}[1h]))
           unless
           count by (site_code, site_city, environment) (upright_probe_up{type="http"})
         for: 5m
@@ -139,7 +143,7 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting SMTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=smtp"
         expr: |
-          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="smtp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="smtp", environment!=""}[1h]))
           unless
           count by (site_code, site_city, environment) (upright_probe_up{type="smtp"})
         for: 5m
@@ -154,7 +158,7 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting MCP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=mcp"
         expr: |
-          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="mcp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="mcp", environment!=""}[1h]))
           unless
           count by (site_code, site_city, environment) (upright_probe_up{type="mcp"})
         for: 5m
@@ -169,7 +173,7 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting Playwright probe metrics. Probes may be stuck."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=playwright"
         expr: |
-          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="playwright"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="playwright", environment!=""}[1h]))
           unless
           count by (site_code, site_city, environment) (upright_probe_up{type="playwright"})
         for: 30m
