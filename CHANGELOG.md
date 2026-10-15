@@ -62,6 +62,10 @@
 
 ### Fixed
 
+- Render the Probe Status dashboard for Playwright probes. Playwright probes
+  have no target, so their series have no `probe_target` label, and grouping
+  them raised `ArgumentError: missing keyword: :probe_target`. A missing label
+  now groups as `nil`.
 - Cache each service's past-day uptime bars on the public status page. They
   were rendered from 89 partials per service on every request. The cache key
   is a digest of the days' data, so a new or corrected rollup renders fresh
