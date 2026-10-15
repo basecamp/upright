@@ -77,17 +77,24 @@ Copy `lib/generators/upright/install/templates/upright.rules.yml` from the gem
 over `config/prometheus/rules/upright.rules.yml`, keeping any alerts of your
 own. The recording rules `upright:probe_down_fraction` and
 `upright:probe_uptime_daily` now keep `environment` in their `by (...)`
-clauses. `UprightMassFailure` and the `*RegionalFailure` alerts now count
-probes separately for each environment, so probes that share a name in two
-environments are not counted together. Redeploy Prometheus:
+clauses. The mass failure, regional failure, pool degraded and site missing
+alerts now count probes and sites separately for each environment, so two
+environments that share a Prometheus are not counted together. Redeploy
+Prometheus:
 
 ```sh
 bin/kamal accessory reboot prometheus
 ```
 
-If your collector or Prometheus scrape config already adds an `environment`
-label, remove that relabel rule. Otherwise Prometheus keeps the target label
-and renames the app's label to `exported_environment`.
+The label is `Rails.env`, so each environment that writes to the same
+Prometheus needs its own `RAILS_ENV`. If your collector or Prometheus scrape
+config already adds an `environment` label, remove that relabel rule or make
+sure it sets the same value as `RAILS_ENV`. Prometheus keeps the target label
+and renames the app's label to `exported_environment`, so a different value
+replaces the one the queries match.
+
+Alerts that are firing during the deploy gain an `environment` label, so
+Alertmanager resolves them and sends them again as new alerts.
 
 Series recorded before the upgrade have no `environment` label, so the 30-day
 history on the Uptime dashboard starts from the deploy. Daily rollups already

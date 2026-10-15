@@ -49,16 +49,16 @@ groups:
           severity: critical
           group: upright
 
-      # Pool has fewer active sites than peak in last hour
+      # Pool has fewer active sites than peak in last hour, per environment
       - alert: UprightPoolDegraded
         annotations:
           summary: "Upright pool degraded - {{ $value }} site(s) missing"
           description: "Upright pool degraded - {{ $value }} site(s) missing"
           upright: "https://app.<%= app_domain %>/"
         expr: |
-          max_over_time(count(count by (site_code) (upright_probe_up))[1h:1m])
+          max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up))[1h:1m])
           -
-          count(count by (site_code) (upright_probe_up))
+          count by (environment) (count by (site_code, environment) (upright_probe_up))
           > 0
         for: 5m
         labels:
@@ -66,6 +66,7 @@ groups:
           group: upright
 
       # No HTTP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightHTTPProbesMissing
         annotations:
           summary: "HTTP probes missing - no metrics received"
@@ -78,6 +79,7 @@ groups:
           group: upright
 
       # No SMTP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightSMTPProbesMissing
         annotations:
           summary: "SMTP probes missing - no metrics received"
@@ -90,6 +92,7 @@ groups:
           group: upright
 
       # No MCP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightMCPProbesMissing
         annotations:
           summary: "MCP probes missing - no metrics received"
@@ -102,6 +105,7 @@ groups:
           group: upright
 
       # No Playwright metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightPlaywrightProbesMissing
         annotations:
           summary: "Playwright probes missing - no metrics received"
@@ -120,9 +124,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting HTTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=http"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="http"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="http"}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="http"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="http"})
         for: 5m
         labels:
           severity: warning
@@ -135,9 +139,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting SMTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=smtp"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="smtp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="smtp"}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="smtp"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="smtp"})
         for: 5m
         labels:
           severity: warning
@@ -150,9 +154,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting MCP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=mcp"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="mcp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="mcp"}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="mcp"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="mcp"})
         for: 5m
         labels:
           severity: warning
@@ -165,9 +169,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting Playwright probe metrics. Probes may be stuck."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=playwright"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="playwright"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="playwright"}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="playwright"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="playwright"})
         for: 30m
         labels:
           severity: warning
