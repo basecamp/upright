@@ -62,6 +62,11 @@
 
 ### Fixed
 
+- Redirect a signed-out request for a Mission Control Jobs page to sign in.
+  Mission Control's controllers inherit `Upright::ApplicationController` but
+  build URLs from Mission Control's routes, which have no sign-in route, so
+  the request raised `ActionController::UrlGenerationError`. The sign-in URL
+  is now built from Upright's routes.
 - Label every exported metric with `environment`, set to `Rails.env`, and keep
   the label in the `upright:probe_down_fraction` and `upright:probe_uptime_daily`
   recording rules. The mass failure, regional failure, pool degraded and site
