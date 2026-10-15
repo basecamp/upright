@@ -12,7 +12,8 @@ module Upright::Authentication
         Upright::Current.user = Upright::User.new(session[:user_info])
       else
         session[:return_to] = request.url if request.get?
-        redirect_to new_admin_session_url(default_url_options.merge(subdomain: Upright.configuration.global_subdomain)), allow_other_host: true
+        # Mounted engines such as Mission Control inherit this controller with their own routes
+        redirect_to Upright::Engine.routes.url_helpers.new_admin_session_url(subdomain: Upright.configuration.global_subdomain), allow_other_host: true
       end
     end
 
