@@ -19,6 +19,21 @@ class Upright::Probes::StatusTest < ActiveSupport::TestCase
     assert_equal 2, probes.last.site_statuses.size
   end
 
+  test ".for_type groups series without a probe_target label" do
+    stub_prometheus_query_range([
+      { "metric" => { "name" => "sign_in", "type" => "playwright", "site_code" => "iad" },
+        "values" => [ [ 2.minutes.ago.to_i, "1" ] ] },
+      { "metric" => { "name" => "sign_in", "type" => "playwright", "site_code" => "ams" },
+        "values" => [ [ 2.minutes.ago.to_i, "0" ] ] }
+    ])
+
+    probes = Upright::Probes::Status.for_type(:playwright)
+
+    assert_equal 1, probes.size
+    assert_nil probes.first.probe_target
+    assert_equal 2, probes.first.site_statuses.size
+  end
+
   test ".for_type returns empty array when no results" do
     stub_prometheus_query_range([])
 

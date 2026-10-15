@@ -10,7 +10,7 @@ class Upright::Probes::Status::Probe
     @site_statuses = site_statuses
   end
 
-  def self.key_for(name:, type:, probe_target:, **)
+  def self.key_for(name:, type:, probe_target: nil, **)
     [ name, type, probe_target ]
   end
 
