@@ -39,6 +39,7 @@ module Upright::Metrics
           default_tag :site_country, current_site&.country
           default_tag :site_geohash, current_site&.geohash
           default_tag :site_provider, current_site&.provider
+          default_tag :environment, Rails.env.to_s
 
           group :upright do
             gauge :probe_duration_seconds,

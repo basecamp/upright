@@ -8,9 +8,9 @@ groups:
       # Keep probe_service so the public status page can read live status per service.
       - record: upright:probe_down_fraction
         expr: |
-          count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up == 0)
+          count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up == 0)
           /
-          count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up)
+          count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up)
 
       # Daily uptime percentage (0.0 to 1.0)
       # Uptime = percentage of time in past day when majority of sites reported UP
@@ -19,8 +19,8 @@ groups:
       - record: upright:probe_uptime_daily
         expr: |
           avg_over_time((
-            sum by (name, type, probe_target, probe_service) (upright_probe_up)
+            sum by (name, type, probe_target, probe_service, environment) (upright_probe_up)
             /
-            count by (name, type, probe_target, probe_service) (upright_probe_up)
+            count by (name, type, probe_target, probe_service, environment) (upright_probe_up)
             > bool 0.5
           )[1d:])

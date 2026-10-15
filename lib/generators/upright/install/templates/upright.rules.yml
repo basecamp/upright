@@ -6,16 +6,17 @@ groups:
     interval: 30s
     rules:
       # Fraction of regions reporting DOWN (0.0 to 1.0)
-      # Keep probe_service so the public status page can read live status per service.
+      # Keep probe_service so the public status page can read live status per service,
+      # and environment so each environment reads only its own probes.
       - record: upright:probe_down_fraction
         expr: |
           (
-            count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up == 0)
+            count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up == 0)
             or
-            count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up) * 0
+            count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up) * 0
           )
           /
-          count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up)
+          count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up)
 
       # Daily uptime percentage (0.0 to 1.0)
       # Uptime = percentage of time in past day when majority of sites reported UP
@@ -24,15 +25,15 @@ groups:
       - record: upright:probe_uptime_daily
         expr: |
           avg_over_time((
-            sum by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up)
+            sum by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up)
             /
-            count by (name, type, probe_target, alert_severity, probe_service) (upright_probe_up)
+            count by (name, type, probe_target, alert_severity, probe_service, environment) (upright_probe_up)
             > bool 0.5
           )[1d:])
 
   - name: upright_alerts
     rules:
-      # Mass failure alert - fires when >20% of all probes are failing
+      # Mass failure alert - fires when >20% of an environment's probes are failing
       # When this fires, individual probe alerts are suppressed via inhibition rules
       - alert: UprightMassFailure
         annotations:
@@ -40,24 +41,28 @@ groups:
           description: "Many probes failing simultaneously, likely an Upright or network issue"
           upright: "https://app.<%= app_domain %>/?status=fail"
         expr: |
-          count(upright:probe_down_fraction > 0.5)
+          count by (environment) (upright:probe_down_fraction > 0.5)
           /
-          count(count by (name, type, probe_target) (upright_probe_up))
+          count by (environment) (count by (name, type, probe_target, environment) (upright_probe_up))
           > 0.2
         labels:
           severity: critical
           group: upright
 
-      # Pool has fewer active sites than peak in last hour
+      # Pool has fewer active sites than peak in last hour, per environment
       - alert: UprightPoolDegraded
         annotations:
           summary: "Upright pool degraded - {{ $value }} site(s) missing"
           description: "Upright pool degraded - {{ $value }} site(s) missing"
           upright: "https://app.<%= app_domain %>/"
         expr: |
-          max_over_time(count(count by (site_code) (upright_probe_up))[1h:1m])
+          max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up{environment!=""}))[1h:1m])
           -
-          count(count by (site_code) (upright_probe_up))
+          (
+            count by (environment) (count by (site_code, environment) (upright_probe_up))
+            or
+            max_over_time(count by (environment) (count by (site_code, environment) (upright_probe_up{environment!=""}))[1h:1m]) * 0
+          )
           > 0
         for: 5m
         labels:
@@ -65,6 +70,7 @@ groups:
           group: upright
 
       # No HTTP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightHTTPProbesMissing
         annotations:
           summary: "HTTP probes missing - no metrics received"
@@ -77,6 +83,7 @@ groups:
           group: upright
 
       # No SMTP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightSMTPProbesMissing
         annotations:
           summary: "SMTP probes missing - no metrics received"
@@ -89,6 +96,7 @@ groups:
           group: upright
 
       # No MCP metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightMCPProbesMissing
         annotations:
           summary: "MCP probes missing - no metrics received"
@@ -101,6 +109,7 @@ groups:
           group: upright
 
       # No Playwright metrics at all - probes completely stopped
+      # absent() fires only when no environment reports this type
       - alert: UprightPlaywrightProbesMissing
         annotations:
           summary: "Playwright probes missing - no metrics received"
@@ -119,9 +128,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting HTTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=http"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="http"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="http", environment!=""}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="http"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="http"})
         for: 5m
         labels:
           severity: warning
@@ -134,9 +143,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting SMTP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=smtp"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="smtp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="smtp", environment!=""}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="smtp"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="smtp"})
         for: 5m
         labels:
           severity: warning
@@ -149,9 +158,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting MCP probe metrics."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=mcp"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="mcp"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="mcp", environment!=""}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="mcp"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="mcp"})
         for: 5m
         labels:
           severity: warning
@@ -164,9 +173,9 @@ groups:
           description: "{{ $labels.site_city }} ({{ $labels.site_code }}) stopped reporting Playwright probe metrics. Probes may be stuck."
           upright: "https://{{ $labels.site_code }}.<%= app_domain %>/?probe_type=playwright"
         expr: |
-          count by (site_code, site_city) (max_over_time(upright_probe_up{type="playwright"}[1h]))
+          count by (site_code, site_city, environment) (max_over_time(upright_probe_up{type="playwright", environment!=""}[1h]))
           unless
-          count by (site_code, site_city) (upright_probe_up{type="playwright"})
+          count by (site_code, site_city, environment) (upright_probe_up{type="playwright"})
         for: 30m
         labels:
           severity: warning
@@ -204,8 +213,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="http"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -243,8 +252,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="smtp"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -282,8 +291,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="mcp"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 2m
         labels:
           severity: warning
@@ -321,8 +330,8 @@ groups:
         # Only fire when exactly 1 site is down (isolated regional issue)
         expr: |
           upright_probe_up{type="playwright"} == 0
-          and on (name, type, probe_target)
-          count by (name, type, probe_target) (upright_probe_up == 0) == 1
+          and on (name, type, probe_target, environment)
+          count by (name, type, probe_target, environment) (upright_probe_up == 0) == 1
         for: 20m
         labels:
           severity: warning
