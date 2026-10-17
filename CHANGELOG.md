@@ -52,6 +52,12 @@
   and metrics-missing alerts for the `mcp` type. Existing apps add
   `probes/mcp_probes.yml`, a `mcp_probes` entry in `config/recurring.yml` and the
   `mcp` alert rules from the install templates to use it.
+- An MCP probe's optional `client_registration` lists the ways of registering a
+  client its authorization server must advertise: `dynamic` (a
+  `registration_endpoint`, RFC 7591) and `metadata_document`
+  (`client_id_metadata_document_supported: true`). Unset means `[dynamic]`, as
+  before; `[]` requires neither, for a server whose clients are all registered
+  ahead of time.
 - `config.public_status_json_enabled` serves the public status page as
   read-only v2 status JSON on the public status host, for status widgets,
   aggregators and chat integrations: `/api/v2/summary.json`, `status.json`,

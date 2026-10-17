@@ -316,7 +316,16 @@ The probe checks the public side of a remote [MCP](https://modelcontextprotocol.
 
 1. An unauthenticated `initialize` request to `url` returns 401 with a `resource_metadata` URL in the `WWW-Authenticate` header. The URL must be https on the same host as `url`.
 2. The resource metadata names `url` as the `resource` and lists `authorization_server`.
-3. The authorization server metadata has `authorization_endpoint`, `token_endpoint` and `registration_endpoint`, and supports the S256 code challenge method.
+3. The authorization server metadata has `authorization_endpoint` and `token_endpoint`, supports the S256 code challenge method, and advertises each way of registering a client that `client_registration` names.
+
+The optional `client_registration` field lists those ways: `dynamic` requires a `registration_endpoint` (RFC 7591 dynamic client registration), and `metadata_document` requires `client_id_metadata_document_supported: true` (client ID metadata documents). It defaults to `[dynamic]`. Use `[metadata_document]` for a server that has dropped dynamic registration, both for a server that offers both, and `[]` for a server whose clients are all registered ahead of time:
+
+```yaml
+- name: Example MCP Server
+  url: https://mcp.example.com/mcp
+  authorization_server: https://auth.example.com
+  client_registration: [ metadata_document ]
+```
 
 An HTTP probe cannot check this, because MCP endpoints accept only POST and the resource metadata is often cached by a CDN. The probe does not authenticate, so it does not call `tools/list`. The failing step is written to an `mcp.log` artifact on the result.
 
