@@ -80,6 +80,64 @@ class Upright::Probes::MCPProbeTest < ActiveSupport::TestCase
     assert_log "no registration_endpoint"
   end
 
+  test "fails when the authorization server does not support client ID metadata documents and the probe requires them" do
+    @probe = probe_with(client_registration: %w[ metadata_document ])
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server", authorization_server_metadata)
+
+    assert_not @probe.check
+    assert_log "does not set client_id_metadata_document_supported"
+  end
+
+  test "passes without a registration endpoint when the probe requires only client ID metadata documents" do
+    @probe = probe_with(client_registration: %w[ metadata_document ])
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server",
+      authorization_server_metadata.except(:registration_endpoint).merge(client_id_metadata_document_supported: true))
+
+    assert @probe.check
+  end
+
+  test "requires every way of registering a client the probe names" do
+    @probe = probe_with(client_registration: %w[ dynamic metadata_document ])
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server",
+      authorization_server_metadata.except(:registration_endpoint).merge(client_id_metadata_document_supported: true))
+
+    assert_not @probe.check
+    assert_log "no registration_endpoint"
+  end
+
+  test "passes with no way of registering a client when the probe requires none" do
+    @probe = probe_with(client_registration: [])
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server", authorization_server_metadata.except(:registration_endpoint))
+
+    assert @probe.check
+  end
+
+  test "still requires the sign-in endpoints when the probe requires no way of registering a client" do
+    @probe = probe_with(client_registration: [])
+    stub_mcp
+    stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])
+    stub_json("#{AUTH_SERVER}/.well-known/oauth-authorization-server", authorization_server_metadata.except(:registration_endpoint, :token_endpoint))
+
+    assert_not @probe.check
+    assert_log "no token_endpoint"
+  end
+
+  test "fails before any request when client_registration names an unknown way" do
+    @probe = probe_with(client_registration: %w[ dcr ])
+
+    assert_not @probe.check
+    assert_log %(client_registration ["dcr"] is not one of)
+    assert_not_requested :post, MCP_URL
+  end
+
   test "fails when the endpoint times out" do
     stub_request(:post, MCP_URL).to_timeout
 
@@ -95,6 +153,10 @@ class Upright::Probes::MCPProbeTest < ActiveSupport::TestCase
   end
 
   private
+    def probe_with(**options)
+      Upright::Probes::MCPProbe.new(name: "test", url: MCP_URL, authorization_server: AUTH_SERVER, **options)
+    end
+
     def stub_all
       stub_mcp
       stub_json(METADATA_URL, resource: MCP_URL, authorization_servers: [ AUTH_SERVER ])

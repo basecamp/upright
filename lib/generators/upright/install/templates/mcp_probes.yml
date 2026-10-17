@@ -10,6 +10,9 @@
 #
 # Optional fields:
 #   - alert_severity: Alert severity when probe fails: medium, high (default), critical
+#   - client_registration: Ways of registering a client the authorization server
+#     must advertise: dynamic (a registration_endpoint) and metadata_document
+#     (client ID metadata documents). Default [dynamic]; [] requires neither.
 
 - name: Example MCP Server
   url: https://mcp.example.com/mcp
