@@ -46,7 +46,12 @@ Upright::Engine.routes.draw do
 
     resources :artifacts, only: :show, as: :site_artifacts
 
-    match "traces/:signed_id", to: "traces#show", as: :site_trace, via: [ :get, :options ]
+    trace_route = -> { match "traces/:signed_id", to: "traces#show", as: :site_trace, via: [ :get, :options ] }
+    if respond_to?(:filter_path_parameters)
+      filter_path_parameters(:signed_id, &trace_route)
+    else
+      trace_route.call
+    end
 
     scope :framed do
       resource :jobs, only: :show
