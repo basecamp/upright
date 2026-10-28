@@ -129,7 +129,7 @@ GEM
       rack-test (>= 0.6.3)
       regexp_parser (>= 1.5, < 3.0)
       xpath (~> 3.2)
-    capybara-playwright-driver (0.5.13)
+    capybara-playwright-driver (0.5.14)
       addressable
       capybara
       playwright-ruby-client (>= 1.16.0)
@@ -224,7 +224,7 @@ GEM
     mime-types (3.7.0)
       logger
       mime-types-data (~> 3.2025, >= 3.2025.0507)
-    mime-types-data (3.2026.0203)
+    mime-types-data (3.2026.1020)
     mini_mime (1.1.5)
     minitest (6.0.6)
       drb (~> 2.0)
@@ -475,7 +475,7 @@ GEM
     parser (3.3.10.1)
       ast (~> 2.4.1)
       racc
-    playwright-ruby-client (1.63.0)
+    playwright-ruby-client (1.64.0)
       base64
       concurrent-ruby (>= 1.1.6)
       mime-types (>= 3.0)
@@ -511,7 +511,7 @@ GEM
     rack-session (2.1.2)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
-    rack-test (2.2.0)
+    rack-test (2.3.0)
       rack (>= 1.3)
     rackup (2.3.1)
       rack (>= 3)
@@ -556,7 +556,7 @@ GEM
       prism (>= 1.6.0)
       rbs (>= 4.0.0)
       tsort
-    regexp_parser (2.11.3)
+    regexp_parser (2.13.1)
     reline (0.7.0)
       io-console (~> 0.5)
     rexml (3.4.4)
@@ -626,12 +626,12 @@ GEM
     validate_url (1.0.15)
       activemodel (>= 3.0.0)
       public_suffix
-    venetian (0.3.1-arm64-darwin)
+    venetian (0.4.1-arm64-darwin)
       capybara-playwright-driver (>= 0.5)
-      playwright-ruby-client (~> 1.63.0)
-    venetian (0.3.1-x86_64-linux)
+      playwright-ruby-client (~> 1.64.0)
+    venetian (0.4.1-x86_64-linux)
       capybara-playwright-driver (>= 0.5)
-      playwright-ruby-client (~> 1.63.0)
+      playwright-ruby-client (~> 1.64.0)
     webfinger (2.1.3)
       activesupport
       faraday (~> 2.0)
@@ -700,7 +700,7 @@ CHECKSUMS
   brakeman (8.1.0) sha256=cfa9e5214e4925842f4bc849a64f8a7e6c5d0425fe98eac8d7b7bc60fdc17e07
   builder (3.3.0) sha256=497918d2f9dca528fdca4b88d84e4ef4387256d984b8154e9d5d3fe5a9c8835f
   capybara (3.40.0) sha256=42dba720578ea1ca65fd7a41d163dd368502c191804558f6e0f71b391054aeef
-  capybara-playwright-driver (0.5.13) sha256=68c7ae3e98dd9e044ff964aa1d975dc924745cd7d433e8665f6109597a30d78c
+  capybara-playwright-driver (0.5.14) sha256=90bcfbe68ba7fc60c83e6a5b60a83509c2afc529a2155f233beea69466cb7149
   cgi (0.5.2) sha256=61ca30298171190fd4fa0d8018e57ada456eae9b7a2b78526debf7f0a0e6f8bb
   concurrent-ruby (1.3.8) sha256=b2f1be836e968ccc78ccfce277ea79c72a88633f22306782c16ff23fb415d1e1
   connection_pool (3.0.2) sha256=33fff5ba71a12d2aa26cb72b1db8bba2a1a01823559fb01d29eb74c286e62e0a
@@ -744,7 +744,7 @@ CHECKSUMS
   marcel (1.2.1) sha256=1678e9360e32f9eafa917c80029e2f6d10b2715c66a4b87b6d0da9b9cd1f859f
   matrix (0.4.3) sha256=a0d5ab7ddcc1973ff690ab361b67f359acbb16958d1dc072b8b956a286564c5b
   mime-types (3.7.0) sha256=dcebf61c246f08e15a4de34e386ebe8233791e868564a470c3fe77c00eed5e56
-  mime-types-data (3.2026.0203) sha256=54353d693af028847391c28361c07d4b8b689cad78c3e1cc272fb1205c6d2a2f
+  mime-types-data (3.2026.1020) sha256=6b3bcc776c1e3591267727700467e02fb9c12b503fcce4e0e964516d7c1e0d06
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.6) sha256=153ea36d1d987a62942382b61075745042a2b3123b1cd48f4c3675af9cc7d6f1
   mission_control-jobs (1.3.1) sha256=3230be224069b39fee2893eecd27c1c334fb5467290bf575e88b5c9121287b26
@@ -822,7 +822,7 @@ CHECKSUMS
   opentelemetry-semantic_conventions (1.44.0) sha256=b09b8793422f13b01c08f7a6f29b5f511f47f37bcdb57c0513465a0464168513
   parallel (1.27.0) sha256=4ac151e1806b755fb4e2dc2332cbf0e54f2e24ba821ff2d3dcf86bf6dc4ae130
   parser (3.3.10.1) sha256=06f6a725d2cd91e5e7f2b7c32ba143631e1f7c8ae2fb918fc4cebec187e6a688
-  playwright-ruby-client (1.63.0) sha256=83bd8c5a81e0a09b44f51ea5aed2f42c477a6cbe75ae9eb03dd7203213614a16
+  playwright-ruby-client (1.64.0) sha256=a30df6435a26a09dccb664260e1aaed49de2c2d97a67c7ee7b03ab84755af755
   pp (0.6.4) sha256=dfcb0fce700c41456265922884f9fe195d7fbb0674a3578e6c0f69588e82b570
   prettyprint (0.2.0) sha256=2bc9e15581a94742064a3cc8b0fb9d45aae3d03a1baa6ef80922627a0766f193
   prism (1.9.0) sha256=7b530c6a9f92c24300014919c9dcbc055bf4cdf51ec30aed099b06cd6674ef85
@@ -837,7 +837,7 @@ CHECKSUMS
   rack-oauth2 (2.3.0) sha256=43e02cf73f13886a0a06499603caeec58aeba6eae1fefc4977c9678b7652c632
   rack-protection (4.2.1) sha256=cf6e2842df8c55f5e4d1a4be015e603e19e9bc3a7178bae58949ccbb58558bac
   rack-session (2.1.2) sha256=595434f8c0c3473ae7d7ac56ecda6cc6dfd9d37c0b2b5255330aa1576967ffe8
-  rack-test (2.2.0) sha256=005a36692c306ac0b4a9350355ee080fd09ddef1148a5f8b2ac636c720f5c463
+  rack-test (2.3.0) sha256=b118d177cc002c572fc1b6fd8d19c9ed5881a36e8d6f689f9e618f9f861241e8
   rackup (2.3.1) sha256=6c79c26753778e90983761d677a48937ee3192b3ffef6bc963c0950f94688868
   rails (8.1.4) sha256=5f3ecdf9a2a3b79b2e31b8fee3b64a00f7284d76e5631f87d0e58e665911a33b
   rails-dom-testing (2.3.0) sha256=8acc7953a7b911ca44588bf08737bc16719f431a1cc3091a292bca7317925c1d
@@ -847,7 +847,7 @@ CHECKSUMS
   rake (13.4.2) sha256=cb825b2bd5f1f8e91ca37bddb4b9aaf345551b4731da62949be002fa89283701
   rbs (4.2.0) sha256=51f7b886dcc05bc09e10b901daa6a81829f6adc03101d6ca9ea4aac6103e0674
   rdoc (8.0.0) sha256=03bf8c08a9639658855a0cfd77c0abca8325c227693f7f33f82957811348c469
-  regexp_parser (2.11.3) sha256=ca13f381a173b7a93450e53459075c9b76a10433caadcb2f1180f2c741fc55a4
+  regexp_parser (2.13.1) sha256=5aedb6b7c35688f51e86eef17a15374dfd287c83f4ca644b2c5f3ec50a33b44b
   reline (0.7.0) sha256=5b012d8e55dbf9d450f12bde2cf7d15ff546ae80b3f8f3b30e570d431815583d
   rexml (3.4.4) sha256=19e0a2c3425dfbf2d4fc1189747bdb2f849b6c5e74180401b15734bc97b5d142
   rubocop (1.82.1) sha256=09f1a6a654a960eda767aebea33e47603080f8e9c9a3f019bf9b94c9cab5e273
@@ -876,8 +876,8 @@ CHECKSUMS
   uri (1.1.1) sha256=379fa58d27ffb1387eaada68c749d1426738bd0f654d812fcc07e7568f5c57c6
   useragent (0.16.11) sha256=700e6413ad4bb954bb63547fa098dddf7b0ebe75b40cc6f93b8d54255b173844
   validate_url (1.0.15) sha256=72fe164c0713d63a9970bd6700bea948babbfbdcec392f2342b6704042f57451
-  venetian (0.3.1-arm64-darwin) sha256=8bea6d799d7812ae8ed7477f189bba58f2adb9814771eb37d950b096da5d426c
-  venetian (0.3.1-x86_64-linux) sha256=f16c71c2c80119c909f994b55d484d91215abee46b2688cca54a17663dac52a6
+  venetian (0.4.1-arm64-darwin) sha256=63e0acb729ce0593fd28fb4707f03f50a0947044fa744296d53e0eb379205b56
+  venetian (0.4.1-x86_64-linux) sha256=7c730e6d42f79d16231df7255bd80333331c594de53ae85b308fe22ff70abc4a
   webfinger (2.1.3) sha256=567a52bde77fb38ca6b67e55db755f988766ec4651c1d24916a65aa70540695c
   webmock (3.34.0) sha256=72eed29dc8c00148d592acaedaaa6b869e2e397de57dfc8602b84aa834f46b33
   webrick (1.9.2) sha256=beb4a15fc474defed24a3bda4ffd88a490d517c9e4e6118c3edce59e45864131
