@@ -9,6 +9,8 @@ export default class extends Controller {
 
     L.tileLayer(this.tileUrl, { attribution: this.attribution }).addTo(map)
 
+    const bounds = L.latLngBounds([])
+
     for (const site of this.sitesValue) {
       if (!site.lat || !site.lon) continue
 
@@ -18,6 +20,12 @@ export default class extends Controller {
         .on("mouseover", function() { this.openPopup() })
         .on("mouseout", function() { this.closePopup() })
         .on("click", () => window.location.href = site.url)
+
+      bounds.extend([site.lat, site.lon])
+    }
+
+    if (bounds.isValid()) {
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5 })
     }
   }
 
