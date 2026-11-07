@@ -5,11 +5,15 @@
       <%# Post credentials straight to the OmniAuth callback, but as a same-origin
           form carrying a Rails authenticity token so a cross-site request can't
           forge a sign-in (CVE-2026-67993). %>
-      <%= form_with url: "/auth/static_credentials/callback", method: :post, data: { turbo: false } do |form| %>
-        <%= form.label :username, "Username" %>
-        <%= form.text_field :username, autocomplete: "username" %>
-        <%= form.label :password, "Password" %>
-        <%= form.password_field :password, autocomplete: "current-password" %>
+      <%= form_with url: "/auth/static_credentials/callback", method: :post, class: "sign-in-form", data: { turbo: false } do |form| %>
+        <div class="field">
+          <%= form.label :username, "Username", class: "field__label" %>
+          <%= form.text_field :username, autocomplete: "username", class: "field__input" %>
+        </div>
+        <div class="field">
+          <%= form.label :password, "Password", class: "field__label" %>
+          <%= form.password_field :password, autocomplete: "current-password", class: "field__input" %>
+        </div>
         <%= form.submit "Sign in", class: "btn" %>
       <% end %>
     <% else %>
