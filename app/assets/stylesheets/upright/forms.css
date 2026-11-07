@@ -25,6 +25,19 @@
       display: flex;
       justify-content: center;
     }
+
+    .sign-in-form {
+      --accent: var(--focus-ring-color);
+      flex-direction: column;
+      gap: var(--block-space);
+      text-align: left;
+      width: min(18rem, 100%);
+
+      .btn {
+        align-self: center;
+        margin-top: calc(var(--block-space) / 2);
+      }
+    }
   }
 
   .input--select {

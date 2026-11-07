@@ -30,6 +30,29 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "http://ams.#{Upright.configuration.hostname}#{upright.prometheus_path}"
   end
 
+  test "static credentials sign in stacks its labelled fields above the button" do
+    on_subdomain "app"
+    get upright.new_admin_session_path
+
+    assert_response :success
+    assert_select ".sign-in-box form.sign-in-form" do
+      assert_select ".field", count: 2
+      assert_select ".field label.field__label[for=username] + input.field__input#username"
+      assert_select ".field label.field__label[for=password] + input.field__input#password[type=password]"
+      assert_select "input.btn[type=submit][value='Sign in']"
+    end
+  end
+
+  test "a provider's sign in keeps its lone button outside the stacked form" do
+    Upright.configuration.stubs(:auth_provider).returns(:openid_connect)
+    on_subdomain "app"
+    get upright.new_admin_session_path
+
+    assert_response :success
+    assert_select ".sign-in-box form.button_to button.btn", text: "Sign in"
+    assert_select ".sign-in-form", count: 0
+  end
+
   test "session routes not accessible from site subdomain" do
     on_subdomain "ams"
     get upright.new_admin_session_path
