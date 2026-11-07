@@ -26,19 +26,16 @@
       justify-content: center;
     }
 
-    /* The static_credentials form stacks its fields; a provider's lone button stays as above. */
     .sign-in-form {
-      /* The shared .field__input focus ring and border read --accent, which the incident form sets. */
       --accent: var(--focus-ring-color);
-
       flex-direction: column;
       gap: var(--block-space);
-      text-align: start;
+      text-align: left;
       width: min(18rem, 100%);
 
       .btn {
         align-self: center;
-        margin-block-start: calc(var(--block-space) / 2);
+        margin-top: calc(var(--block-space) / 2);
       }
     }
   }
