@@ -25,6 +25,19 @@
       display: flex;
       justify-content: center;
     }
+
+    /* The static_credentials form stacks its fields; a provider's lone button stays as above. */
+    .sign-in-form {
+      flex-direction: column;
+      gap: var(--block-space);
+      text-align: start;
+      width: min(18rem, 100%);
+
+      .btn {
+        align-self: center;
+        margin-block-start: calc(var(--block-space) / 2);
+      }
+    }
   }
 
   .input--select {
