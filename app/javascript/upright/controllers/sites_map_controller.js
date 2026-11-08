@@ -5,7 +5,7 @@ export default class extends Controller {
   static values = { sites: Array }
 
   connect() {
-    const map = L.map(this.element, { scrollWheelZoom: false }).setView([30, 0], 2)
+    const map = L.map(this.element, { minZoom: 2, scrollWheelZoom: false }).setView([30, 0], 2)
 
     L.tileLayer(this.tileUrl, { attribution: this.attribution }).addTo(map)
 
