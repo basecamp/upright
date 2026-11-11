@@ -17,7 +17,22 @@
     <%= search_field_tag :q, params[:q], class: "field__input history-filters__search", placeholder: "Search titles and updates", aria: { label: "Search" } %>
   <% end %>
 
-  <% if @page.records.none? %>
+  <% if @page.first? %>
+    <% { "Active" => @active, "Upcoming" => @upcoming }.each do |title, incidents| %>
+      <% if incidents.any? %>
+        <section class="incident-section">
+          <h2 class="incident-section__title"><%= title %></h2>
+          <div class="incident-list">
+            <% incidents.each do |incident| %>
+              <%= render "row", incident: incident, when_label: history_when_label(incident) %>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+    <% end %>
+  <% end %>
+
+  <% if @page.records.none? && @active.none? && @upcoming.none? %>
     <div class="incidents-empty">
       <% if params.values_at(:kind, :service, :q).any?(&:present?) %>
         <p class="incidents-empty__headline">Nothing found</p>

@@ -14,6 +14,19 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".incident-section__title", text: "June 2026"
   end
 
+  test "lists active and upcoming events above the history" do
+    travel_to Time.utc(2026, 6, 15, 12) do
+      get upright.incidents_path
+    end
+
+    assert_select ".incident-section:nth-of-type(1) .incident-section__title", text: "Active"
+    assert_select ".incident-section:nth-of-type(1) .incident-row__title", text: "Rolling restart"
+    assert_select ".incident-section:nth-of-type(2) .incident-section__title", text: "Upcoming"
+    assert_select ".incident-section:nth-of-type(2) .incident-row__title", text: "Scheduled upgrade"
+    assert_select ".incident-section:nth-of-type(3) .incident-section__title", text: "June 2026"
+    assert_select ".incident-section:nth-of-type(3) .incident-row__title", text: "Resolved outage"
+  end
+
   test "offers new incidents and maintenances" do
     get upright.incidents_path
 
@@ -132,7 +145,7 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".field--starts-at .field__hint", text: "It’s 14:29 UTC now."
   end
 
-  test "the new form doesn't fill in a maintenance's title or first update" do
+  test "the new form pauses autofill while maintenance is chosen" do
     get upright.new_incident_path(maintenance: true)
 
     assert_select "[data-suggestions-autofill-unless-value='#kind_maintenance:checked'] input[name='incident[title]']"

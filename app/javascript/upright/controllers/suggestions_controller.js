@@ -105,6 +105,11 @@ export default class extends Controller {
   }
 
   async #load({ autofill = false } = {}) {
+    if (autofill && this.#autofillPaused) {
+      this.#clearAutofill()
+      autofill = false
+    }
+
     this.request?.abort()
     this.request = new AbortController()
 
@@ -126,13 +131,15 @@ export default class extends Controller {
   }
 
   #autofill() {
-    if (this.#autofillPaused) {
-      if (this.autofilled) this.inputTarget.value = ""
-      this.autofilled = false
-    } else if (this.suggestions.length) {
+    if (this.suggestions.length) {
       this.inputTarget.value = this.suggestions[0].text
       this.autofilled = true
     }
+  }
+
+  #clearAutofill() {
+    if (this.autofilled) this.inputTarget.value = ""
+    this.autofilled = false
   }
 
   get #autofillPaused() {

@@ -3,7 +3,10 @@ class Upright::IncidentsController < Upright::ApplicationController
 
   def index
     incidents = Upright::Incident.of_kind(params[:kind]).affecting(params[:service]).mentioning(params[:q]).preload(:affected_services)
-    set_page_and_extract_portion_from incidents, ordered_by: { starts_at: :desc, id: :desc }, per_page: 25
+
+    @active   = incidents.active.order(starts_at: :desc)
+    @upcoming = incidents.upcoming.order(:starts_at)
+    set_page_and_extract_portion_from incidents.resolved, ordered_by: { starts_at: :desc, id: :desc }, per_page: 25
   end
 
   def new

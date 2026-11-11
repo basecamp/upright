@@ -20,9 +20,10 @@ module Upright::IncidentsHelper
     { suggestions_target: "input", action: "input->suggestions#input focus->suggestions#show blur->suggestions#hide keydown->suggestions#navigate scroll->suggestions#sync" }
   end
 
-  # Form times are entered in the app's zone, so their labels name it.
-  def time_zone_abbreviation
-    Time.current.strftime("%Z")
+  # Form times are entered in the app's zone, so their labels name it as it
+  # stands at that time.
+  def time_zone_abbreviation(time)
+    (time || Time.current).zone
   end
 
   def history_when_label(incident)
