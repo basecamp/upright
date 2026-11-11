@@ -40,6 +40,16 @@
   Playwright moves from 1.59 to 1.63. See UPGRADING.md.
 - Remove the unused Playwright server from `test/dummy/docker-compose.yml`, the
   README's deploy example and `test/dummy/config/playwright.yml`.
+- The incidents page is the history: active and upcoming incidents and
+  maintenances first, then everything resolved by month, with the type, service
+  and search filters and the New incident and New maintenance buttons.
+  `/incidents/history` redirects there, filters included.
+  The header link reads Events, since maintenances aren't incidents.
+- The incident form labels its start and end times with the zone they're
+  entered in, and shows the current time in that zone.
+- A new maintenance's title and first update start empty. Choosing services
+  no longer fills them in with the last maintenance's text; the suggestions
+  still open when you click into either field.
 
 ### Added
 
