@@ -9,48 +9,36 @@
     </div>
   </header>
 
-  <% if @current.none? && @upcoming.none? && @past.none? %>
+  <%= form_with url: incidents_path, method: :get, class: "history-filters", data: { controller: "form" } do %>
+    <%= select_tag :kind, options_for_select(Upright::Incidents::Searchable::KINDS.invert, params[:kind]),
+          include_blank: "Incidents and maintenance", class: "input--select", aria: { label: "Type" }, data: { action: "change->form#submit" } %>
+    <%= select_tag :service, options_from_collection_for_select(Upright::Service.all, :code, :name, params[:service]),
+          include_blank: "All services", class: "input--select", aria: { label: "Service" }, data: { action: "change->form#submit" } %>
+    <%= search_field_tag :q, params[:q], class: "field__input history-filters__search", placeholder: "Search titles and updates", aria: { label: "Search" } %>
+  <% end %>
+
+  <% if @page.records.none? %>
     <div class="incidents-empty">
-      <p class="incidents-empty__headline">All clear</p>
-      <p class="incidents-empty__body">Nothing to report. Incidents and maintenance you declare here appear on the public status page.</p>
+      <% if params.values_at(:kind, :service, :q).any?(&:present?) %>
+        <p class="incidents-empty__headline">Nothing found</p>
+        <p class="incidents-empty__body">No incident or maintenance matches these filters. Clear the search or choose all services to see more.</p>
+      <% else %>
+        <p class="incidents-empty__headline">All clear</p>
+        <p class="incidents-empty__body">Nothing to report. Incidents and maintenance you declare here appear on the public status page.</p>
+      <% end %>
     </div>
   <% end %>
 
-  <% if @current.any? %>
+  <% @page.records.group_by { it.starts_at.beginning_of_month }.each do |month, incidents| %>
     <section class="incident-section">
-      <h2 class="incident-section__title">Active</h2>
+      <h2 class="incident-section__title"><%= month.strftime("%B %Y") %></h2>
       <div class="incident-list">
-        <% @current.each do |incident| %>
-          <%= render "row", incident: incident,
-                when_label: incident.maintenance? ? maintenance_window_description(incident) : "Started #{incident.starts_at.to_fs(:month_day_at_zone)}" %>
+        <% incidents.each do |incident| %>
+          <%= render "row", incident: incident, when_label: history_when_label(incident) %>
         <% end %>
       </div>
     </section>
   <% end %>
 
-  <% if @upcoming.any? %>
-    <section class="incident-section">
-      <h2 class="incident-section__title">Upcoming maintenance</h2>
-      <div class="incident-list">
-        <% @upcoming.each do |incident| %>
-          <%= render "row", incident: incident, when_label: maintenance_window_description(incident) %>
-        <% end %>
-      </div>
-    </section>
-  <% end %>
-
-  <% if @past.any? %>
-    <section class="incident-section">
-      <header class="incident-section__head">
-        <h2 class="incident-section__title">Recently resolved</h2>
-        <%= link_to "All history", incidents_history_path, class: "btn btn--ghost" %>
-      </header>
-      <div class="incident-list">
-        <% @past.each do |incident| %>
-          <%= render "row", incident: incident,
-                when_label: "Resolved #{incident.resolved_at&.to_fs(:month_day_at_zone)}" %>
-        <% end %>
-      </div>
-    </section>
-  <% end %>
+  <%= render "upright/probe_results/pagination", page: @page %>
 </div>

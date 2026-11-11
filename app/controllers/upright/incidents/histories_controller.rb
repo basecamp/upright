@@ -1,6 +1,6 @@
+# The history is the incidents page now. This keeps old links, filters included, working.
 class Upright::Incidents::HistoriesController < Upright::ApplicationController
   def show
-    incidents = Upright::Incident.of_kind(params[:kind]).affecting(params[:service]).mentioning(params[:q]).preload(:affected_services)
-    set_page_and_extract_portion_from incidents, ordered_by: { starts_at: :desc, id: :desc }, per_page: 25
+    redirect_to incidents_path(request.query_parameters), status: :moved_permanently
   end
 end

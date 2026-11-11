@@ -6,6 +6,61 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     on_subdomain :app
   end
 
+  test "lists incidents and maintenances by month, newest first" do
+    get upright.incidents_path
+
+    assert_response :success
+    assert_select ".incident-row", count: Upright::Incident.count
+    assert_select ".incident-section__title", text: "June 2026"
+  end
+
+  test "offers new incidents and maintenances" do
+    get upright.incidents_path
+
+    assert_select ".incidents-actions a[href='#{upright.new_incident_path}']", text: "New incident"
+    assert_select ".incidents-actions a[href='#{upright.new_incident_path(maintenance: true)}']", text: "New maintenance"
+  end
+
+  test "filters by type" do
+    get upright.incidents_path(kind: "maintenance")
+
+    assert_select ".incident-row", count: Upright::Maintenance.count
+    assert_select ".incident-row--maintenance", count: Upright::Maintenance.count
+  end
+
+  test "filters by service" do
+    get upright.incidents_path(service: "example_app")
+
+    assert_select ".incident-row", count: Upright::Incident.for_service("example_app").count
+  end
+
+  test "searches titles and update messages" do
+    get upright.incidents_path(q: "investigating")
+
+    assert_select ".incident-row__title", text: "Resolved outage"
+    assert_select ".incident-row", count: 1
+  end
+
+  test "says when nothing matches" do
+    get upright.incidents_path(q: "no such incident")
+
+    assert_select ".incidents-empty__headline", text: "Nothing found"
+  end
+
+  test "says all clear when there's nothing at all" do
+    Upright::Incident.destroy_all
+
+    get upright.incidents_path
+
+    assert_select ".incidents-empty__headline", text: "All clear"
+  end
+
+  test "the header links to the incidents page as Events" do
+    get upright.incidents_path
+
+    assert_select ".header__link[href$='#{upright.incidents_path}']", text: "Events"
+  end
+
   test "creating an incident opens it" do
     post upright.incidents_path, params: { incident: incident_params }
 
@@ -65,6 +120,24 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select ".field:has(.chips) ~ .field [data-controller=suggestions] input[name='incident[title]']"
     assert_select "[data-controller=suggestions] textarea[name='incident[body]']"
+  end
+
+  test "the new form labels its times with the zone they're entered in" do
+    travel_to Time.utc(2026, 10, 9, 14, 29) do
+      get upright.new_incident_path(maintenance: true)
+    end
+
+    assert_select "label[for=incident_starts_at]", text: "Starts (UTC)"
+    assert_select "label[for=incident_ends_at]", text: "Ends (UTC)"
+    assert_select ".field--starts-at .field__hint", text: "It’s 14:29 UTC now."
+  end
+
+  test "the new form doesn't fill in a maintenance's title or first update" do
+    get upright.new_incident_path(maintenance: true)
+
+    assert_select "[data-suggestions-autofill-unless-value='#kind_maintenance:checked'] input[name='incident[title]']"
+    assert_select "[data-suggestions-autofill-unless-value='#kind_maintenance:checked'] textarea[name='incident[body]']"
+    assert_select "input#kind_maintenance[checked]"
   end
 
   test "the update composer has a button for each status, with the current one chosen and its most used message filled in" do

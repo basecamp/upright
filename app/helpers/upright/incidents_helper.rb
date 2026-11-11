@@ -3,9 +3,11 @@ module Upright::IncidentsHelper
   # `url`. The named form fields are sent along so the server can rank for the
   # services and status being written about. With `autofill`, a change to those
   # fields replaces the text with the top suggestion unless someone has typed
-  # their own.
-  def suggestion_picker(url:, fields: [], autofill: false, &block)
-    tag.div class: "picker", data: { controller: "suggestions", suggestions_url_value: url, suggestions_fields_value: fields, suggestions_autofill_value: autofill } do
+  # their own, or the form has an element matching the `autofill_unless`
+  # selector.
+  def suggestion_picker(url:, fields: [], autofill: false, autofill_unless: nil, &block)
+    tag.div class: "picker", data: { controller: "suggestions", suggestions_url_value: url, suggestions_fields_value: fields,
+      suggestions_autofill_value: autofill, suggestions_autofill_unless_value: autofill_unless } do
       safe_join [
         capture(&block),
         tag.div(class: "picker__completion", aria: { hidden: true }, data: { suggestions_target: "completion" }),
@@ -16,6 +18,11 @@ module Upright::IncidentsHelper
 
   def suggestion_input_data
     { suggestions_target: "input", action: "input->suggestions#input focus->suggestions#show blur->suggestions#hide keydown->suggestions#navigate scroll->suggestions#sync" }
+  end
+
+  # Form times are entered in the app's zone, so their labels name it.
+  def time_zone_abbreviation
+    Time.current.strftime("%Z")
   end
 
   def history_when_label(incident)

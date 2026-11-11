@@ -64,7 +64,7 @@
     <div class="field">
       <%= f.label :title, "Title", class: "field__label" %>
       <% if @incident.new_record? %>
-        <%= suggestion_picker url: incidents_suggestions_path(field: :title), fields: suggestion_context, autofill: true do %>
+        <%= suggestion_picker url: incidents_suggestions_path(field: :title), fields: suggestion_context, autofill: true, autofill_unless: "#kind_maintenance:checked" do %>
           <%= f.text_field :title, class: "field__input", placeholder: "Short summary customers will see", data: suggestion_input_data %>
         <% end %>
       <% else %>
@@ -75,7 +75,7 @@
     <% if @incident.new_record? %>
       <div class="field">
         <%= label_tag "incident_body", "First update", class: "field__label" %>
-        <%= suggestion_picker url: incidents_suggestions_path(field: :body), fields: suggestion_context, autofill: true do %>
+        <%= suggestion_picker url: incidents_suggestions_path(field: :body), fields: suggestion_context, autofill: true, autofill_unless: "#kind_maintenance:checked" do %>
           <%= text_area_tag "incident[body]", @incident.body, id: "incident_body", class: "field__input",
                 placeholder: "What’s happening, and what you’re doing about it.", data: suggestion_input_data %>
         <% end %>
@@ -88,13 +88,14 @@
     <% end %>
 
     <div class="field field--starts-at">
-      <%= f.label :starts_at, "Starts", class: "field__label" %>
+      <%= f.label :starts_at, "Starts (#{time_zone_abbreviation})", class: "field__label" %>
       <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input",
             data: { maintenance_window_target: "start", action: "change->maintenance-window#startChanged" } %>
+      <span class="field__hint">It’s <%= Time.current.to_fs(:clock_zone) %> now.</span>
     </div>
 
     <div class="field field--maintenance">
-      <%= f.label :ends_at, "Ends", class: "field__label" %>
+      <%= f.label :ends_at, "Ends (#{time_zone_abbreviation})", class: "field__label" %>
       <div class="field__row">
         <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input", data: { maintenance_window_target: "end" } %>
         <%= button_tag "+1h", type: "button", class: "btn btn--ghost", title: "End an hour later", data: { action: "maintenance-window#extend" } %>
