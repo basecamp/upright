@@ -89,14 +89,14 @@
     <% end %>
 
     <div class="field field--starts-at">
-      <%= f.label :starts_at, "Starts (#{time_zone_abbreviation(@incident.starts_at)})", class: "field__label" %>
+      <%= f.label :starts_at, "Starts (#{time_zone_name})", class: "field__label" %>
       <%= f.datetime_field :starts_at, include_seconds: false, class: "field__input",
             data: { maintenance_window_target: "start", action: "change->maintenance-window#startChanged" } %>
       <span class="field__hint">It’s <%= Time.current.to_fs(:clock_zone) %> now.</span>
     </div>
 
     <div class="field field--maintenance">
-      <%= f.label :ends_at, "Ends (#{time_zone_abbreviation(@incident.ends_at || @incident.starts_at)})", class: "field__label" %>
+      <%= f.label :ends_at, "Ends (#{time_zone_name})", class: "field__label" %>
       <div class="field__row">
         <%= f.datetime_field :ends_at, include_seconds: false, class: "field__input", data: { maintenance_window_target: "end" } %>
         <%= button_tag "+1h", type: "button", class: "btn btn--ghost", title: "End an hour later", data: { action: "maintenance-window#extend" } %>

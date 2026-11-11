@@ -27,6 +27,15 @@ class Upright::IncidentsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".incident-section:nth-of-type(3) .incident-row__title", text: "Resolved outage"
   end
 
+  test "lists a completed maintenance in the history" do
+    upright_incidents(:elapsed_scheduled).update_columns(status: "completed", resolved_at: Time.utc(2026, 6, 15, 11))
+
+    get upright.incidents_path(q: "Window fully elapsed")
+
+    assert_select ".incident-section__title", text: "June 2026"
+    assert_select ".incident-row__title", text: "Window fully elapsed"
+  end
+
   test "offers new incidents and maintenances" do
     get upright.incidents_path
 

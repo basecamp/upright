@@ -6,7 +6,7 @@ class Upright::IncidentsController < Upright::ApplicationController
 
     @active   = incidents.active.order(starts_at: :desc)
     @upcoming = incidents.upcoming.order(:starts_at)
-    set_page_and_extract_portion_from incidents.resolved, ordered_by: { starts_at: :desc, id: :desc }, per_page: 25
+    set_page_and_extract_portion_from incidents.where.not(resolved_at: nil), ordered_by: { starts_at: :desc, id: :desc }, per_page: 25
   end
 
   def new
