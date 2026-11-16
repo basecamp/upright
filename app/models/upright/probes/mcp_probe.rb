@@ -6,7 +6,9 @@
 # 2. The resource metadata names the configured authorization server and the
 #    endpoint itself as the protected resource.
 # 3. The authorization server metadata advertises the endpoints a client needs
-#    to register and sign in (authorization, token, dynamic client registration).
+#    to sign in (authorization, token, S256), and each way of registering a
+#    client that `client_registration` names: dynamic client registration
+#    (RFC 7591) by default, client ID metadata documents, both, or neither.
 class Upright::Probes::MCPProbe < FrozenRecord::Base
   include Upright::Probeable
   include Upright::ProbeYamlSource
@@ -26,11 +28,13 @@ class Upright::Probes::MCPProbe < FrozenRecord::Base
     }
   }.to_json
 
-  REQUIRED_AUTHORIZATION_SERVER_KEYS = %w[ authorization_endpoint token_endpoint registration_endpoint ]
+  REQUIRED_AUTHORIZATION_SERVER_KEYS = %w[ authorization_endpoint token_endpoint ]
+  CLIENT_REGISTRATIONS = %w[ dynamic metadata_document ]
 
   def check
     @log = StringIO.new
 
+    verify_client_registration_option
     resource_metadata_url = discover_resource_metadata_url
     verify_resource_metadata(resource_metadata_url)
     verify_authorization_server_metadata
@@ -87,6 +91,31 @@ class Upright::Probes::MCPProbe < FrozenRecord::Base
       REQUIRED_AUTHORIZATION_SERVER_KEYS.each do |key|
         expect metadata[key].present?, "authorization server metadata has no #{key}"
       end
+
+      verify_client_registration(metadata)
+    end
+
+    def verify_client_registration(metadata)
+      if client_registrations.include?("dynamic")
+        expect metadata["registration_endpoint"].present?, "authorization server metadata has no registration_endpoint"
+      end
+
+      if client_registrations.include?("metadata_document")
+        expect metadata["client_id_metadata_document_supported"] == true,
+          "authorization server metadata does not set client_id_metadata_document_supported to true"
+      end
+    end
+
+    def verify_client_registration_option
+      unknown = client_registrations - CLIENT_REGISTRATIONS
+      expect unknown.empty?, "client_registration #{unknown.inspect} is not one of #{CLIENT_REGISTRATIONS.inspect}"
+    end
+
+    # The ways of registering a client the authorization server must advertise.
+    # Unset means dynamic client registration; an empty list requires none, for
+    # a server whose clients are all registered ahead of time.
+    def client_registrations
+      self[:client_registration].nil? ? %w[ dynamic ] : Array(self[:client_registration]).map(&:to_s)
     end
 
     # RFC 8414: the well-known segment goes between the host and the issuer's path.
