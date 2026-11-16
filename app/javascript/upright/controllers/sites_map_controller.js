@@ -25,7 +25,7 @@ export default class extends Controller {
     }
 
     if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5 })
+      map.fitBounds(bounds, { padding: [40, 40], maxZoom: 5, animate: false })
     }
   }
 
