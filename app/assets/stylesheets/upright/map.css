@@ -11,6 +11,8 @@
     }
 
     @media (prefers-color-scheme: dark) {
+      background-color: oklch(57% 0.02 246) !important;
+
       .leaflet-tile-pane {
         filter: brightness(0.65) invert(1) contrast(2) hue-rotate(200deg) saturate(0.3);
       }
