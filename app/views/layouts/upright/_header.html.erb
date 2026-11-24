@@ -13,7 +13,7 @@
     <%= link_to "Probes", upright.site_root_url(subdomain: current_or_default_site.code), class: "header__link" %>
     <%= link_to "Uptime", upright.dashboards_uptime_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
     <%= link_to "Status", upright.dashboards_probe_status_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
-    <%= link_to "Incidents", upright.incidents_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
+    <%= link_to "Events", upright.incidents_url(subdomain: Upright.configuration.global_subdomain), class: "header__link" %>
     <span class="header__divider"></span>
     <%= link_to "Jobs", upright.jobs_url(subdomain: current_or_default_site.code), class: "header__link" %>
     <span class="header__divider"></span>

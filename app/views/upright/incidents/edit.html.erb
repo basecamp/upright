@@ -1,7 +1,7 @@
 <% @page_title = @incident.title %>
 
 <div class="incident-editor incident-editor--<%= @incident.past? ? "resolved" : (@incident.maintenance? ? "maintenance" : @incident.impact) %>">
-  <%= link_to "← All incidents", incidents_path, class: "incident-editor__back" %>
+  <%= link_to "← All events", incidents_path, class: "incident-editor__back" %>
 
   <%= render "form" %>
 

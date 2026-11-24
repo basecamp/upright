@@ -10,16 +10,18 @@ const VISIBLE = 4
 // With autofill, a change to the context fields replaces the text with the top
 // suggestion unless someone has typed their own. A picked suggestion is still
 // replaced, so a message picked for one status doesn't stay after the status
-// changes.
+// changes. While the form has an element matching autofillUnless, it fills
+// nothing in and clears what it filled in before.
 export default class extends Controller {
   static targets = [ "input", "completion", "list" ]
-  static values = { url: String, fields: Array, autofill: Boolean }
+  static values = { url: String, fields: Array, autofill: Boolean, autofillUnless: String }
 
   connect() {
     this.suggestions = []
     this.matches = []
     this.active = -1
     this.edited = !this.autofillValue && this.inputTarget.value !== ""
+    this.autofilled = false
 
     this.inputTarget.autocomplete = "off"
     this.inputTarget.setAttribute("role", "combobox")
@@ -40,6 +42,7 @@ export default class extends Controller {
 
   input() {
     this.edited = true
+    this.autofilled = false
     this.show()
   }
 
@@ -102,6 +105,11 @@ export default class extends Controller {
   }
 
   async #load({ autofill = false } = {}) {
+    if (autofill && this.#autofillPaused) {
+      this.#clearAutofill()
+      autofill = false
+    }
+
     this.request?.abort()
     this.request = new AbortController()
 
@@ -118,8 +126,24 @@ export default class extends Controller {
       throw error
     }
 
-    if (autofill && this.suggestions.length) this.inputTarget.value = this.suggestions[0].text
+    if (autofill) this.#autofill()
     this.#filter()
+  }
+
+  #autofill() {
+    if (this.suggestions.length) {
+      this.inputTarget.value = this.suggestions[0].text
+      this.autofilled = true
+    }
+  }
+
+  #clearAutofill() {
+    if (this.autofilled) this.inputTarget.value = ""
+    this.autofilled = false
+  }
+
+  get #autofillPaused() {
+    return this.autofillUnlessValue !== "" && this.form.querySelector(this.autofillUnlessValue) !== null
   }
 
   #filter() {
@@ -207,6 +231,7 @@ export default class extends Controller {
 
   #pick(text) {
     this.edited = false
+    this.autofilled = false
     this.inputTarget.value = text
     this.inputTarget.setSelectionRange(text.length, text.length)
     this.inputTarget.focus()
